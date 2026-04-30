@@ -7,6 +7,13 @@ export const fmtMoneyShort = (n: number) => {
   return "¥" + n.toLocaleString("zh-CN");
 };
 
+// Split a money amount into a big number + small unit suffix, for KPI display.
+export const splitMoneyShort = (n: number): { num: string; unit: string } => {
+  if (n >= 100000000) return { num: (n / 100000000).toFixed(2), unit: "亿" };
+  if (n >= 10000) return { num: (n / 10000).toFixed(1), unit: "万" };
+  return { num: n.toLocaleString("zh-CN"), unit: "" };
+};
+
 export const fmtInt = (n: number) => (n ?? 0).toLocaleString("zh-CN");
 
 export const customerTypeLabel = (t: string) => (t === "software" ? "软件" : "硬件");

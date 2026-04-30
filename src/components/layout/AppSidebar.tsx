@@ -7,16 +7,36 @@ import {
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter,
 } from "@/components/ui/sidebar";
 
-const items = [
-  { title: "控制面板", url: "/", icon: LayoutDashboard, dot: "tomato" },
-  { title: "客户管理", url: "/customers", icon: Users, dot: "mustard" },
-  { title: "产品库存", url: "/products", icon: Package, dot: "mint" },
-  { title: "供应商", url: "/suppliers", icon: Truck, dot: "cobalt" },
-  { title: "采购管理", url: "/purchases", icon: ShoppingCart, dot: "mustard" },
-  { title: "合同管理", url: "/contracts", icon: FileText, dot: "tomato" },
-  { title: "销售订单", url: "/sales", icon: Receipt, dot: "mint" },
-  { title: "财务收支", url: "/payments", icon: Wallet, dot: "cobalt" },
-  { title: "数据报表", url: "/reports", icon: BarChart3, dot: "mustard" },
+const groups = [
+  {
+    label: "工作台",
+    items: [
+      { title: "控制面板", url: "/", icon: LayoutDashboard, dot: "tomato" },
+    ],
+  },
+  {
+    label: "业务",
+    items: [
+      { title: "客户管理", url: "/customers", icon: Users, dot: "mustard" },
+      { title: "产品库存", url: "/products", icon: Package, dot: "mint" },
+      { title: "供应商", url: "/suppliers", icon: Truck, dot: "cobalt" },
+    ],
+  },
+  {
+    label: "交易",
+    items: [
+      { title: "采购管理", url: "/purchases", icon: ShoppingCart, dot: "mustard" },
+      { title: "合同管理", url: "/contracts", icon: FileText, dot: "tomato" },
+      { title: "销售订单", url: "/sales", icon: Receipt, dot: "mint" },
+      { title: "财务收支", url: "/payments", icon: Wallet, dot: "cobalt" },
+    ],
+  },
+  {
+    label: "分析",
+    items: [
+      { title: "数据报表", url: "/reports", icon: BarChart3, dot: "mustard" },
+    ],
+  },
 ];
 
 const dotMap: Record<string, string> = {
@@ -32,61 +52,84 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-r-0">
-      <SidebarHeader className="px-7 pt-8 pb-4">
+      <SidebarHeader className="px-6 pt-7 pb-3">
         <div className="flex items-center gap-3">
-          <div className="size-11 rounded-2xl bg-tomato flex items-center justify-center font-display font-black text-primary-foreground text-2xl -rotate-6 shadow-[4px_4px_0_0_hsl(var(--cobalt))]">
-            墨
+          <div className="relative shrink-0">
+            <div className="size-10 rounded-2xl bg-tomato flex items-center justify-center font-display font-black text-primary-foreground text-xl -rotate-6 shadow-[3px_3px_0_0_hsl(var(--cobalt))]">
+              墨
+            </div>
+            <span className="absolute -right-1 -bottom-1 size-3 rounded-full bg-mint border-2 border-background" />
           </div>
-          <div className="font-display font-bold text-2xl tracking-tight leading-none">
-            墨印<span className="text-tomato">.</span>
-            <div className="text-[10px] font-sans font-medium tracking-[0.2em] uppercase text-muted-foreground mt-1">CRM Suite</div>
+          <div className="leading-none min-w-0">
+            <div className="font-display font-bold text-lg tracking-tight whitespace-nowrap">
+              墨印<span className="text-tomato">.</span>Suite
+            </div>
+            <div className="text-[9px] font-mono font-medium tracking-[0.25em] uppercase text-foreground/45 mt-1.5">
+              Ledger · Est.2026
+            </div>
           </div>
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="px-4 mt-4">
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu className="gap-1.5">
-              {items.map((item) => {
-                const active = isActive(item.url);
-                return (
-                  <SidebarMenuItem key={item.url}>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={active}
-                      className={
-                        "rounded-xl h-10 px-3 transition-all hover:bg-sidebar-accent " +
-                        (active ? "bg-sidebar-accent font-bold text-foreground shadow-[3px_3px_0_0_hsl(var(--foreground)/0.08)]" : "text-foreground/60 hover:text-foreground font-medium")
-                      }
-                    >
-                      <NavLink to={item.url} className="flex items-center gap-3">
-                        <span
-                          className={
-                            "size-2 rounded-full transition-transform shrink-0 " +
-                            dotMap[item.dot] +
-                            (active ? " scale-150" : "")
-                          }
-                        />
-                        <span className="text-sm">{item.title}</span>
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+      <SidebarContent className="px-3 mt-2">
+        {groups.map((g) => (
+          <SidebarGroup key={g.label} className="mb-1">
+            <div className="px-3 pt-3 pb-1.5 text-[9px] font-bold tracking-[0.3em] uppercase text-foreground/35 font-mono">
+              · {g.label}
+            </div>
+            <SidebarGroupContent>
+              <SidebarMenu className="gap-0.5">
+                {g.items.map((item) => {
+                  const active = isActive(item.url);
+                  return (
+                    <SidebarMenuItem key={item.url}>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={active}
+                        className={
+                          "rounded-xl h-9 px-3 transition-all " +
+                          (active
+                            ? "bg-card font-bold text-foreground shadow-[2px_2px_0_0_hsl(var(--foreground)/0.08)] border border-foreground/8"
+                            : "text-foreground/55 hover:text-foreground hover:bg-card/60 font-medium")
+                        }
+                      >
+                        <NavLink to={item.url} className="flex items-center gap-3">
+                          <span
+                            className={
+                              "size-1.5 rounded-full transition-all shrink-0 " +
+                              dotMap[item.dot] +
+                              (active ? " ring-4 ring-current/0 scale-150" : " opacity-70")
+                            }
+                          />
+                          <span className="text-[13px] tracking-tight">{item.title}</span>
+                          {active && (
+                            <span className="ml-auto font-mono text-[9px] text-foreground/40">
+                              ●
+                            </span>
+                          )}
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
       </SidebarContent>
 
-      <SidebarFooter className="p-5">
-        <div className="rounded-3xl p-5 bg-cobalt text-secondary-foreground flex flex-col gap-3">
-          <div className="text-[10px] opacity-80 font-bold tracking-[0.2em] uppercase">月度对账提醒</div>
-          <div className="font-display italic text-base leading-snug">
+      <SidebarFooter className="p-4">
+        <div className="relative rounded-3xl p-5 bg-cobalt text-secondary-foreground flex flex-col gap-3 overflow-hidden shadow-[3px_3px_0_0_hsl(var(--mustard))]">
+          <div className="absolute -right-6 -top-6 size-20 rounded-full bg-mustard/30 blur-xl" />
+          <div className="flex items-center gap-2 text-[9px] opacity-90 font-bold tracking-[0.25em] uppercase relative">
+            <span className="size-1 rounded-full bg-mint" />
+            月度对账
+          </div>
+          <div className="font-display italic text-[15px] leading-snug relative">
             “本月还有 <span className="text-mustard not-italic font-bold">12</span> 笔账单待核对”
           </div>
-          <button className="py-2.5 rounded-2xl bg-mustard text-foreground font-bold text-sm hover:-translate-y-0.5 transition-transform">
-            前往核对
+          <button className="py-2 rounded-full bg-mustard text-foreground font-bold text-xs hover:-translate-y-0.5 transition-transform relative tracking-wide">
+            前往核对 →
           </button>
         </div>
       </SidebarFooter>
