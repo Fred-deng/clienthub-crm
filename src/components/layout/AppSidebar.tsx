@@ -120,16 +120,17 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="p-4">
-        <div className="relative rounded-3xl p-5 bg-cobalt text-secondary-foreground flex flex-col gap-3 overflow-hidden shadow-[3px_3px_0_0_hsl(var(--mustard))]">
-          <div className="absolute -right-6 -top-6 size-20 rounded-full bg-mustard/30 blur-xl" />
-          <div className="flex items-center gap-2 text-[9px] opacity-90 font-bold tracking-[0.25em] uppercase relative">
+        <div className="relative rounded-2xl p-5 bg-cobalt text-secondary-foreground flex flex-col gap-3 overflow-hidden">
+          <div className="absolute -right-10 -top-10 size-32 rounded-full bg-mustard/15 blur-2xl" />
+          <div className="absolute -left-6 -bottom-6 size-20 rounded-full bg-tomato/20 blur-2xl" />
+          <div className="flex items-center gap-2 text-[9px] opacity-80 font-bold tracking-[0.28em] uppercase relative">
             <span className="size-1 rounded-full bg-mint" />
             月度对账
           </div>
-          <div className="font-display italic text-[15px] leading-snug relative">
-            “本月还有 <span className="text-mustard not-italic font-bold">12</span> 笔账单待核对”
+          <div className="font-display italic text-[14px] leading-snug relative opacity-95">
+            本月还有 <span className="text-mustard not-italic font-bold">12</span> 笔账单待核对
           </div>
-          <button className="py-2 rounded-full bg-mustard text-foreground font-bold text-xs hover:-translate-y-0.5 transition-transform relative tracking-wide">
+          <button className="py-2 rounded-full bg-[hsl(var(--paper))] text-foreground font-bold text-[11px] hover:bg-mustard transition-colors relative tracking-wide">
             前往核对 →
           </button>
         </div>
