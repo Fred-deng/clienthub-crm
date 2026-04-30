@@ -170,12 +170,14 @@
   /* ===== Refined data table ===== */
   .data-table {
     @apply w-full text-sm;
+    border-collapse: separate;
+    border-spacing: 0;
   }
   .data-table thead tr {
     @apply border-t border-foreground/[0.06];
   }
   .data-table thead th {
-    @apply px-6 py-3 text-[10px] font-bold uppercase tracking-[0.18em] text-foreground/45 font-mono text-left;
+    @apply px-5 py-3 text-[10px] font-bold uppercase tracking-[0.18em] text-foreground/45 font-mono text-left whitespace-nowrap;
   }
   .data-table thead th.num,
   .data-table thead th.right {
@@ -188,7 +190,10 @@
     @apply bg-foreground/[0.025];
   }
   .data-table tbody td {
-    @apply px-6 py-3.5 text-[13px] text-foreground/85 align-middle;
+    @apply px-5 py-3.5 text-[13px] text-foreground/85 align-middle whitespace-nowrap;
+  }
+  .data-table tbody td.wrap {
+    @apply whitespace-normal;
   }
   .data-table tbody td.num {
     @apply text-right font-mono tabular-nums font-semibold text-foreground;
