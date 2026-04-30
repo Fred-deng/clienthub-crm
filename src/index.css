@@ -64,33 +64,32 @@
   }
 
   .dark {
-    /* Risograph stays light by design. Mirror tokens. */
-    --background: 38 40% 96%;
-    --foreground: 0 0% 10%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 10%;
+    --background: 36 33% 96%;
+    --foreground: 24 15% 12%;
+    --card: 36 50% 99%;
+    --card-foreground: 24 15% 12%;
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 10%;
-    --primary: 9 80% 57%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 215 64% 30%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 38 25% 92%;
-    --muted-foreground: 0 0% 35%;
-    --accent: 138 47% 68%;
-    --accent-foreground: 0 0% 10%;
-    --destructive: 9 80% 57%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 10% / 0.08;
-    --input: 0 0% 10% / 0.12;
-    --ring: 9 80% 57%;
-    --sidebar-background: 38 40% 96%;
-    --sidebar-foreground: 0 0% 10%;
-    --sidebar-primary: 9 80% 57%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 100%;
-    --sidebar-accent-foreground: 0 0% 10%;
-    --sidebar-border: 0 0% 10% / 0.06;
+    --popover-foreground: 24 15% 12%;
+    --primary: 8 72% 54%;
+    --primary-foreground: 36 50% 99%;
+    --secondary: 218 55% 28%;
+    --secondary-foreground: 36 50% 99%;
+    --muted: 36 22% 92%;
+    --muted-foreground: 24 10% 38%;
+    --accent: 152 32% 62%;
+    --accent-foreground: 24 15% 12%;
+    --destructive: 8 72% 54%;
+    --destructive-foreground: 36 50% 99%;
+    --border: 24 15% 12% / 0.07;
+    --input: 24 15% 12% / 0.1;
+    --ring: 8 72% 54%;
+    --sidebar-background: 36 33% 95%;
+    --sidebar-foreground: 24 15% 12%;
+    --sidebar-primary: 8 72% 54%;
+    --sidebar-primary-foreground: 36 50% 99%;
+    --sidebar-accent: 36 50% 99%;
+    --sidebar-accent-foreground: 24 15% 12%;
+    --sidebar-border: 24 15% 12% / 0.05;
   }
 }
 
