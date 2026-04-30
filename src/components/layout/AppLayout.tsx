@@ -52,7 +52,7 @@ export default function AppLayout() {
                   <span className="text-[10px] text-foreground/45">{greet}</span>
                   <span className="text-xs font-bold">陈雨晴</span>
                 </div>
-                <div className="size-9 rounded-full bg-mustard border-[1.5px] border-foreground flex items-center justify-center font-display font-black text-foreground text-sm -rotate-3 shadow-[2px_2px_0_0_hsl(var(--cobalt))]">
+                <div className="size-9 rounded-full bg-gradient-to-br from-mustard to-[hsl(32_72%_50%)] flex items-center justify-center font-display font-black text-foreground text-sm ring-2 ring-card shadow-sm">
                   陈
                 </div>
               </div>
