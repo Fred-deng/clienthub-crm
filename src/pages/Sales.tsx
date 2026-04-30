@@ -94,29 +94,40 @@ export default function Sales() {
         <div className="overflow-x-auto">
           <table className="data-table">
             <thead>
-              <tr>{["订单号", "客户", "明细", "状态", "金额", "已回款", "未收", "销售员", "下单日", "操作"].map((h) => (
-                <th key={h}>{h}</th>
-              ))}</tr>
+              <tr>
+                <th>订单号</th>
+                <th>客户</th>
+                <th>明细</th>
+                <th>状态</th>
+                <th className="num">金额</th>
+                <th className="num">已回款</th>
+                <th className="num">未收</th>
+                <th>销售员</th>
+                <th>下单日</th>
+                <th className="num">操作</th>
+              </tr>
             </thead>
             <tbody>
-              {loading && <tr><td colSpan={10} className="py-12 text-center text-xs text-muted-foreground">加载中…</td></tr>}
+              {loading && <tr className="empty"><td colSpan={10} className="empty">加载中…</td></tr>}
               {data.list.map((o) => {
                 const owner = employees.find((e) => e.id === o.ownerId);
                 const unpaid = o.totalAmount - o.received;
                 return (
                   <tr key={o.id}>
-                    <td className="font-mono text-xs">{o.code}</td>
-                    <td className="text-foreground/90 truncate max-w-[180px]">{o.customerName}</td>
-                    <td className="text-xs text-muted-foreground truncate max-w-[200px]">{o.items.map((i) => `${i.productName}×${i.qty}`).join(", ")}</td>
-                    <td className="px-5 py-3"><StatusBadge status={o.status} /></td>
-                    <td className="font-mono text-xs">{fmtMoney(o.totalAmount)}</td>
-                    <td className="font-mono text-xs text-accent">{fmtMoney(o.received)}</td>
-                    <td className={"px-5 py-3 font-mono text-xs " + (unpaid> 0 ? "text-warning" : "text-muted-foreground")}>{fmtMoney(unpaid)}</td>
-                    <td className="text-xs">{owner?.name ?? "-"}</td>
-                    <td className="text-xs text-muted-foreground">{o.createdAt}</td>
-                    <td className="px-5 py-3">
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(o)}><Pencil className="h-3.5 w-3.5" /></Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeletingId(o.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                    <td className="mono">{o.code}</td>
+                    <td className="bold"><span className="block max-w-[180px] truncate">{o.customerName}</span></td>
+                    <td className="text-xs text-foreground/55"><span className="block max-w-[220px] truncate">{o.items.map((i) => `${i.productName}×${i.qty}`).join(", ")}</span></td>
+                    <td><StatusBadge status={o.status} /></td>
+                    <td className="num">{fmtMoney(o.totalAmount)}</td>
+                    <td className={"num " + (o.received > 0 ? "!text-mint" : "!text-foreground/40")}>{fmtMoney(o.received)}</td>
+                    <td className={"num " + (unpaid > 0 ? "!text-tomato" : "!text-foreground/40")}>{fmtMoney(unpaid)}</td>
+                    <td className="text-xs">{owner?.name ?? "—"}</td>
+                    <td className="mono">{o.createdAt}</td>
+                    <td className="num">
+                      <div className="inline-flex gap-1">
+                        <button className="size-8 rounded-full hover:bg-foreground/5 text-foreground/55 hover:text-foreground inline-flex items-center justify-center transition-colors" onClick={() => openEdit(o)}><Pencil className="h-3.5 w-3.5" /></button>
+                        <button className="size-8 rounded-full hover:bg-tomato/10 text-foreground/55 hover:text-tomato inline-flex items-center justify-center transition-colors" onClick={() => setDeletingId(o.id)}><Trash2 className="h-3.5 w-3.5" /></button>
+                      </div>
                     </td>
                   </tr>
                 );
