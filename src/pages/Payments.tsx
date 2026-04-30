@@ -97,31 +97,31 @@ export default function Payments() {
         }
       >
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/30 text-left">
+          <table className="data-table">
+            <thead>
               <tr>{["流水号", "方向", "关联单据", "对手方", "金额", "方式", "日期", "操作"].map((h) => (
-                <th key={h} className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{h}</th>
+                <th key={h} className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{h}</th>
               ))}</tr>
             </thead>
-            <tbody className="divide-y divide-border">
+            <tbody>
               {loading && <tr><td colSpan={8} className="py-12 text-center text-xs text-muted-foreground">加载中…</td></tr>}
               {data.list.map((p) => (
-                <tr key={p.id} className="hover:bg-muted/20">
-                  <td className="px-5 py-3 font-mono text-xs">{p.code}</td>
-                  <td className="px-5 py-3 text-xs">
+                <tr key={p.id} >
+                  <td className="font-mono text-xs">{p.code}</td>
+                  <td className="text-xs">
                     {p.direction === "in" ? (
                       <span className="inline-flex items-center gap-1 text-accent"><ArrowDownLeft className="h-3 w-3" />回款</span>
                     ) : (
                       <span className="inline-flex items-center gap-1 text-warning"><ArrowUpRight className="h-3 w-3" />付款</span>
                     )}
                   </td>
-                  <td className="px-5 py-3 font-mono text-xs">{p.refCode}</td>
-                  <td className="px-5 py-3 text-xs truncate max-w-[200px]">{p.partyName}</td>
+                  <td className="font-mono text-xs">{p.refCode}</td>
+                  <td className="text-xs truncate max-w-[200px]">{p.partyName}</td>
                   <td className={"px-5 py-3 font-mono text-sm font-bold " + (p.direction === "in" ? "text-accent" : "text-warning")}>
                     {p.direction === "in" ? "+" : "-"}{fmtMoney(p.amount)}
                   </td>
-                  <td className="px-5 py-3 text-xs">{p.method}</td>
-                  <td className="px-5 py-3 text-xs text-muted-foreground">{p.paidAt}</td>
+                  <td className="text-xs">{p.method}</td>
+                  <td className="text-xs text-muted-foreground">{p.paidAt}</td>
                   <td className="px-5 py-3">
                     <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeletingId(p.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
                   </td>

@@ -81,30 +81,30 @@ export default function Products() {
         }
       >
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/30 text-left">
+          <table className="data-table">
+            <thead>
               <tr>
                 {["编号", "名称", "分类", "规格", "单位", "售价", "成本", "库存", "安全库存", "操作"].map((h) => (
-                  <th key={h} className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{h}</th>
+                  <th key={h} className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{h}</th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-border">
+            <tbody>
               {loading && <tr><td colSpan={10} className="py-12 text-center text-xs text-muted-foreground">加载中…</td></tr>}
               {!loading && data.list.length === 0 && <tr><td colSpan={10} className="py-12 text-center text-xs text-muted-foreground">暂无数据</td></tr>}
               {data.list.map((p) => {
                 const low = p.stock <= p.safetyStock && p.category !== "software";
                 return (
-                  <tr key={p.id} className="hover:bg-muted/20">
-                    <td className="px-5 py-3 font-mono text-xs">{p.code}</td>
-                    <td className="px-5 py-3 font-medium">{p.name}</td>
-                    <td className="px-5 py-3 text-xs text-muted-foreground">{productCategoryLabel[p.category]}</td>
-                    <td className="px-5 py-3 text-xs text-muted-foreground">{p.spec || "-"}</td>
-                    <td className="px-5 py-3 text-xs">{p.unit}</td>
-                    <td className="px-5 py-3 font-mono text-xs">{fmtMoney(p.price)}</td>
-                    <td className="px-5 py-3 font-mono text-xs text-muted-foreground">{fmtMoney(p.cost)}</td>
+                  <tr key={p.id} >
+                    <td className="font-mono text-xs">{p.code}</td>
+                    <td className="font-medium">{p.name}</td>
+                    <td className="text-xs text-muted-foreground">{productCategoryLabel[p.category]}</td>
+                    <td className="text-xs text-muted-foreground">{p.spec || "-"}</td>
+                    <td className="text-xs">{p.unit}</td>
+                    <td className="font-mono text-xs">{fmtMoney(p.price)}</td>
+                    <td className="font-mono text-xs text-muted-foreground">{fmtMoney(p.cost)}</td>
                     <td className={"px-5 py-3 font-mono text-xs " + (low ? "text-warning font-bold" : "")}>{p.stock}</td>
-                    <td className="px-5 py-3 font-mono text-xs text-muted-foreground">{p.safetyStock}</td>
+                    <td className="font-mono text-xs text-muted-foreground">{p.safetyStock}</td>
                     <td className="px-5 py-3">
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(p)}><Pencil className="h-3.5 w-3.5" /></Button>
                       <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeletingId(p.id)}><Trash2 className="h-3.5 w-3.5" /></Button>

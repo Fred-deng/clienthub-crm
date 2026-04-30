@@ -92,28 +92,28 @@ export default function Sales() {
         }
       >
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/30 text-left">
+          <table className="data-table">
+            <thead>
               <tr>{["订单号", "客户", "明细", "状态", "金额", "已回款", "未收", "销售员", "下单日", "操作"].map((h) => (
-                <th key={h} className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{h}</th>
+                <th key={h} className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{h}</th>
               ))}</tr>
             </thead>
-            <tbody className="divide-y divide-border">
+            <tbody>
               {loading && <tr><td colSpan={10} className="py-12 text-center text-xs text-muted-foreground">加载中…</td></tr>}
               {data.list.map((o) => {
                 const owner = employees.find((e) => e.id === o.ownerId);
                 const unpaid = o.totalAmount - o.received;
                 return (
-                  <tr key={o.id} className="hover:bg-muted/20">
-                    <td className="px-5 py-3 font-mono text-xs">{o.code}</td>
-                    <td className="px-5 py-3 text-foreground/90 truncate max-w-[180px]">{o.customerName}</td>
-                    <td className="px-5 py-3 text-xs text-muted-foreground truncate max-w-[200px]">{o.items.map((i) => `${i.productName}×${i.qty}`).join(", ")}</td>
+                  <tr key={o.id} >
+                    <td className="font-mono text-xs">{o.code}</td>
+                    <td className="text-foreground/90 truncate max-w-[180px]">{o.customerName}</td>
+                    <td className="text-xs text-muted-foreground truncate max-w-[200px]">{o.items.map((i) => `${i.productName}×${i.qty}`).join(", ")}</td>
                     <td className="px-5 py-3"><StatusBadge status={o.status} /></td>
-                    <td className="px-5 py-3 font-mono text-xs">{fmtMoney(o.totalAmount)}</td>
-                    <td className="px-5 py-3 font-mono text-xs text-accent">{fmtMoney(o.received)}</td>
+                    <td className="font-mono text-xs">{fmtMoney(o.totalAmount)}</td>
+                    <td className="font-mono text-xs text-accent">{fmtMoney(o.received)}</td>
                     <td className={"px-5 py-3 font-mono text-xs " + (unpaid > 0 ? "text-warning" : "text-muted-foreground")}>{fmtMoney(unpaid)}</td>
-                    <td className="px-5 py-3 text-xs">{owner?.name ?? "-"}</td>
-                    <td className="px-5 py-3 text-xs text-muted-foreground">{o.createdAt}</td>
+                    <td className="text-xs">{owner?.name ?? "-"}</td>
+                    <td className="text-xs text-muted-foreground">{o.createdAt}</td>
                     <td className="px-5 py-3">
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(o)}><Pencil className="h-3.5 w-3.5" /></Button>
                       <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeletingId(o.id)}><Trash2 className="h-3.5 w-3.5" /></Button>

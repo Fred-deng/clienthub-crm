@@ -116,44 +116,44 @@ export default function Customers() {
         }
       >
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/30 text-left">
+          <table className="data-table">
+            <thead>
               <tr>
-                <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">编号</th>
-                <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">客户名称</th>
-                <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">类型</th>
-                <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">阶段</th>
-                <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">等级</th>
-                <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">联系人</th>
-                <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">电话</th>
-                <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground text-right">应收</th>
-                <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground text-right">操作</th>
+                <th className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">编号</th>
+                <th className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">客户名称</th>
+                <th className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">类型</th>
+                <th className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">阶段</th>
+                <th className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">等级</th>
+                <th className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">联系人</th>
+                <th className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">电话</th>
+                <th className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground text-right">应收</th>
+                <th className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground text-right">操作</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border">
+            <tbody>
               {loading && <tr><td colSpan={9} className="py-12 text-center text-xs text-muted-foreground">加载中…</td></tr>}
               {!loading && data.list.length === 0 && (
                 <tr><td colSpan={9} className="py-12 text-center text-xs text-muted-foreground">暂无客户数据</td></tr>
               )}
               {data.list.map((c) => (
-                <tr key={c.id} className="hover:bg-muted/20">
-                  <td className="px-5 py-3 font-mono text-xs">{c.code}</td>
-                  <td className="px-5 py-3 text-foreground font-medium">{c.name}</td>
-                  <td className="px-5 py-3 text-xs">
+                <tr key={c.id} >
+                  <td className="font-mono text-xs">{c.code}</td>
+                  <td className="text-foreground font-medium">{c.name}</td>
+                  <td className="text-xs">
                     <span className={c.type === "software" ? "text-primary" : "text-accent"}>
                       {customerTypeLabel(c.type)}
                     </span>
                   </td>
-                  <td className="px-5 py-3 text-xs">
+                  <td className="text-xs">
                     <span className={c.stage === "formal" ? "text-foreground" : "text-warning"}>
                       {customerStageLabel(c.stage)}
                     </span>
                   </td>
-                  <td className="px-5 py-3 text-xs font-mono">{c.level}</td>
-                  <td className="px-5 py-3 text-xs">{c.contact}</td>
-                  <td className="px-5 py-3 text-xs font-mono text-muted-foreground">{c.phone}</td>
-                  <td className="px-5 py-3 text-right font-mono text-xs">{fmtMoney(c.receivable)}</td>
-                  <td className="px-5 py-3 text-right">
+                  <td className="text-xs font-mono">{c.level}</td>
+                  <td className="text-xs">{c.contact}</td>
+                  <td className="text-xs font-mono text-muted-foreground">{c.phone}</td>
+                  <td className="text-right font-mono text-xs">{fmtMoney(c.receivable)}</td>
+                  <td className="text-right">
                     <div className="inline-flex gap-1">
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(c)}>
                         <Pencil className="h-3.5 w-3.5" />
