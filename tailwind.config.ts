@@ -8,9 +8,10 @@ export default {
     container: { center: true, padding: "2rem", screens: { "2xl": "1400px" } },
     extend: {
       fontFamily: {
-        sans: ['"IBM Plex Sans"', '"Noto Sans SC"', "system-ui", "sans-serif"],
+        sans: ['Inter', '"Noto Sans SC"', "system-ui", "sans-serif"],
         mono: ['"IBM Plex Mono"', "ui-monospace", "monospace"],
-        serif: ['"Noto Serif SC"', "serif"],
+        serif: ['Fraunces', '"Noto Serif SC"', "serif"],
+        display: ['Fraunces', '"Noto Serif SC"', "serif"],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -26,8 +27,10 @@ export default {
         warning: { DEFAULT: "hsl(var(--warning))", foreground: "hsl(var(--warning-foreground))" },
         popover: { DEFAULT: "hsl(var(--popover))", foreground: "hsl(var(--popover-foreground))" },
         card: { DEFAULT: "hsl(var(--card))", foreground: "hsl(var(--card-foreground))" },
-        glow: "hsl(var(--glow))",
-        "surface-elevated": "hsl(var(--surface-elevated))",
+        tomato: "hsl(var(--tomato))",
+        cobalt: "hsl(var(--cobalt))",
+        mustard: "hsl(var(--mustard))",
+        mint: "hsl(var(--mint))",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",

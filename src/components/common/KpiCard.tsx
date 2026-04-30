@@ -9,26 +9,61 @@ interface KpiCardProps {
   icon?: ReactNode;
 }
 
-const toneAccent: Record<string, string> = {
-  default: "bg-foreground/40",
-  primary: "bg-primary",
-  warning: "bg-warning",
-  accent: "bg-accent",
-  destructive: "bg-destructive",
+// Map semantic tones to Memphis color blocks
+const toneStyles: Record<string, { bg: string; text: string; hint: string; rotate: string }> = {
+  default: {
+    bg: "bg-card border-2 border-foreground/10",
+    text: "text-foreground",
+    hint: "text-foreground/60",
+    rotate: "hover:rotate-1",
+  },
+  primary: {
+    bg: "bg-tomato",
+    text: "text-primary-foreground",
+    hint: "text-primary-foreground/80",
+    rotate: "hover:rotate-2",
+  },
+  warning: {
+    bg: "bg-mustard",
+    text: "text-foreground",
+    hint: "text-foreground/70",
+    rotate: "hover:-rotate-2",
+  },
+  accent: {
+    bg: "bg-mint",
+    text: "text-foreground",
+    hint: "text-foreground/70",
+    rotate: "hover:rotate-2",
+  },
+  destructive: {
+    bg: "bg-cobalt",
+    text: "text-secondary-foreground",
+    hint: "text-mint",
+    rotate: "hover:-rotate-2",
+  },
 };
 
 export function KpiCard({ label, value, hint, tone = "default", icon }: KpiCardProps) {
+  const s = toneStyles[tone];
   return (
-    <div className="relative bg-card border border-border p-5 group hover:border-primary/40 transition-colors overflow-hidden">
-      <div className={cn("absolute top-0 left-0 w-0.5 h-full", toneAccent[tone])} />
-      <div className="flex items-start justify-between mb-3">
-        <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{label}</p>
-        {icon && <div className="text-muted-foreground/60 group-hover:text-primary transition-colors">{icon}</div>}
+    <div
+      className={cn(
+        "relative rounded-[40px] p-7 flex flex-col justify-between aspect-square overflow-hidden transition-transform duration-300 cursor-default",
+        s.bg,
+        s.text,
+        s.rotate,
+      )}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <span className="font-display italic text-lg font-medium leading-tight">{label}</span>
+        {icon && <div className="opacity-60">{icon}</div>}
       </div>
-      <div className="text-2xl font-semibold text-foreground tabular-nums tracking-tight font-mono">
-        {value}
+      <div>
+        <div className="font-display font-black text-5xl lg:text-6xl tabular-nums tracking-tighter leading-none">
+          {value}
+        </div>
+        {hint && <div className={cn("mt-2 text-sm font-bold", s.hint)}>{hint}</div>}
       </div>
-      {hint && <div className="mt-2 text-xs text-muted-foreground">{hint}</div>}
     </div>
   );
 }

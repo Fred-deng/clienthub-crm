@@ -2,90 +2,93 @@
 @tailwind components;
 @tailwind utilities;
 
-/* OPTIC CRM - Dark command center design system. All colors HSL. */
+/* MO YIN CRM — Risograph Memphis design system. All colors HSL. */
 
 @layer base {
   :root {
-    /* Deep navy command center */
-    --background: 222 47% 4%;
-    --foreground: 215 20% 70%;
+    /* Cream paper */
+    --background: 38 40% 96%;          /* #FBF7F0 */
+    --foreground: 0 0% 10%;            /* #1A1A1A */
 
-    --card: 222 47% 7%;
-    --card-foreground: 210 40% 98%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 10%;
 
-    --popover: 222 47% 7%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 10%;
 
-    --primary: 187 85% 53%;          /* cyan glow */
-    --primary-foreground: 222 47% 4%;
+    /* Tomato red — primary energy */
+    --primary: 9 80% 57%;              /* #E94F37 */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 217 33% 12%;
-    --secondary-foreground: 210 40% 98%;
+    /* Cobalt — secondary depth */
+    --secondary: 215 64% 30%;          /* #1B4079 */
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 217 33% 12%;
-    --muted-foreground: 215 20% 55%;
+    --muted: 38 25% 92%;
+    --muted-foreground: 0 0% 35%;
 
-    --accent: 160 84% 39%;           /* green accent */
-    --accent-foreground: 222 47% 4%;
+    /* Mint — accent positive */
+    --accent: 138 47% 68%;             /* #88D498 */
+    --accent-foreground: 0 0% 10%;
 
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 210 40% 98%;
+    /* Mustard — warning / highlight */
+    --warning: 42 89% 61%;             /* #F4B942 */
+    --warning-foreground: 0 0% 10%;
 
-    --warning: 32 95% 55%;
-    --warning-foreground: 222 47% 4%;
+    --destructive: 9 80% 57%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 217 33% 14%;
-    --input: 217 33% 14%;
-    --ring: 187 85% 53%;
+    --border: 0 0% 10% / 0.08;
+    --input: 0 0% 10% / 0.12;
+    --ring: 9 80% 57%;
 
-    --radius: 0.25rem;
+    --radius: 1.5rem;
 
     /* Sidebar */
-    --sidebar-background: 222 47% 5%;
-    --sidebar-foreground: 215 20% 65%;
-    --sidebar-primary: 187 85% 53%;
-    --sidebar-primary-foreground: 222 47% 4%;
-    --sidebar-accent: 217 33% 10%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 217 33% 12%;
-    --sidebar-ring: 187 85% 53%;
+    --sidebar-background: 38 40% 96%;
+    --sidebar-foreground: 0 0% 10%;
+    --sidebar-primary: 9 80% 57%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 100%;
+    --sidebar-accent-foreground: 0 0% 10%;
+    --sidebar-border: 0 0% 10% / 0.06;
+    --sidebar-ring: 9 80% 57%;
 
-    /* Custom tokens */
-    --glow: 187 85% 53%;
-    --surface-elevated: 222 47% 9%;
-    --gradient-glow: linear-gradient(135deg, hsl(187 85% 53% / 0.15), transparent);
-    --shadow-glow: 0 0 20px hsl(187 85% 53% / 0.15);
+    /* Custom Memphis swatches (for direct dot accents) */
+    --tomato: 9 80% 57%;
+    --cobalt: 215 64% 30%;
+    --mustard: 42 89% 61%;
+    --mint: 138 47% 68%;
   }
 
   .dark {
-    /* same as root, app is dark by default */
-    --background: 222 47% 4%;
-    --foreground: 215 20% 70%;
-    --card: 222 47% 7%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222 47% 7%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 187 85% 53%;
-    --primary-foreground: 222 47% 4%;
-    --secondary: 217 33% 12%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217 33% 12%;
-    --muted-foreground: 215 20% 55%;
-    --accent: 160 84% 39%;
-    --accent-foreground: 222 47% 4%;
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217 33% 14%;
-    --input: 217 33% 14%;
-    --ring: 187 85% 53%;
-    --sidebar-background: 222 47% 5%;
-    --sidebar-foreground: 215 20% 65%;
-    --sidebar-primary: 187 85% 53%;
-    --sidebar-primary-foreground: 222 47% 4%;
-    --sidebar-accent: 217 33% 10%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 217 33% 12%;
-    --sidebar-ring: 187 85% 53%;
+    /* Risograph stays light by design. Mirror tokens. */
+    --background: 38 40% 96%;
+    --foreground: 0 0% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 10%;
+    --primary: 9 80% 57%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 215 64% 30%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 38 25% 92%;
+    --muted-foreground: 0 0% 35%;
+    --accent: 138 47% 68%;
+    --accent-foreground: 0 0% 10%;
+    --destructive: 9 80% 57%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 10% / 0.08;
+    --input: 0 0% 10% / 0.12;
+    --ring: 9 80% 57%;
+    --sidebar-background: 38 40% 96%;
+    --sidebar-foreground: 0 0% 10%;
+    --sidebar-primary: 9 80% 57%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 100%;
+    --sidebar-accent-foreground: 0 0% 10%;
+    --sidebar-border: 0 0% 10% / 0.06;
   }
 }
 
@@ -98,28 +101,69 @@
   }
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'IBM Plex Sans', 'Noto Sans SC', system-ui, sans-serif;
+    font-family: 'Inter', 'Noto Sans SC', system-ui, sans-serif;
+  }
+  .font-display {
+    font-family: 'Fraunces', 'Noto Serif SC', Georgia, serif;
+    font-feature-settings: "ss01", "ss02";
   }
   .font-mono {
     font-family: 'IBM Plex Mono', ui-monospace, monospace;
   }
-  /* subtle scanline / grid backdrop */
-  .grid-bg {
-    background-image:
-      linear-gradient(hsl(var(--border) / 0.4) 1px, transparent 1px),
-      linear-gradient(90deg, hsl(var(--border) / 0.4) 1px, transparent 1px);
-    background-size: 32px 32px;
+
+  /* Grain overlay (subtle riso noise) */
+  .riso-grain::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 50;
+    opacity: 0.05;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
-  .glow-text {
-    text-shadow: 0 0 10px hsl(var(--primary) / 0.6);
+
+  /* Decorative ambient blobs */
+  .memphis-blob-mustard {
+    position: fixed;
+    top: -60px; right: -60px;
+    width: 320px; height: 320px;
+    border-radius: 9999px;
+    background: hsl(var(--mustard));
+    opacity: 0.18;
+    filter: blur(80px);
+    pointer-events: none;
+    z-index: 0;
   }
-  .pulse-dot {
-    box-shadow: 0 0 0 0 hsl(var(--accent) / 0.7);
-    animation: pulse-ring 2s infinite;
+  .memphis-blob-mint {
+    position: fixed;
+    bottom: -40px; left: 240px;
+    width: 380px; height: 380px;
+    border-radius: 9999px;
+    background: hsl(var(--mint));
+    opacity: 0.18;
+    filter: blur(90px);
+    pointer-events: none;
+    z-index: 0;
   }
-  @keyframes pulse-ring {
-    0% { box-shadow: 0 0 0 0 hsl(var(--accent) / 0.7); }
-    70% { box-shadow: 0 0 0 8px hsl(var(--accent) / 0); }
-    100% { box-shadow: 0 0 0 0 hsl(var(--accent) / 0); }
+
+  @keyframes fade-in {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .animate-fade-in { animation: fade-in 0.3s ease-out; }
+}
+
+@layer components {
+  .memphis-card {
+    @apply bg-card rounded-3xl border-2 border-foreground/5 hover:border-foreground/30 transition-colors;
+  }
+  .memphis-pill {
+    @apply inline-flex items-center px-4 py-1.5 rounded-full text-xs font-bold;
+  }
+  .underline-mustard {
+    text-decoration: underline;
+    text-decoration-color: hsl(var(--mustard));
+    text-decoration-thickness: 4px;
+    text-underline-offset: 4px;
   }
 }
