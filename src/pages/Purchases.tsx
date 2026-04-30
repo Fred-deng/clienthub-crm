@@ -81,28 +81,28 @@ export default function Purchases() {
             </Select>
           </div>
         }
-      >
+>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/30 text-left">
+          <table className="data-table">
+            <thead>
               <tr>{["单号", "供应商", "状态", "金额", "已付款", "未付", "下单日", "预计入库", "操作"].map((h) => (
-                <th key={h} className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{h}</th>
+                <th key={h}>{h}</th>
               ))}</tr>
             </thead>
-            <tbody className="divide-y divide-border">
+            <tbody>
               {loading && <tr><td colSpan={9} className="py-12 text-center text-xs text-muted-foreground">加载中…</td></tr>}
               {data.list.map((o) => {
                 const unpaid = o.totalAmount - o.paid;
                 return (
-                  <tr key={o.id} className="hover:bg-muted/20">
-                    <td className="px-5 py-3 font-mono text-xs">{o.code}</td>
+                  <tr key={o.id}>
+                    <td className="font-mono text-xs">{o.code}</td>
                     <td className="px-5 py-3">{o.supplierName}</td>
                     <td className="px-5 py-3"><StatusBadge status={o.status} /></td>
-                    <td className="px-5 py-3 font-mono text-xs">{fmtMoney(o.totalAmount)}</td>
-                    <td className="px-5 py-3 font-mono text-xs text-accent">{fmtMoney(o.paid)}</td>
-                    <td className={"px-5 py-3 font-mono text-xs " + (unpaid > 0 ? "text-warning" : "text-muted-foreground")}>{fmtMoney(unpaid)}</td>
-                    <td className="px-5 py-3 text-xs text-muted-foreground">{o.createdAt}</td>
-                    <td className="px-5 py-3 text-xs text-muted-foreground">{o.expectedAt}</td>
+                    <td className="font-mono text-xs">{fmtMoney(o.totalAmount)}</td>
+                    <td className="font-mono text-xs text-accent">{fmtMoney(o.paid)}</td>
+                    <td className={"px-5 py-3 font-mono text-xs " + (unpaid> 0 ? "text-warning" : "text-muted-foreground")}>{fmtMoney(unpaid)}</td>
+                    <td className="text-xs text-muted-foreground">{o.createdAt}</td>
+                    <td className="text-xs text-muted-foreground">{o.expectedAt}</td>
                     <td className="px-5 py-3">
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(o)}><Pencil className="h-3.5 w-3.5" /></Button>
                       <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeletingId(o.id)}><Trash2 className="h-3.5 w-3.5" /></Button>

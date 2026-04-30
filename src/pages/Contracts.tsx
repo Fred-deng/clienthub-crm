@@ -74,26 +74,26 @@ export default function Contracts() {
             </Select>
           </div>
         }
-      >
+>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/30 text-left">
+          <table className="data-table">
+            <thead>
               <tr>{["合同号", "客户", "标题", "状态", "金额", "签订日", "起止", "负责人", "操作"].map((h) => (
-                <th key={h} className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{h}</th>
+                <th key={h}>{h}</th>
               ))}</tr>
             </thead>
-            <tbody className="divide-y divide-border">
+            <tbody>
               {loading && <tr><td colSpan={9} className="py-12 text-center text-xs text-muted-foreground">加载中…</td></tr>}
               {data.list.map((c) => (
-                <tr key={c.id} className="hover:bg-muted/20">
-                  <td className="px-5 py-3 font-mono text-xs">{c.code}</td>
-                  <td className="px-5 py-3 truncate max-w-[160px]">{c.customerName}</td>
-                  <td className="px-5 py-3 text-xs truncate max-w-[180px]">{c.title}</td>
+                <tr key={c.id}>
+                  <td className="font-mono text-xs">{c.code}</td>
+                  <td className="truncate max-w-[160px]">{c.customerName}</td>
+                  <td className="text-xs truncate max-w-[180px]">{c.title}</td>
                   <td className="px-5 py-3"><StatusBadge status={c.status} /></td>
-                  <td className="px-5 py-3 font-mono text-xs">{fmtMoney(c.amount)}</td>
-                  <td className="px-5 py-3 text-xs text-muted-foreground">{c.signedAt}</td>
-                  <td className="px-5 py-3 text-xs text-muted-foreground">{c.startAt} ~ {c.endAt}</td>
-                  <td className="px-5 py-3 text-xs">{employees.find((e) => e.id === c.ownerId)?.name ?? "-"}</td>
+                  <td className="font-mono text-xs">{fmtMoney(c.amount)}</td>
+                  <td className="text-xs text-muted-foreground">{c.signedAt}</td>
+                  <td className="text-xs text-muted-foreground">{c.startAt} ~ {c.endAt}</td>
+                  <td className="text-xs">{employees.find((e) => e.id === c.ownerId)?.name ?? "-"}</td>
                   <td className="px-5 py-3">
                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(c)}><Pencil className="h-3.5 w-3.5" /></Button>
                     <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeletingId(c.id)}><Trash2 className="h-3.5 w-3.5" /></Button>

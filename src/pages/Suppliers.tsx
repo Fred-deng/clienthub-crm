@@ -39,25 +39,25 @@ export default function Suppliers() {
             <Input placeholder="搜索名称/编号" className="pl-8 h-8 w-56 text-xs" onChange={(e) => setFilter({ keyword: e.target.value })} />
           </div>
         }
-      >
+>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/30 text-left">
+          <table className="data-table">
+            <thead>
               <tr>{["编号", "名称", "分类", "联系人", "电话", "应付", "建档日期", "操作"].map((h) => (
-                <th key={h} className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{h}</th>
+                <th key={h}>{h}</th>
               ))}</tr>
             </thead>
-            <tbody className="divide-y divide-border">
+            <tbody>
               {loading && <tr><td colSpan={8} className="py-12 text-center text-xs text-muted-foreground">加载中…</td></tr>}
               {data.list.map((s) => (
-                <tr key={s.id} className="hover:bg-muted/20">
-                  <td className="px-5 py-3 font-mono text-xs">{s.code}</td>
-                  <td className="px-5 py-3 font-medium">{s.name}</td>
-                  <td className="px-5 py-3 text-xs">{s.category}</td>
-                  <td className="px-5 py-3 text-xs">{s.contact}</td>
-                  <td className="px-5 py-3 font-mono text-xs text-muted-foreground">{s.phone}</td>
-                  <td className="px-5 py-3 font-mono text-xs text-warning">{fmtMoney(s.payable)}</td>
-                  <td className="px-5 py-3 text-xs text-muted-foreground">{s.createdAt}</td>
+                <tr key={s.id}>
+                  <td className="font-mono text-xs">{s.code}</td>
+                  <td className="font-medium">{s.name}</td>
+                  <td className="text-xs">{s.category}</td>
+                  <td className="text-xs">{s.contact}</td>
+                  <td className="font-mono text-xs text-muted-foreground">{s.phone}</td>
+                  <td className="font-mono text-xs text-warning">{fmtMoney(s.payable)}</td>
+                  <td className="text-xs text-muted-foreground">{s.createdAt}</td>
                   <td className="px-5 py-3">
                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { reset(s); setEditing(s); setOpen(true); }}><Pencil className="h-3.5 w-3.5" /></Button>
                     <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeletingId(s.id)}><Trash2 className="h-3.5 w-3.5" /></Button>

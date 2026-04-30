@@ -37,7 +37,7 @@ export default function Reports() {
             <Input type="month" value={month} onChange={(e) => setMonth(e.target.value)} className="h-8 w-36 text-xs" />
           </div>
         }
-      >
+>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-border">
           <div className="bg-card p-5">
             <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-2">销售总额</div>
@@ -54,7 +54,7 @@ export default function Reports() {
           </div>
           <div className="bg-card p-5">
             <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-2">净现金流</div>
-            <div className={"text-xl font-mono font-semibold " + (balance >= 0 ? "text-accent" : "text-destructive")}>{fmtMoney(balance)}</div>
+            <div className={"text-xl font-mono font-semibold " + (balance>= 0 ? "text-accent" : "text-destructive")}>{fmtMoney(balance)}</div>
           </div>
         </div>
       </DataPanel>
@@ -91,22 +91,22 @@ export default function Reports() {
 
       <DataPanel title={<h3 className="text-xs font-bold uppercase tracking-[0.2em]">{month} 销售明细</h3>}>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/30 text-left">
+          <table className="data-table">
+            <thead>
               <tr>{["订单号", "客户", "金额", "已回款", "未收", "下单日"].map((h) => (
-                <th key={h} className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{h}</th>
+                <th key={h}>{h}</th>
               ))}</tr>
             </thead>
-            <tbody className="divide-y divide-border">
+            <tbody>
               {recon.sales.length === 0 && <tr><td colSpan={6} className="py-12 text-center text-xs text-muted-foreground">该月份暂无销售订单</td></tr>}
               {recon.sales.map((o) => (
-                <tr key={o.id} className="hover:bg-muted/20">
-                  <td className="px-5 py-3 font-mono text-xs">{o.code}</td>
-                  <td className="px-5 py-3 text-xs">{o.customerName}</td>
-                  <td className="px-5 py-3 font-mono text-xs">{fmtMoney(o.totalAmount)}</td>
-                  <td className="px-5 py-3 font-mono text-xs text-accent">{fmtMoney(o.received)}</td>
-                  <td className="px-5 py-3 font-mono text-xs text-warning">{fmtMoney(o.totalAmount - o.received)}</td>
-                  <td className="px-5 py-3 text-xs text-muted-foreground">{o.createdAt}</td>
+                <tr key={o.id}>
+                  <td className="font-mono text-xs">{o.code}</td>
+                  <td className="text-xs">{o.customerName}</td>
+                  <td className="font-mono text-xs">{fmtMoney(o.totalAmount)}</td>
+                  <td className="font-mono text-xs text-accent">{fmtMoney(o.received)}</td>
+                  <td className="font-mono text-xs text-warning">{fmtMoney(o.totalAmount - o.received)}</td>
+                  <td className="text-xs text-muted-foreground">{o.createdAt}</td>
                 </tr>
               ))}
             </tbody>
