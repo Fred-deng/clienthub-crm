@@ -82,22 +82,21 @@ export default function Customers() {
       />
 
       <DataPanel
-        title={<div className="flex items-center gap-3 flex-wrap">
-          <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-foreground">客户列表</h3>
-          <span className="text-xs text-muted-foreground">共 {data.total} 条</span>
-        </div>}
+        title="客户列表"
+        subtitle={`Customer registry · ${data.total} records`}
+        accent="tomato"
         actions={
           <div className="flex items-center gap-2">
             <div className="relative">
-              <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Search className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-foreground/40" />
               <Input
-                placeholder="搜索名称/编号/联系人"
-                className="pl-8 h-8 w-56 text-xs"
+                placeholder="搜索名称 / 编号 / 联系人"
+                className="pl-9 h-9 w-60 text-xs rounded-full"
                 onChange={(e) => setFilter({ keyword: e.target.value })}
               />
             </div>
             <Select value={query.type ?? "all"} onValueChange={(v) => setFilter({ type: v })}>
-              <SelectTrigger className="h-8 w-28 text-xs"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="h-9 w-28 text-xs rounded-full"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">全部类型</SelectItem>
                 <SelectItem value="software">软件客户</SelectItem>
@@ -105,7 +104,7 @@ export default function Customers() {
               </SelectContent>
             </Select>
             <Select value={query.stage ?? "all"} onValueChange={(v) => setFilter({ stage: v })}>
-              <SelectTrigger className="h-8 w-28 text-xs"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="h-9 w-28 text-xs rounded-full"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">全部阶段</SelectItem>
                 <SelectItem value="lead">潜在客户</SelectItem>
@@ -114,13 +113,13 @@ export default function Customers() {
             </Select>
           </div>
         }
->
+      >
         <div className="overflow-x-auto">
           <table className="data-table">
             <thead>
               <tr>
                 <th>编号</th>
-                <th>客户名称</th>
+                <th>客户</th>
                 <th>类型</th>
                 <th>阶段</th>
                 <th>等级</th>
@@ -131,40 +130,57 @@ export default function Customers() {
               </tr>
             </thead>
             <tbody>
-              {loading && <tr><td colSpan={9} className="py-12 text-center text-xs text-muted-foreground">加载中…</td></tr>}
+              {loading && <tr className="empty"><td colSpan={9} className="empty">加载中…</td></tr>}
               {!loading && data.list.length === 0 && (
-                <tr><td colSpan={9} className="py-12 text-center text-xs text-muted-foreground">暂无客户数据</td></tr>
+                <tr className="empty"><td colSpan={9} className="empty">暂无客户数据</td></tr>
               )}
-              {data.list.map((c) => (
-                <tr key={c.id}>
-                  <td className="font-mono text-xs">{c.code}</td>
-                  <td className="text-foreground font-medium">{c.name}</td>
-                  <td className="text-xs">
-                    <span className={c.type === "software" ? "text-primary" : "text-accent"}>
-                      {customerTypeLabel(c.type)}
-                    </span>
-                  </td>
-                  <td className="text-xs">
-                    <span className={c.stage === "formal" ? "text-foreground" : "text-warning"}>
-                      {customerStageLabel(c.stage)}
-                    </span>
-                  </td>
-                  <td className="text-xs font-mono">{c.level}</td>
-                  <td className="text-xs">{c.contact}</td>
-                  <td className="text-xs font-mono text-muted-foreground">{c.phone}</td>
-                  <td className="text-right font-mono text-xs">{fmtMoney(c.receivable)}</td>
-                  <td className="text-right">
-                    <div className="inline-flex gap-1">
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(c)}>
-                        <Pencil className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive hover:text-destructive" onClick={() => setDeletingId(c.id)}>
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+              {data.list.map((c) => {
+                const avatarTone = c.type === "software" ? "bg-cobalt text-white" : "bg-mint text-foreground";
+                return (
+                  <tr key={c.id}>
+                    <td className="mono">{c.code}</td>
+                    <td>
+                      <div className="flex items-center gap-2.5">
+                        <div className={"size-8 rounded-full flex items-center justify-center font-display font-black text-sm shrink-0 " + avatarTone}>
+                          {c.name.slice(0, 1)}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="font-semibold text-foreground truncate">{c.name}</div>
+                          <div className="text-[11px] text-foreground/45 truncate">{c.industry || "—"}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <span className={"cell-chip " + (c.type === "software" ? "bg-cobalt/10 text-cobalt ring-1 ring-cobalt/20" : "bg-mint/20 text-foreground ring-1 ring-mint/40")}>
+                        {customerTypeLabel(c.type)}
+                      </span>
+                    </td>
+                    <td>
+                      <span className={"cell-chip " + (c.stage === "formal" ? "bg-foreground text-background" : "bg-mustard/25 text-foreground ring-1 ring-mustard/50")}>
+                        {customerStageLabel(c.stage)}
+                      </span>
+                    </td>
+                    <td>
+                      <span className={"inline-flex items-center justify-center size-6 rounded-md font-mono text-[11px] font-bold " + (c.level === "A" ? "bg-tomato text-white" : c.level === "B" ? "bg-foreground/10 text-foreground" : "bg-foreground/[0.06] text-foreground/60")}>
+                        {c.level}
+                      </span>
+                    </td>
+                    <td>{c.contact}</td>
+                    <td className="mono">{c.phone}</td>
+                    <td className="num">{fmtMoney(c.receivable)}</td>
+                    <td className="num">
+                      <div className="inline-flex gap-1">
+                        <button className="size-8 rounded-full hover:bg-foreground/5 text-foreground/55 hover:text-foreground inline-flex items-center justify-center transition-colors" onClick={() => openEdit(c)}>
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                        <button className="size-8 rounded-full hover:bg-tomato/10 text-foreground/55 hover:text-tomato inline-flex items-center justify-center transition-colors" onClick={() => setDeletingId(c.id)}>
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
