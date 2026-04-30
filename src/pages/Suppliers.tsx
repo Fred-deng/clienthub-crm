@@ -39,18 +39,18 @@ export default function Suppliers() {
             <Input placeholder="搜索名称/编号" className="pl-8 h-8 w-56 text-xs" onChange={(e) => setFilter({ keyword: e.target.value })} />
           </div>
         }
-      >
+>
         <div className="overflow-x-auto">
           <table className="data-table">
             <thead>
               <tr>{["编号", "名称", "分类", "联系人", "电话", "应付", "建档日期", "操作"].map((h) => (
-                <th key={h} className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{h}</th>
+                <th key={h}>{h}</th>
               ))}</tr>
             </thead>
             <tbody>
               {loading && <tr><td colSpan={8} className="py-12 text-center text-xs text-muted-foreground">加载中…</td></tr>}
               {data.list.map((s) => (
-                <tr key={s.id} >
+                <tr key={s.id}>
                   <td className="font-mono text-xs">{s.code}</td>
                   <td className="font-medium">{s.name}</td>
                   <td className="text-xs">{s.category}</td>

@@ -114,20 +114,20 @@ export default function Customers() {
             </Select>
           </div>
         }
-      >
+>
         <div className="overflow-x-auto">
           <table className="data-table">
             <thead>
               <tr>
-                <th className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">编号</th>
-                <th className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">客户名称</th>
-                <th className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">类型</th>
-                <th className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">阶段</th>
-                <th className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">等级</th>
-                <th className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">联系人</th>
-                <th className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">电话</th>
-                <th className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground text-right">应收</th>
-                <th className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground text-right">操作</th>
+                <th>编号</th>
+                <th>客户名称</th>
+                <th>类型</th>
+                <th>阶段</th>
+                <th>等级</th>
+                <th>联系人</th>
+                <th>电话</th>
+                <th className="num">应收</th>
+                <th className="num">操作</th>
               </tr>
             </thead>
             <tbody>
@@ -136,7 +136,7 @@ export default function Customers() {
                 <tr><td colSpan={9} className="py-12 text-center text-xs text-muted-foreground">暂无客户数据</td></tr>
               )}
               {data.list.map((c) => (
-                <tr key={c.id} >
+                <tr key={c.id}>
                   <td className="font-mono text-xs">{c.code}</td>
                   <td className="text-foreground font-medium">{c.name}</td>
                   <td className="text-xs">

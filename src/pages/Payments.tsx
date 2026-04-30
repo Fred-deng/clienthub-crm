@@ -95,18 +95,18 @@ export default function Payments() {
             </Select>
           </div>
         }
-      >
+>
         <div className="overflow-x-auto">
           <table className="data-table">
             <thead>
               <tr>{["流水号", "方向", "关联单据", "对手方", "金额", "方式", "日期", "操作"].map((h) => (
-                <th key={h} className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{h}</th>
+                <th key={h}>{h}</th>
               ))}</tr>
             </thead>
             <tbody>
               {loading && <tr><td colSpan={8} className="py-12 text-center text-xs text-muted-foreground">加载中…</td></tr>}
               {data.list.map((p) => (
-                <tr key={p.id} >
+                <tr key={p.id}>
                   <td className="font-mono text-xs">{p.code}</td>
                   <td className="text-xs">
                     {p.direction === "in" ? (

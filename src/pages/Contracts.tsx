@@ -74,18 +74,18 @@ export default function Contracts() {
             </Select>
           </div>
         }
-      >
+>
         <div className="overflow-x-auto">
           <table className="data-table">
             <thead>
               <tr>{["合同号", "客户", "标题", "状态", "金额", "签订日", "起止", "负责人", "操作"].map((h) => (
-                <th key={h} className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{h}</th>
+                <th key={h}>{h}</th>
               ))}</tr>
             </thead>
             <tbody>
               {loading && <tr><td colSpan={9} className="py-12 text-center text-xs text-muted-foreground">加载中…</td></tr>}
               {data.list.map((c) => (
-                <tr key={c.id} >
+                <tr key={c.id}>
                   <td className="font-mono text-xs">{c.code}</td>
                   <td className="truncate max-w-[160px]">{c.customerName}</td>
                   <td className="text-xs truncate max-w-[180px]">{c.title}</td>

@@ -74,18 +74,18 @@ export default function Products() {
               size="sm"
               className="h-8 text-xs"
               onClick={() => setFilter({ lowStock: !query.lowStock })}
-            >
+>
               <AlertTriangle className="h-3.5 w-3.5 mr-1" /> 仅看低库存
             </Button>
           </div>
         }
-      >
+>
         <div className="overflow-x-auto">
           <table className="data-table">
             <thead>
               <tr>
                 {["编号", "名称", "分类", "规格", "单位", "售价", "成本", "库存", "安全库存", "操作"].map((h) => (
-                  <th key={h} className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{h}</th>
+                  <th key={h}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -95,7 +95,7 @@ export default function Products() {
               {data.list.map((p) => {
                 const low = p.stock <= p.safetyStock && p.category !== "software";
                 return (
-                  <tr key={p.id} >
+                  <tr key={p.id}>
                     <td className="font-mono text-xs">{p.code}</td>
                     <td className="font-medium">{p.name}</td>
                     <td className="text-xs text-muted-foreground">{productCategoryLabel[p.category]}</td>
