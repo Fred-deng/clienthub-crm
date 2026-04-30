@@ -31,6 +31,8 @@ export default {
         cobalt: "hsl(var(--cobalt))",
         mustard: "hsl(var(--mustard))",
         mint: "hsl(var(--mint))",
+        ink: "hsl(var(--ink))",
+        paper: "hsl(var(--paper))",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",

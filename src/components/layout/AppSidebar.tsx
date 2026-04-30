@@ -52,21 +52,21 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-r-0">
-      <SidebarHeader className="px-6 pt-7 pb-3">
+      <SidebarHeader className="px-6 pt-7 pb-4">
         <div className="flex items-center gap-3">
           <div className="relative shrink-0">
-            <div className="size-10 rounded-2xl bg-tomato flex items-stretch justify-center font-display font-black text-primary-foreground -rotate-6 shadow-[3px_3px_0_0_hsl(var(--cobalt))] overflow-hidden">
-              <span className="flex-1 flex items-center justify-center text-[15px] leading-none border-r border-primary-foreground/30">J</span>
-              <span className="flex-1 flex items-center justify-center text-[15px] leading-none bg-foreground text-mustard">M</span>
+            <div className="size-10 rounded-xl bg-foreground flex items-stretch justify-center font-display font-black overflow-hidden shadow-[2px_2px_0_0_hsl(var(--tomato))]">
+              <span className="flex-1 flex items-center justify-center text-[15px] leading-none bg-tomato text-[hsl(var(--paper))]">J</span>
+              <span className="flex-1 flex items-center justify-center text-[15px] leading-none text-mustard">M</span>
             </div>
-            <span className="absolute -right-1 -bottom-1 size-3 rounded-full bg-mint border-2 border-background" />
+            <span className="absolute -right-1 -bottom-1 size-2.5 rounded-full bg-mint ring-2 ring-sidebar" />
           </div>
           <div className="leading-none min-w-0">
-            <div className="font-display font-bold text-lg tracking-tight whitespace-nowrap">
-              集马<span className="text-tomato">.</span>科技
+            <div className="font-display font-bold text-[17px] tracking-tight whitespace-nowrap">
+              集马<span className="text-tomato">·</span>科技
             </div>
-            <div className="text-[9px] font-mono font-medium tracking-[0.25em] uppercase text-foreground/45 mt-1.5">
-              JM · Est.2026
+            <div className="text-[9px] font-mono font-medium tracking-[0.28em] uppercase text-foreground/45 mt-1.5">
+              JM · CRM 2026
             </div>
           </div>
         </div>
@@ -120,16 +120,17 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="p-4">
-        <div className="relative rounded-3xl p-5 bg-cobalt text-secondary-foreground flex flex-col gap-3 overflow-hidden shadow-[3px_3px_0_0_hsl(var(--mustard))]">
-          <div className="absolute -right-6 -top-6 size-20 rounded-full bg-mustard/30 blur-xl" />
-          <div className="flex items-center gap-2 text-[9px] opacity-90 font-bold tracking-[0.25em] uppercase relative">
+        <div className="relative rounded-2xl p-5 bg-cobalt text-secondary-foreground flex flex-col gap-3 overflow-hidden">
+          <div className="absolute -right-10 -top-10 size-32 rounded-full bg-mustard/15 blur-2xl" />
+          <div className="absolute -left-6 -bottom-6 size-20 rounded-full bg-tomato/20 blur-2xl" />
+          <div className="flex items-center gap-2 text-[9px] opacity-80 font-bold tracking-[0.28em] uppercase relative">
             <span className="size-1 rounded-full bg-mint" />
             月度对账
           </div>
-          <div className="font-display italic text-[15px] leading-snug relative">
-            “本月还有 <span className="text-mustard not-italic font-bold">12</span> 笔账单待核对”
+          <div className="font-display italic text-[14px] leading-snug relative opacity-95">
+            本月还有 <span className="text-mustard not-italic font-bold">12</span> 笔账单待核对
           </div>
-          <button className="py-2 rounded-full bg-mustard text-foreground font-bold text-xs hover:-translate-y-0.5 transition-transform relative tracking-wide">
+          <button className="py-2 rounded-full bg-[hsl(var(--paper))] text-foreground font-bold text-[11px] hover:bg-mustard transition-colors relative tracking-wide">
             前往核对 →
           </button>
         </div>

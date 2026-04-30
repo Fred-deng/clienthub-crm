@@ -22,22 +22,23 @@ export function DataPanel({ title, subtitle, actions, children, className, bodyC
   return (
     <div
       className={cn(
-        "bg-card rounded-[28px] border border-foreground/8 overflow-hidden shadow-[0_1px_0_0_hsl(0_0%_0%/0.03)] hover:shadow-[0_4px_20px_-8px_hsl(0_0%_0%/0.08)] transition-shadow",
+        "bg-card rounded-2xl border border-foreground/[0.07] overflow-hidden",
+        "shadow-[0_1px_2px_0_hsl(var(--ink)/0.03)] hover:shadow-[0_4px_18px_-10px_hsl(var(--ink)/0.1)] transition-shadow",
         className,
       )}
     >
       {(title || actions) && (
-        <div className="px-6 pt-5 pb-4 flex items-center justify-between gap-3 flex-wrap">
-          <div className="flex items-center gap-3 min-w-0">
+        <div className="px-6 pt-5 pb-4 flex items-center justify-between gap-3 flex-wrap border-b border-foreground/[0.05]">
+          <div className="flex items-center gap-2.5 min-w-0">
             {accent && (
-              <span className={cn("h-6 w-1 rounded-full", accentMap[accent])} />
+              <span className={cn("size-2 rounded-full shrink-0", accentMap[accent])} />
             )}
             <div className="min-w-0">
               {typeof title === "string" ? (
-                <h3 className="font-display font-bold text-xl tracking-tight leading-none">{title}</h3>
+                <h3 className="font-display font-bold text-[17px] tracking-tight leading-none">{title}</h3>
               ) : title}
               {subtitle && (
-                <p className="text-[11px] text-foreground/45 mt-1 font-mono uppercase tracking-wider">{subtitle}</p>
+                <p className="text-[10px] text-foreground/45 mt-1.5 font-mono uppercase tracking-[0.15em]">{subtitle}</p>
               )}
             </div>
           </div>

@@ -6,89 +6,90 @@
 
 @layer base {
   :root {
-    /* Cream paper */
-    --background: 38 40% 96%;          /* #FBF7F0 */
-    --foreground: 0 0% 10%;            /* #1A1A1A */
+    /* Warm ivory paper — slightly more refined */
+    --background: 36 33% 96%;          /* #F8F4EC */
+    --foreground: 24 15% 12%;          /* warm near-black */
 
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 10%;
+    --card: 36 50% 99%;                /* warmer white */
+    --card-foreground: 24 15% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 10%;
+    --popover-foreground: 24 15% 12%;
 
-    /* Tomato red — primary energy */
-    --primary: 9 80% 57%;              /* #E94F37 */
-    --primary-foreground: 0 0% 100%;
+    /* Tomato red — slightly muted, more refined */
+    --primary: 8 72% 54%;              /* #DC4A38 */
+    --primary-foreground: 36 50% 99%;
 
-    /* Cobalt — secondary depth */
-    --secondary: 215 64% 30%;          /* #1B4079 */
-    --secondary-foreground: 0 0% 100%;
+    /* Cobalt — deeper, more refined */
+    --secondary: 218 55% 28%;          /* #20407A */
+    --secondary-foreground: 36 50% 99%;
 
-    --muted: 38 25% 92%;
-    --muted-foreground: 0 0% 35%;
+    --muted: 36 22% 92%;
+    --muted-foreground: 24 10% 38%;
 
-    /* Mint — accent positive */
-    --accent: 138 47% 68%;             /* #88D498 */
-    --accent-foreground: 0 0% 10%;
+    /* Sage mint — desaturated, sophisticated */
+    --accent: 152 32% 62%;             /* #82B89A */
+    --accent-foreground: 24 15% 12%;
 
-    /* Mustard — warning / highlight */
-    --warning: 42 89% 61%;             /* #F4B942 */
-    --warning-foreground: 0 0% 10%;
+    /* Honey mustard — warmer, less aggressive */
+    --warning: 38 78% 58%;             /* #ECAA3D */
+    --warning-foreground: 24 15% 12%;
 
-    --destructive: 9 80% 57%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 8 72% 54%;
+    --destructive-foreground: 36 50% 99%;
 
-    --border: 0 0% 10% / 0.08;
-    --input: 0 0% 10% / 0.12;
-    --ring: 9 80% 57%;
+    --border: 24 15% 12% / 0.07;
+    --input: 24 15% 12% / 0.1;
+    --ring: 8 72% 54%;
 
-    --radius: 1.5rem;
+    --radius: 1.25rem;
 
     /* Sidebar */
-    --sidebar-background: 38 40% 96%;
-    --sidebar-foreground: 0 0% 10%;
-    --sidebar-primary: 9 80% 57%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 100%;
-    --sidebar-accent-foreground: 0 0% 10%;
-    --sidebar-border: 0 0% 10% / 0.06;
-    --sidebar-ring: 9 80% 57%;
+    --sidebar-background: 36 33% 95%;
+    --sidebar-foreground: 24 15% 12%;
+    --sidebar-primary: 8 72% 54%;
+    --sidebar-primary-foreground: 36 50% 99%;
+    --sidebar-accent: 36 50% 99%;
+    --sidebar-accent-foreground: 24 15% 12%;
+    --sidebar-border: 24 15% 12% / 0.05;
+    --sidebar-ring: 8 72% 54%;
 
-    /* Custom Memphis swatches (for direct dot accents) */
-    --tomato: 9 80% 57%;
-    --cobalt: 215 64% 30%;
-    --mustard: 42 89% 61%;
-    --mint: 138 47% 68%;
+    /* Custom palette swatches — harmonized */
+    --tomato:  8 72% 54%;     /* primary red */
+    --cobalt: 218 55% 28%;    /* deep blue */
+    --mustard: 38 78% 58%;    /* honey */
+    --mint:   152 32% 62%;    /* sage */
+    --ink:    24 15% 12%;     /* warm ink */
+    --paper:  36 50% 99%;
   }
 
   .dark {
-    /* Risograph stays light by design. Mirror tokens. */
-    --background: 38 40% 96%;
-    --foreground: 0 0% 10%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 10%;
+    --background: 36 33% 96%;
+    --foreground: 24 15% 12%;
+    --card: 36 50% 99%;
+    --card-foreground: 24 15% 12%;
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 10%;
-    --primary: 9 80% 57%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 215 64% 30%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 38 25% 92%;
-    --muted-foreground: 0 0% 35%;
-    --accent: 138 47% 68%;
-    --accent-foreground: 0 0% 10%;
-    --destructive: 9 80% 57%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 10% / 0.08;
-    --input: 0 0% 10% / 0.12;
-    --ring: 9 80% 57%;
-    --sidebar-background: 38 40% 96%;
-    --sidebar-foreground: 0 0% 10%;
-    --sidebar-primary: 9 80% 57%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 100%;
-    --sidebar-accent-foreground: 0 0% 10%;
-    --sidebar-border: 0 0% 10% / 0.06;
+    --popover-foreground: 24 15% 12%;
+    --primary: 8 72% 54%;
+    --primary-foreground: 36 50% 99%;
+    --secondary: 218 55% 28%;
+    --secondary-foreground: 36 50% 99%;
+    --muted: 36 22% 92%;
+    --muted-foreground: 24 10% 38%;
+    --accent: 152 32% 62%;
+    --accent-foreground: 24 15% 12%;
+    --destructive: 8 72% 54%;
+    --destructive-foreground: 36 50% 99%;
+    --border: 24 15% 12% / 0.07;
+    --input: 24 15% 12% / 0.1;
+    --ring: 8 72% 54%;
+    --sidebar-background: 36 33% 95%;
+    --sidebar-foreground: 24 15% 12%;
+    --sidebar-primary: 8 72% 54%;
+    --sidebar-primary-foreground: 36 50% 99%;
+    --sidebar-accent: 36 50% 99%;
+    --sidebar-accent-foreground: 24 15% 12%;
+    --sidebar-border: 24 15% 12% / 0.05;
   }
 }
 
@@ -118,30 +119,30 @@
     inset: 0;
     pointer-events: none;
     z-index: 50;
-    opacity: 0.05;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
 
-  /* Decorative ambient blobs */
+  /* Decorative ambient blobs — subtle, harmonized */
   .memphis-blob-mustard {
     position: fixed;
-    top: -60px; right: -60px;
-    width: 320px; height: 320px;
+    top: -120px; right: -120px;
+    width: 480px; height: 480px;
     border-radius: 9999px;
     background: hsl(var(--mustard));
-    opacity: 0.18;
-    filter: blur(80px);
+    opacity: 0.09;
+    filter: blur(120px);
     pointer-events: none;
     z-index: 0;
   }
   .memphis-blob-mint {
     position: fixed;
-    bottom: -40px; left: 240px;
-    width: 380px; height: 380px;
+    bottom: -160px; left: 280px;
+    width: 520px; height: 520px;
     border-radius: 9999px;
-    background: hsl(var(--mint));
-    opacity: 0.18;
-    filter: blur(90px);
+    background: hsl(var(--cobalt));
+    opacity: 0.06;
+    filter: blur(140px);
     pointer-events: none;
     z-index: 0;
   }
