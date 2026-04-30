@@ -7,11 +7,11 @@ interface StatusBadgeProps {
 }
 
 const toneClasses: Record<string, string> = {
-  primary: "bg-primary/15 text-primary border-primary/30",
-  accent: "bg-accent/15 text-accent border-accent/30",
-  muted: "bg-muted text-muted-foreground border-border",
-  destructive: "bg-destructive/15 text-destructive border-destructive/30",
-  warning: "bg-warning/15 text-warning border-warning/30",
+  primary: "bg-tomato text-primary-foreground",
+  accent: "bg-mint text-foreground",
+  muted: "bg-foreground/10 text-foreground",
+  destructive: "bg-tomato text-primary-foreground",
+  warning: "bg-mustard text-foreground",
 };
 
 export function StatusBadge({ status, label }: StatusBadgeProps) {
@@ -19,7 +19,7 @@ export function StatusBadge({ status, label }: StatusBadgeProps) {
   const text = label || statusLabels[status] || status;
   return (
     <span className={cn(
-      "inline-flex items-center px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider border",
+      "inline-flex items-center px-3 py-1 rounded-full text-[11px] font-bold whitespace-nowrap",
       toneClasses[tone]
     )}>
       {text}

@@ -11,11 +11,11 @@ interface DataPanelProps {
 
 export function DataPanel({ title, actions, children, className, bodyClassName }: DataPanelProps) {
   return (
-    <div className={cn("bg-card border border-border", className)}>
+    <div className={cn("bg-card rounded-[32px] border-2 border-foreground/5 overflow-hidden", className)}>
       {(title || actions) && (
-        <div className="px-5 py-3.5 border-b border-border flex items-center justify-between gap-2">
+        <div className="px-7 py-5 border-b-2 border-foreground/5 flex items-center justify-between gap-3 flex-wrap">
           {typeof title === "string" ? (
-            <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-foreground">{title}</h3>
+            <h3 className="font-display font-bold text-2xl tracking-tight">{title}</h3>
           ) : title}
           {actions}
         </div>
