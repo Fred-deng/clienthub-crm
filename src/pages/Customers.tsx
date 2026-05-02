@@ -97,10 +97,10 @@ export default function Customers() {
   const [allSales, setAllSales] = useState<SalesOrder[]>([]);
   useEffect(() => { employeeApi.all().then(setEmployees); salesApi.all().then(setAllSales); }, []);
 
-  // 动态应收：按客户聚合「合同金额(优先) - 已回款」
+  // 动态应收：按客户聚合「合同金额(优先) - 已回款」（排除已取消订单）
   const receivableByCustomer = useMemo(() => {
     const m = new Map<string, number>();
-    allSales.forEach((o) => {
+    allSales.filter((o) => o.status !== "cancelled").forEach((o) => {
       const total = o.contractAmount ?? o.totalAmount;
       const remain = Math.max(total - (o.received || 0), 0);
       m.set(o.customerId, (m.get(o.customerId) || 0) + remain);
