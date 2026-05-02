@@ -187,15 +187,18 @@ export default function Sales() {
       productStdCost: Number(v.productStdCost) || 0,
     };
     const op = readCurrentOperator();
+    const reasonRemark = (editing && editing.status !== "cancelled" && payload.status === "cancelled" && cancelReason)
+      ? `订单取消原因：${cancelReason}` : undefined;
     if (editing) {
       const merged = { ...editing, ...payload } as SalesOrder;
       syncSalesStock(editing, merged, op);
-      logOrderUpdate("sales", editing, payload);
+      logOrderUpdate("sales", editing, payload, reasonRemark);
       await salesApi.update(editing.id, payload);
     } else {
       const created = await salesApi.create(payload);
       syncSalesStock(null, created, op);
     }
+    setCancelReason("");
     toast.success("已保存"); setOpen(false); reload();
   });
 
@@ -445,7 +448,13 @@ export default function Sales() {
 
             <GroupTitle>订单执行</GroupTitle>
             <Field label="订单状态" span={3}>
-              <Select value={watch("status")} onValueChange={(v) => setValue("status", v)}>
+              <Select value={watch("status")} onValueChange={(v) => {
+                if (v === "cancelled" && watch("status") !== "cancelled" && editing) {
+                  setCancelOpen(true);
+                  return;
+                }
+                setValue("status", v);
+              }}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="pending">待发货</SelectItem>
@@ -454,6 +463,9 @@ export default function Sales() {
                   <SelectItem value="cancelled">已取消</SelectItem>
                 </SelectContent>
               </Select>
+              {watch("status") === "cancelled" && cancelReason && (
+                <div className="text-[11px] text-tomato mt-1">取消原因：{cancelReason}</div>
+              )}
             </Field>
             <Field label="下单日" span={3}><Input type="date" {...register("createdAt")} /></Field>
             <Field label="已回款" span={3}><Input type="number" step="0.01" className="bg-muted/40" readOnly value={editing?.received ?? 0} title="由回款记录自动累计，无法直接修改" /></Field>
