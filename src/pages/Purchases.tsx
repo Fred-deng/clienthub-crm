@@ -326,9 +326,9 @@ export default function Purchases() {
                 <th>供应商</th>
                 <th>业务</th>
                 <th>状态</th>
-                <th className="num">合同金额</th>
                 <th className="num">明细合计</th>
                 <th className="num">已付</th>
+                <th className="num">未付</th>
                 <th className="num">发票</th>
                 <th>申请人</th>
                 <th>采购经理</th>
@@ -363,9 +363,9 @@ export default function Purchases() {
                     <td className="text-foreground/75">{o.supplierName}</td>
                     <td><span className={"cell-chip " + bizTone[split.category]}>{bizLabel[split.category]}</span></td>
                     <td><StatusBadge status={o.status} /></td>
-                    <td className="num mono">{fmtMoney(o.contractAmount || 0)}</td>
                     <td className="num mono">{fmtMoney(o.totalAmount)}</td>
                     <td className={"num mono " + (unpaid > 0 ? "text-tomato" : "text-foreground/55")}>{fmtMoney(o.paid)}</td>
+                    <td className={"num mono " + (unpaid > 0 ? "text-warning" : "text-foreground/55")}>{fmtMoney(unpaid)}</td>
                     <td className="num mono text-[12px] text-foreground/70">{(o.invoices?.length ?? 0)} 张 / {fmtMoney((o.invoices || []).reduce((s, r) => s + (r.amount || 0), 0))}</td>
                     <td className="text-foreground/70">{empName(o.applicantId)}</td>
                     <td className="text-foreground/70">{empName(o.buyerId)}</td>
@@ -394,17 +394,17 @@ export default function Purchases() {
               })}
             </tbody>
             {data.list.length > 0 && (() => {
-              const sumContract = data.list.reduce((s, o) => s + (o.contractAmount || 0), 0);
               const sumTotal = data.list.reduce((s, o) => s + o.totalAmount, 0);
               const sumPaid = data.list.reduce((s, o) => s + o.paid, 0);
+              const sumUnpaid = data.list.reduce((s, o) => s + (o.totalAmount - o.paid), 0);
               const sumInvoice = data.list.reduce((s, o) => s + (o.invoices || []).reduce((a, r) => a + (r.amount || 0), 0), 0);
               return (
                 <tfoot>
                   <tr>
                     <td colSpan={6} className="label">本页 {data.list.length} 单 / 共 {data.total} 单 · 合计</td>
-                    <td className="num">{fmtMoney(sumContract)}</td>
                     <td className="num">{fmtMoney(sumTotal)}</td>
                     <td className="num text-tomato">{fmtMoney(sumPaid)}</td>
+                    <td className="num text-warning">{fmtMoney(sumUnpaid)}</td>
                     <td className="num text-cobalt">{fmtMoney(sumInvoice)}</td>
                     <td colSpan={4} />
                   </tr>
@@ -461,9 +461,6 @@ export default function Purchases() {
             </Field>
             <Field label="签订日期"><Input type="date" {...register("signedAt")} /></Field>
             <Field label="合同到期日"><Input type="date" {...register("contractExpireAt")} /></Field>
-            <Field label="合同金额">
-              <Input type="number" step="0.01" className="mono text-right" {...register("contractAmount", { valueAsNumber: true })} />
-            </Field>
             <Field label="是否关联销售合同" required span={12}>
               <div className="flex items-center gap-3 h-10">
                 <Switch
