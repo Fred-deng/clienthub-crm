@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { productApi } from "@/services/api";
-import { usePagedList } from "@/hooks/usePagedList";
+import { useInfiniteList } from "../hooks/useInfiniteList";
 import { useToast } from "@/hooks/use-toast";
 import type { Product, ProductCategory } from "@/types";
 import { Package, AlertTriangle } from "lucide-react";
@@ -12,7 +12,7 @@ const CATS: { value: ProductCategory | "all"; label: string }[] = [
 
 export default function MProducts() {
   const { toast } = useToast();
-  const { data, loading, setFilter, reload } = usePagedList<Product>(productApi.list, { pageSize: 20 });
+  const { items, total, loading, hasMore, setFilter, loadMore, reload } = useInfiniteList<Product>(productApi.list, { pageSize: 15 });
   const [keyword, setKeyword] = useState(""); const [cat, setCat] = useState("all");
   const [editOpen, setEditOpen] = useState(false);
   const [editing, setEditing] = useState<Partial<Product> | null>(null);
@@ -30,11 +30,11 @@ export default function MProducts() {
 
   return (
     <div>
-      <MPageHeader title="产品库" subtitle={`共 ${data.total} 个 SKU`} />
+      <MPageHeader title="产品库" subtitle={`共 ${total} 个 SKU`} />
       <MSearchBar value={keyword} onChange={(v) => { setKeyword(v); setFilter({ keyword: v }); }} placeholder="名称 / 编号 / 规格" />
       <MChipFilter value={cat} onChange={(v) => { setCat(v); setFilter({ category: v }); }} options={CATS} />
-      <MList loading={loading && !data.list.length} empty={!loading && !data.list.length}>
-        {data.list.map((p) => {
+      <MList loading={loading && !items.length} empty={!loading && !items.length}>
+        {items.map((p) => {
           const low = p.stock <= p.safetyStock && p.category !== "software";
           return (
             <MCard key={p.id} onClick={() => setView(p)}>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { contactApi, customerApi } from "@/services/api";
-import { usePagedList } from "@/hooks/usePagedList";
+import { useInfiniteList } from "../hooks/useInfiniteList";
 import { useToast } from "@/hooks/use-toast";
 import { useCurrentUser } from "@/context/CurrentUserContext";
 import type { Contact, Customer } from "@/types";
@@ -10,7 +10,7 @@ import { MPageHeader, MSearchBar, MList, MCard, MTag, MFab, MSheet, MField, MInp
 export default function MContacts() {
   const { current } = useCurrentUser();
   const { toast } = useToast();
-  const { data, loading, setFilter, reload } = usePagedList<Contact>(contactApi.list, { pageSize: 20 });
+  const { items, total, loading, hasMore, setFilter, loadMore, reload } = useInfiniteList<Contact>(contactApi.list, { pageSize: 15 });
   const [keyword, setKeyword] = useState("");
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [editOpen, setEditOpen] = useState(false);
@@ -34,10 +34,10 @@ export default function MContacts() {
 
   return (
     <div>
-      <MPageHeader title="联系人" subtitle={`共 ${data.total} 位联系人`} />
+      <MPageHeader title="联系人" subtitle={`共 ${total} 位联系人`} />
       <MSearchBar value={keyword} onChange={onSearch} placeholder="姓名 / 客户 / 手机号" />
-      <MList loading={loading && !data.list.length} empty={!loading && !data.list.length}>
-        {data.list.map((c) => (
+      <MList loading={loading && !items.length} empty={!loading && !items.length}>
+        {items.map((c) => (
           <MCard key={c.id} onClick={() => setView(c)}>
             <div className="flex items-start gap-3">
               <div className="size-10 rounded-full bg-cobalt/15 flex items-center justify-center text-cobalt font-bold shrink-0">{c.name.slice(0, 1)}</div>

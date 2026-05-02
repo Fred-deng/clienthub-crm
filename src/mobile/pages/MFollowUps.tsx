@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { followUpApi, customerApi } from "@/services/api";
-import { usePagedList } from "@/hooks/usePagedList";
+import { useInfiniteList } from "../hooks/useInfiniteList";
 import { useToast } from "@/hooks/use-toast";
 import { useCurrentUser } from "@/context/CurrentUserContext";
 import type { FollowUp, Customer } from "@/types";
@@ -14,7 +14,7 @@ const WAY_OPTS = [{ value: "all", label: "全部" }, ...WAYS.map(w => ({ value: 
 export default function MFollowUps() {
   const { current } = useCurrentUser();
   const { toast } = useToast();
-  const { data, loading, setFilter, reload } = usePagedList<FollowUp>(followUpApi.list, { pageSize: 20 });
+  const { items, total, loading, hasMore, setFilter, loadMore, reload } = useInfiniteList<FollowUp>(followUpApi.list, { pageSize: 15 });
   const [keyword, setKeyword] = useState(""); const [way, setWay] = useState("all");
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [editOpen, setEditOpen] = useState(false);
@@ -36,11 +36,11 @@ export default function MFollowUps() {
 
   return (
     <div>
-      <MPageHeader title="跟进记录" subtitle={`共 ${data.total} 条`} />
+      <MPageHeader title="跟进记录" subtitle={`共 ${total} 条`} />
       <MSearchBar value={keyword} onChange={(v) => { setKeyword(v); setFilter({ keyword: v }); }} placeholder="搜索客户/主题/内容" />
       <MChipFilter value={way} onChange={(v) => { setWay(v); setFilter({ contactWay: v }); }} options={WAY_OPTS} />
-      <MList loading={loading && !data.list.length} empty={!loading && !data.list.length}>
-        {data.list.map((f) => (
+      <MList loading={loading && !items.length} empty={!loading && !items.length}>
+        {items.map((f) => (
           <MCard key={f.id} onClick={() => setView(f)}>
             <div className="flex items-center gap-2 mb-1.5">
               <MTag variant="cobalt">{f.contactWay}</MTag>
