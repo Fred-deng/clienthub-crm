@@ -98,8 +98,13 @@ export default function Suppliers() {
       await supplierApi.update(editing.id, values);
       toast.success("供应商已更新");
     } else {
-      await supplierApi.create(values);
-      toast.success("供应商已创建");
+      const created = await supplierApi.create(values);
+      if (draftContacts.length) {
+        await Promise.all(draftContacts.map((c) =>
+          supplierContactApi.create({ ...c, supplierId: created.id, supplierName: created.name })
+        ));
+      }
+      toast.success(`供应商已创建${draftContacts.length ? `，含 ${draftContacts.length} 位联系人` : ""}`);
     }
     setOpen(false);
     reload();
