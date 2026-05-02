@@ -25,6 +25,7 @@ import { logOrderUpdate, logOrderDelete } from "@/services/orderLog";
 import { syncSalesStock, revertSalesDeliver } from "@/services/inventory";
 import { readCurrentOperator } from "@/context/CurrentUserContext";
 import { OrderLogDialog } from "@/components/common/OrderLogDialog";
+import { CancelOrderDialog } from "@/components/common/CancelOrderDialog";
 import { usePagedList } from "@/hooks/usePagedList";
 import { fmtMoney } from "@/lib/format";
 import { splitSales, bizLabel, bizTone, type BizFilter } from "@/lib/biz";
