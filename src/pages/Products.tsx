@@ -94,6 +94,7 @@ export default function Products() {
             <Button size="sm" variant="outline" onClick={() => { setLogProduct(null); setLogOpen(true); }}>
               <History className="h-4 w-4 mr-1.5" />库存日志
             </Button>
+            <Button size="sm" variant="outline" onClick={() => setCatOpen(true)}>管理分类</Button>
             <Button size="sm" onClick={openCreate}><Plus className="h-4 w-4 mr-1.5" />新增产品</Button>
           </div>
         }
