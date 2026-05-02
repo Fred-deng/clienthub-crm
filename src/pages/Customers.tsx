@@ -83,27 +83,12 @@ export default function Customers() {
   const [draftFollowUps, setDraftFollowUps] = useState<Omit<FollowUp, "id">[]>([]);
   const [miniContactOpen, setMiniContactOpen] = useState(false);
   const [miniFollowUpOpen, setMiniFollowUpOpen] = useState(false);
-  const [bizMap, setBizMap] = useState<Map<string, { sw: boolean; hw: boolean }>>(new Map());
+  
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => { employeeApi.all().then(setEmployees); }, []);
 
-  // 聚合每个客户的业务覆盖（软/硬/双）
-  useEffect(() => {
-    Promise.all([salesApi.all(), productApi.all()]).then(([orders, prods]: [SalesOrder[], Product[]]) => {
-      const m = new Map<string, { sw: boolean; hw: boolean }>();
-      orders.forEach((o) => {
-        const cur = m.get(o.customerId) || { sw: false, hw: false };
-        o.items.forEach((it) => {
-          const p = prods.find((pp) => pp.id === it.productId);
-          if (p?.category === "software") cur.sw = true; else cur.hw = true;
-        });
-        m.set(o.customerId, cur);
-      });
-      setBizMap(m);
-    });
-  }, []);
 
   const { register, handleSubmit, reset, setValue, watch } = useForm<Omit<Customer, "id">>({ defaultValues: emptyCustomer });
 
