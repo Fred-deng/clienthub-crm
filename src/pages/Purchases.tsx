@@ -9,6 +9,7 @@ import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { StatusBadge } from "@/components/common/StatusBadge";
 import { LineItemsEditor, LineItem } from "@/components/common/LineItemsEditor";
 import { InvoiceList, InvoiceRecord } from "@/components/common/InvoiceList";
+import { AttachmentField } from "@/components/common/AttachmentField";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -44,43 +45,6 @@ function Field({ label, required, span = 4, children }: { label: string; require
         {label}{required && <span className="text-tomato ml-0.5">*</span>}
       </Label>
       {children}
-    </div>
-  );
-}
-
-function AttachmentList({ value, onChange }: { value: string[]; onChange: (v: string[]) => void }) {
-  const [draft, setDraft] = useState("");
-  const add = () => {
-    const v = draft.trim();
-    if (!v) return;
-    onChange([...(value || []), v]);
-    setDraft("");
-  };
-  return (
-    <div className="space-y-2">
-      <div className="space-y-1">
-        {(value || []).map((f, i) => (
-          <div key={i} className="flex items-center gap-2 text-xs px-2.5 h-8 rounded-md bg-foreground/[0.04] border border-foreground/8">
-            <FileText className="h-3.5 w-3.5 text-cobalt shrink-0" />
-            <span className="flex-1 truncate">{f}</span>
-            <button type="button" className="px-2 h-6 rounded text-[11px] text-tomato hover:bg-tomato/10" onClick={() => onChange(value.filter((_, idx) => idx !== i))}>
-              删除
-            </button>
-          </div>
-        ))}
-      </div>
-      <div className="flex gap-2">
-        <Input
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          placeholder="附件文件名或链接"
-          className="h-9"
-          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); add(); } }}
-        />
-        <Button type="button" variant="outline" size="sm" onClick={add} className="shrink-0">
-          <Plus className="h-3.5 w-3.5 mr-1" />添加附件
-        </Button>
-      </div>
     </div>
   );
 }
