@@ -408,6 +408,71 @@ export default function Customers() {
               <Textarea rows={2} placeholder="请输入备注信息" {...register("remark")} />
             </Field>
 
+            {/* 客户联系人子表（仅编辑现有客户时显示） */}
+            {editing && (
+              <>
+                <GroupTitle>客户联系人</GroupTitle>
+                <div className="col-span-12 rounded-xl border border-foreground/10 bg-card overflow-hidden">
+                  <div className="flex items-center justify-between px-4 py-2.5 bg-foreground/[0.03] border-b border-foreground/8">
+                    <div className="text-xs text-foreground/60">
+                      共 <span className="font-bold text-foreground">{customerContacts.length}</span> 位联系人
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Link
+                        to={`/contacts?customerId=${editing.id}`}
+                        className="text-[11px] text-cobalt hover:underline"
+                      >
+                        前往联系人页 →
+                      </Link>
+                      <Button type="button" size="sm" variant="outline" onClick={() => setMiniContactOpen(true)}>
+                        <Plus className="h-3.5 w-3.5 mr-1" />新增联系人
+                      </Button>
+                    </div>
+                  </div>
+                  {customerContacts.length === 0 ? (
+                    <div className="px-4 py-6 text-center text-xs text-foreground/45">暂无联系人，点击右上角新增。</div>
+                  ) : (
+                    <table className="data-table">
+                      <thead>
+                        <tr>
+                          <th>姓名</th>
+                          <th>职位</th>
+                          <th>手机号</th>
+                          <th>邮箱</th>
+                          <th>负责人</th>
+                          <th className="num">操作</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {customerContacts.map((ct) => (
+                          <tr key={ct.id}>
+                            <td>
+                              <div className="flex items-center gap-1.5 font-semibold">
+                                {ct.name}
+                                {ct.isPrimary && <Star className="h-3 w-3 fill-tomato text-tomato" />}
+                              </div>
+                            </td>
+                            <td className="text-foreground/70">{ct.position || "—"}</td>
+                            <td className="mono">{ct.phone}</td>
+                            <td className="text-foreground/65 text-[12px]">{ct.email || "—"}</td>
+                            <td className="text-foreground/70">{ownerName(ct.ownerId)}</td>
+                            <td className="num">
+                              <Link
+                                to={`/contacts?customerId=${editing.id}&editId=${ct.id}`}
+                                className="text-[11px] text-cobalt hover:underline"
+                              >
+                                编辑
+                              </Link>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              </>
+            )}
+
             <DialogFooter className="col-span-12 mt-4">
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>取消</Button>
               <Button type="submit">{editing ? "保存修改" : "创建客户"}</Button>
@@ -415,6 +480,17 @@ export default function Customers() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* 在客户编辑窗口内快速新增联系人 */}
+      {editing && (
+        <MiniContactDialog
+          open={miniContactOpen}
+          onOpenChange={setMiniContactOpen}
+          customer={editing}
+          employees={employees}
+          onCreated={reloadCustomerContacts}
+        />
+      )}
 
       <ConfirmDialog
         open={!!deletingId}
@@ -424,5 +500,81 @@ export default function Customers() {
         onConfirm={onDelete}
       />
     </>
+  );
+}
+
+// —— 客户详情内：快速新增联系人对话框 ——
+function MiniContactDialog({
+  open, onOpenChange, customer, employees, onCreated,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  customer: Customer;
+  employees: Employee[];
+  onCreated: () => void;
+}) {
+  const { register, handleSubmit, reset, setValue, watch } = useForm<Omit<Contact, "id">>({
+    defaultValues: {
+      code: "", customerId: customer.id, customerName: customer.name,
+      name: "", phone: "", position: "", email: "", address: "", birthday: "",
+      ownerId: customer.ownerId || "u3", isPrimary: false, remark: "", attachment: "",
+      createdAt: new Date().toISOString().slice(0, 10),
+    },
+  });
+
+  useEffect(() => {
+    if (open) {
+      reset({
+        code: `LXR-${Date.now().toString().slice(-6)}`,
+        customerId: customer.id, customerName: customer.name,
+        name: "", phone: "", position: "", email: "", address: "", birthday: "",
+        ownerId: customer.ownerId || "u3", isPrimary: false, remark: "", attachment: "",
+        createdAt: new Date().toISOString().slice(0, 10),
+      });
+    }
+  }, [open, customer.id, customer.name, customer.ownerId, reset]);
+
+  const submit = handleSubmit(async (values) => {
+    await contactApi.create({ ...values, customerId: customer.id, customerName: customer.name });
+    toast.success("联系人已新增");
+    onOpenChange(false);
+    onCreated();
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>新增联系人 · {customer.name}</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={submit} className="grid grid-cols-12 gap-x-4 gap-y-3 text-sm">
+          <Field label="姓名" required><Input {...register("name", { required: true })} /></Field>
+          <Field label="手机号" required><Input {...register("phone", { required: true })} /></Field>
+          <Field label="职位"><Input {...register("position")} /></Field>
+          <Field label="邮箱"><Input {...register("email")} /></Field>
+          <Field label="生日"><Input type="date" {...register("birthday")} /></Field>
+          <Field label="销售负责人">
+            <Select value={watch("ownerId")} onValueChange={(v) => setValue("ownerId", v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {employees.map((e) => <SelectItem key={e.id} value={e.id}>{e.name}（{e.role}）</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </Field>
+          <Field label="首要联系人" span={6}>
+            <div className="h-10 flex items-center">
+              <Switch checked={watch("isPrimary")} onCheckedChange={(v) => setValue("isPrimary", v)} />
+              <span className="ml-2 text-xs text-foreground/60">设为该客户首要联系人</span>
+            </div>
+          </Field>
+          <Field label="地址" span={6}><Input {...register("address")} /></Field>
+          <Field label="备注" span={12}><Textarea rows={2} {...register("remark")} /></Field>
+          <DialogFooter className="col-span-12 mt-2">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>取消</Button>
+            <Button type="submit">创建联系人</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
