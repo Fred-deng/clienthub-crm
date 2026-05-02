@@ -61,7 +61,7 @@ export default function MPayables() {
         <MKpi label="已付款" value={fmtMoneyShort(totals.paid)} accent="mint" />
         <MKpi label="未付" value={fmtMoneyShort(totals.outstanding)} accent="tomato" />
       </div>
-      <MChipFilter value={biz} onChange={setBiz} options={[{ value: "all", label: "全部" }, { value: "software", label: "软件" }, { value: "hardware", label: "硬件" }] as any} />
+      <MChipFilter value={biz} onChange={(v) => setBiz(v as any)} options={[{ value: "all", label: "全部" }, { value: "software", label: "软件" }, { value: "hardware", label: "硬件" }] as any} />
       <MChipFilter value={filter} onChange={setFilter as any} options={[{ value: "outstanding", label: "仅看未付" }, { value: "all", label: "全部" }, { value: "settled", label: "已结清" }]} />
       <MSearchBar value={keyword} onChange={setKeyword} placeholder="搜索供应商" />
 

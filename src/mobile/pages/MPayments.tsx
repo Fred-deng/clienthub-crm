@@ -94,7 +94,7 @@ export default function MPayments() {
         <MKpi label="净流水" value={fmtMoney(totals.in - totals.out)} accent="cobalt" />
       </div>
       <MSearchBar value={keyword} onChange={setKeyword} placeholder="搜索单号/对手方" />
-      <MChipFilter value={biz} onChange={setBiz}
+      <MChipFilter value={biz} onChange={(v) => setBiz(v as any)}
         options={[{ value: "all", label: "全部业务" }, { value: "software", label: "软件" }, { value: "hardware", label: "硬件" }] as any} />
       <MFilterBar onReset={() => { setDirF("all"); setRange({ from: "", to: "" }); }}>
         <select value={dirF} onChange={e => setDirF(e.target.value as any)} className="shrink-0 h-8 px-3 rounded-full bg-card border border-foreground/10 text-xs">

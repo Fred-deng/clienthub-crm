@@ -150,7 +150,7 @@ export default function MFollowUps() {
         </MField>
         <MField label="销售线索"><MInput value={form.salesLead || ""} onChange={e => setForm({ ...form, salesLead: e.target.value })} /></MField>
         <MField label="商机状态">
-          <MSelect value={form.oppStatus || ""} onChange={v => setForm({ ...form, oppStatus: v })} options={OPPS.map(o => ({ value: o, label: o }))} />
+          <MSelect value={form.oppStatus || ""} onChange={v => setForm({ ...form, oppStatus: v as any })} options={OPPS.map(o => ({ value: o, label: o }))} />
         </MField>
         <MField label="联系日期" required><MInput type="date" value={form.contactDate} onChange={e => setForm({ ...form, contactDate: e.target.value })} /></MField>
         <MField label="下次回访"><MInput type="date" value={form.nextVisitAt || ""} onChange={e => setForm({ ...form, nextVisitAt: e.target.value })} /></MField>

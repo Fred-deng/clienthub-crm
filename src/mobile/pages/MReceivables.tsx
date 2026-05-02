@@ -60,7 +60,7 @@ export default function MReceivables() {
         <MKpi label="已回款" value={fmtMoneyShort(totals.received)} accent="mint" />
         <MKpi label="未收" value={fmtMoneyShort(totals.outstanding)} accent="tomato" />
       </div>
-      <MChipFilter value={biz} onChange={setBiz}
+      <MChipFilter value={biz} onChange={(v) => setBiz(v as any)}
         options={[{ value: "all", label: "全部" }, { value: "software", label: "软件" }, { value: "hardware", label: "硬件" }] as any} />
       <MChipFilter value={filter} onChange={setFilter as any}
         options={[{ value: "outstanding", label: "仅看未收" }, { value: "all", label: "全部" }, { value: "settled", label: "已结清" }]} />

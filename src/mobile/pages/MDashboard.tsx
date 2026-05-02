@@ -34,7 +34,7 @@ export default function MDashboard() {
   return (
     <>
       <MPageHeader title="控制面板" subtitle={`MISSION CONTROL · ${currentMonth()}`} />
-      <MChipFilter value={biz} onChange={setBiz}
+      <MChipFilter value={biz} onChange={(v) => setBiz(v as any)}
         options={[{ value: "all", label: "全部业务" }, { value: "software", label: "软件" }, { value: "hardware", label: "硬件" }] as any} />
 
       <div className="px-4 grid grid-cols-2 gap-2 mb-4">

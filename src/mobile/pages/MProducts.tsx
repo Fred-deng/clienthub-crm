@@ -141,7 +141,7 @@ export default function MProducts() {
         <MField label="售价"><MInput type="number" step="0.01" value={form.price} onChange={e => setForm({ ...form, price: Number(e.target.value) })} /></MField>
         <MField label="成本"><MInput type="number" step="0.01" value={form.cost} onChange={e => setForm({ ...form, cost: Number(e.target.value) })} /></MField>
         <MGroupTitle>库存</MGroupTitle>
-        <MField label="当前库存"><MInput type="number" value={form.stock} onChange={e => setForm({ ...form, stock: Number(e.target.value) })} hint={editing ? "调整后会自动写入库存日志" : ""} /></MField>
+        <MField label="当前库存" hint={editing ? "调整后会自动写入库存日志" : undefined}><MInput type="number" value={form.stock} onChange={e => setForm({ ...form, stock: Number(e.target.value) })} /></MField>
         <MField label="安全库存">
           <MInput type="number" disabled={form.category === "software"} value={form.safetyStock} onChange={e => setForm({ ...form, safetyStock: Number(e.target.value) })} />
         </MField>
