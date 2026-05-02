@@ -412,7 +412,13 @@ export default function Sales() {
 
             <GroupTitle>销售明细</GroupTitle>
             <div className="col-span-12">
-              <LineItemsEditor items={items} products={products} onChange={setItems} />
+              <LineItemsEditor
+                items={items}
+                products={products}
+                onChange={setItems}
+                logModule="sales"
+                logScope={editing?.id || draftScope}
+              />
             </div>
 
             <GroupTitle>回款记录</GroupTitle>
