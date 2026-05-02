@@ -56,7 +56,7 @@ export default function Products() {
         }
         // 其他字段变更
         const fieldChanged = Object.keys(v).some((k) => k !== "stock" && (v as any)[k] !== (editing as any)[k]);
-        if (fieldChanged) logProductChange(updated, "update", "编辑产品资料", "产品管理");
+        if (fieldChanged) logProductChange(updated, "update", "编辑产品资料");
       }
       toast.success("已更新");
     } else {
@@ -74,7 +74,7 @@ export default function Products() {
   const onDelete = async () => {
     if (!deletingId) return;
     const p = data.list.find((x) => x.id === deletingId);
-    if (p) logProductChange(p, "delete", "删除产品", "产品管理");
+    if (p) logProductChange(p, "delete", "删除产品");
     await productApi.remove(deletingId);
     toast.success("已删除"); setDeletingId(null); reload();
   };
