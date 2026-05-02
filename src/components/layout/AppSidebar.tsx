@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
-  LayoutDashboard, Users, Package, ShoppingCart, FileText, Receipt, Wallet, Truck, BarChart3, Contact as ContactIcon, ClipboardList, ArrowDownLeft, ArrowUpRight,
+  LayoutDashboard, Users, Package, ShoppingCart, FileText, Receipt, Wallet, Truck, Contact as ContactIcon, ClipboardList, ArrowDownLeft, ArrowUpRight,
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
