@@ -55,7 +55,7 @@ export default function Payables() {
         invoiced: 0,
         paid: 0,
         outstanding: 0,
-        oldest: o.appliedAt || o.createdAt,
+        oldest: o.createdAt,
         swContract: 0, hwContract: 0,
         swPaid: 0, hwPaid: 0,
         swOutstanding: 0, hwOutstanding: 0,
@@ -69,7 +69,7 @@ export default function Payables() {
       r.outstanding = r.contractAmount - r.paid;
       r.swOutstanding = r.swContract - r.swPaid;
       r.hwOutstanding = r.hwContract - r.hwPaid;
-      const t = o.appliedAt || o.createdAt;
+      const t = o.createdAt;
       if (t && t < r.oldest) r.oldest = t;
       map.set(o.supplierId, r);
     });
