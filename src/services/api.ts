@@ -2,7 +2,7 @@
 // 只需替换本文件中各方法的内部实现为 fetch/axios 调用即可。
 import type { Paged, ListQuery } from "@/types";
 import {
-  customers, products, suppliers, purchases, contracts, salesOrders, payments, employees, contacts,
+  customers, products, suppliers, purchases, contracts, salesOrders, payments, employees, contacts, followUps,
 } from "@/mock/data";
 
 const delay = (ms = 200) => new Promise((r) => setTimeout(r, ms));
@@ -84,6 +84,17 @@ export const contactApi = buildCrud(contacts, {
   filter: (it, q) => {
     if (q.customerId && q.customerId !== "all" && it.customerId !== q.customerId) return false;
     if (q.isPrimary === true && !it.isPrimary) return false;
+    return true;
+  },
+});
+
+export const followUpApi = buildCrud(followUps, {
+  idPrefix: "fu",
+  searchFields: ["code", "customerName", "subject", "content", "contactName"],
+  filter: (it, q) => {
+    if (q.customerId && q.customerId !== "all" && it.customerId !== q.customerId) return false;
+    if (q.contactWay && q.contactWay !== "all" && it.contactWay !== q.contactWay) return false;
+    if (q.oppStatus && q.oppStatus !== "all" && it.oppStatus !== q.oppStatus) return false;
     return true;
   },
 });
