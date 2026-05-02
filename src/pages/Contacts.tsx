@@ -297,8 +297,8 @@ export default function Contacts() {
           <DialogHeader><DialogTitle>{editing ? "编辑联系人" : "新增联系人"}</DialogTitle></DialogHeader>
           <form onSubmit={onSubmit} className="grid grid-cols-12 gap-x-4 gap-y-3 text-sm">
             <GroupTitle>基础信息</GroupTitle>
-            <Field label="客户" required>
-              <div className="flex items-center gap-2">
+            <Field label="客户" required span={12}>
+              <div className="flex items-center gap-2 max-w-md">
                 <div className="flex-1 min-w-0">
                   <Select value={watch("customerId")} onValueChange={(v) => setValue("customerId", v)}>
                     <SelectTrigger><SelectValue placeholder="选择客户" /></SelectTrigger>
