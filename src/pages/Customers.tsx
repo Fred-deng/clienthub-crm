@@ -225,6 +225,30 @@ export default function Customers() {
           </div>
         }
       >
+        {/* 公海/私海 页签 */}
+        <div className="flex items-center gap-1 px-4 pt-3 pb-2 border-b border-foreground/8">
+          {([
+            { v: "all", label: "全部" },
+            { v: "公海", label: "公海" },
+            { v: "私海", label: "私海" },
+          ] as const).map((t) => {
+            const active = (query.seaStatus ?? "all") === t.v;
+            return (
+              <button
+                key={t.v}
+                type="button"
+                onClick={() => setFilter({ seaStatus: t.v })}
+                className={`px-3.5 h-8 rounded-full text-xs font-semibold transition-colors ${
+                  active
+                    ? "bg-foreground text-background"
+                    : "text-foreground/60 hover:text-foreground hover:bg-foreground/5"
+                }`}
+              >
+                {t.label}
+              </button>
+            );
+          })}
+        </div>
         <div className="overflow-x-auto">
           <table className="data-table">
             <thead>

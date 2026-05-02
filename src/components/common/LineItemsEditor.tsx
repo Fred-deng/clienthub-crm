@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,14 +46,16 @@ export function LineItemsEditor({
   const [logTick, setLogTick] = useState(0);
   const canLog = !!(logModule && logScope);
 
+  // 记录每个输入框获取焦点时的「编辑前」整行快照，用于 blur 时一次性 diff，避免逐字符重复记录日志
+  const focusSnapshotRef = useRef<Record<string, LineItem>>({});
+
   const headerTitle = title
     ?? (logModule === "sales" ? "销售明细（不存在的名称将自动建档）" : "采购明细（不存在的名称将自动建档）");
 
-  const update = (i: number, patch: Partial<LineItem>) => {
-    const before = { ...items[i] };
+  /** 静默更新（不写日志），用于输入过程中只更新 UI */
+  const updateSilent = (i: number, patch: Partial<LineItem>) => {
     const next = [...items];
     next[i] = { ...next[i], ...patch };
-    // 名称变化时尝试匹配已存在产品
     if (patch.productName !== undefined) {
       const match = products.find((p) => p.name.trim() === patch.productName!.trim());
       if (match) {
@@ -65,10 +67,37 @@ export function LineItemsEditor({
       }
     }
     onChange(next);
+  };
+
+  /** 立即更新 + 记录日志（用于 Select 等一次性提交场景） */
+  const updateAndLog = (i: number, patch: Partial<LineItem>) => {
+    const before = { ...items[i] };
+    const next = [...items];
+    next[i] = { ...next[i], ...patch };
+    onChange(next);
     if (canLog) {
       logLineItemUpdate(logModule!, logScope!, before, next[i]);
       setLogTick((t) => t + 1);
     }
+  };
+
+  /** 文本/数字输入：focus 时记录原值，blur 时与最新值 diff，写一次日志 */
+  const handleFocus = (i: number, field: keyof LineItem) => {
+    focusSnapshotRef.current[`${i}:${field}`] = { ...items[i] };
+  };
+  const handleBlur = (i: number, field: keyof LineItem) => {
+    if (!canLog) return;
+    const key = `${i}:${field}`;
+    const before = focusSnapshotRef.current[key];
+    delete focusSnapshotRef.current[key];
+    const after = items[i];
+    if (!before || !after) return;
+    if (before[field] === after[field]
+        && before.productId === after.productId
+        && before.category === after.category
+        && before.price === after.price) return;
+    logLineItemUpdate(logModule!, logScope!, before, after);
+    setLogTick((t) => t + 1);
   };
 
   const remove = (i: number) => {
@@ -121,7 +150,7 @@ export function LineItemsEditor({
           return (
             <div key={i} className="grid grid-cols-12 gap-2 p-2 items-center">
               <div className="col-span-2">
-                <Select value={it.category} onValueChange={(v: ProductCategory) => update(i, { category: v })}>
+                <Select value={it.category} onValueChange={(v: ProductCategory) => updateAndLog(i, { category: v })}>
                   <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {cats.map((c) => <SelectItem key={c} value={c}>{productCategoryLabel[c]}</SelectItem>)}
@@ -134,17 +163,23 @@ export function LineItemsEditor({
                   className="h-8 text-xs"
                   placeholder="输入或选择产品名称"
                   value={it.productName}
-                  onChange={(e) => update(i, { productName: e.target.value })}
+                  onFocus={() => handleFocus(i, "productName")}
+                  onChange={(e) => updateSilent(i, { productName: e.target.value })}
+                  onBlur={() => handleBlur(i, "productName")}
                 />
                 {isNew && <div className="text-[10px] text-warning mt-0.5">新产品，保存时自动建档</div>}
               </div>
               <div className="col-span-1">
                 <Input type="number" min={1} className="h-8 text-xs text-right mono" value={it.qty}
-                  onChange={(e) => update(i, { qty: Number(e.target.value) || 0 })} />
+                  onFocus={() => handleFocus(i, "qty")}
+                  onChange={(e) => updateSilent(i, { qty: Number(e.target.value) || 0 })}
+                  onBlur={() => handleBlur(i, "qty")} />
               </div>
               <div className="col-span-2">
                 <Input type="number" step="0.01" className="h-8 text-xs text-right mono" value={it.price}
-                  onChange={(e) => update(i, { price: Number(e.target.value) || 0 })} />
+                  onFocus={() => handleFocus(i, "price")}
+                  onChange={(e) => updateSilent(i, { price: Number(e.target.value) || 0 })}
+                  onBlur={() => handleBlur(i, "price")} />
               </div>
               <div className="col-span-1 text-right text-xs font-mono">{fmtMoney(it.qty * it.price)}</div>
               <div className="col-span-1 text-right">
