@@ -22,6 +22,8 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { salesApi, customerApi, productApi, employeeApi } from "@/services/api";
 import { logOrderUpdate, logOrderDelete } from "@/services/orderLog";
+import { applySalesDeliver, revertSalesDeliver } from "@/services/inventory";
+import { readCurrentOperator } from "@/context/CurrentUserContext";
 import { OrderLogDialog } from "@/components/common/OrderLogDialog";
 import { usePagedList } from "@/hooks/usePagedList";
 import { fmtMoney } from "@/lib/format";
@@ -183,11 +185,25 @@ export default function Sales() {
       salesFee: Number(v.salesFee) || 0,
       productStdCost: Number(v.productStdCost) || 0,
     };
+    const op = readCurrentOperator();
+    const nextStatus = payload.status as SalesOrder["status"];
     if (editing) {
+      const prevStatus = editing.status;
+      if (prevStatus === "delivered" && nextStatus !== "delivered") {
+        revertSalesDeliver(editing, op, "状态变更撤销出库");
+      }
+      if (nextStatus === "delivered" && prevStatus !== "delivered") {
+        applySalesDeliver({ ...editing, ...payload }, op);
+      }
+      if (prevStatus === "delivered" && nextStatus === "delivered") {
+        revertSalesDeliver(editing, op, "明细变更回滚");
+        applySalesDeliver({ ...editing, ...payload }, op);
+      }
       logOrderUpdate("sales", editing, payload);
       await salesApi.update(editing.id, payload);
     } else {
-      await salesApi.create(payload);
+      const created = await salesApi.create(payload);
+      if (nextStatus === "delivered") applySalesDeliver(created, op);
     }
     toast.success("已保存"); setOpen(false); reload();
   });
@@ -483,7 +499,10 @@ export default function Sales() {
       <ConfirmDialog open={!!deletingId} onOpenChange={(v) => !v && setDeletingId(null)} title="删除合同" onConfirm={async () => {
         if (deletingId) {
           const order = data.list.find((o) => o.id === deletingId);
-          if (order) logOrderDelete("sales", order);
+          if (order) {
+            if (order.status === "delivered") revertSalesDeliver(order, readCurrentOperator(), "订单删除回滚出库");
+            logOrderDelete("sales", order);
+          }
           await salesApi.remove(deletingId);
           toast.success("已删除"); setDeletingId(null); reload();
         }

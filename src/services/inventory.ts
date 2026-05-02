@@ -1,7 +1,7 @@
 // 库存联动 + 日志服务（基于 mock 内存数据）
 import { products, stockLogs } from "@/mock/data";
 import { readCurrentOperator } from "@/context/CurrentUserContext";
-import type { Product, ProductCategory, PurchaseOrder, StockLog, StockLogAction } from "@/types";
+import type { Product, ProductCategory, PurchaseOrder, SalesOrder, StockLog, StockLogAction } from "@/types";
 
 const todayStr = () => new Date().toISOString().slice(0, 19).replace("T", " ");
 const makeId = (prefix: string) => `${prefix}${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
@@ -116,6 +116,40 @@ export function revertPurchaseReceive(order: PurchaseOrder, operator?: string, r
       refCode: order.code,
       operator,
       remark: `${reason}：${order.supplierName}`,
+    });
+  });
+}
+
+/** 应用销售订单出库：每条明细 -qty（仅扣减有 productId 的硬件型明细） */
+export function applySalesDeliver(order: SalesOrder, operator?: string) {
+  order.items.forEach((it) => {
+    if (!it.productId || !it.qty) return;
+    adjustStock({
+      productId: it.productId,
+      delta: -Math.abs(it.qty),
+      action: "out",
+      refType: "sales",
+      refId: order.id,
+      refCode: order.code,
+      operator,
+      remark: `销售出库：${order.customerName}`,
+    });
+  });
+}
+
+/** 撤销销售出库：每条明细 +qty */
+export function revertSalesDeliver(order: SalesOrder, operator?: string, reason = "撤销销售出库") {
+  order.items.forEach((it) => {
+    if (!it.productId || !it.qty) return;
+    adjustStock({
+      productId: it.productId,
+      delta: Math.abs(it.qty),
+      action: "in",
+      refType: "sales",
+      refId: order.id,
+      refCode: order.code,
+      operator,
+      remark: `${reason}：${order.customerName}`,
     });
   });
 }
