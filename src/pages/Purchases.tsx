@@ -112,6 +112,8 @@ export default function Purchases() {
   const [logOpen, setLogOpen] = useState(false);
   const [logRefId, setLogRefId] = useState<string | undefined>(undefined);
   const [logRefCode, setLogRefCode] = useState<string | undefined>(undefined);
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState<string>("");
   const { current } = useCurrentUser();
 
   useEffect(() => {
@@ -604,6 +606,12 @@ export default function Purchases() {
         module="purchase"
         refId={logRefId}
         refCode={logRefCode}
+      />
+      <CancelOrderDialog
+        open={cancelOpen}
+        onOpenChange={setCancelOpen}
+        refCode={editing?.code}
+        onConfirm={(reason) => { setCancelReason(reason); setValue("status", "cancelled"); }}
       />
     </>
   );
