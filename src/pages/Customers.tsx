@@ -78,6 +78,9 @@ export default function Customers() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [customerContacts, setCustomerContacts] = useState<Contact[]>([]);
   const [customerFollowUps, setCustomerFollowUps] = useState<FollowUp[]>([]);
+  // 新增客户时暂存（提交客户后批量写入）
+  const [draftContacts, setDraftContacts] = useState<Omit<Contact, "id">[]>([]);
+  const [draftFollowUps, setDraftFollowUps] = useState<Omit<FollowUp, "id">[]>([]);
   const [miniContactOpen, setMiniContactOpen] = useState(false);
   const [miniFollowUpOpen, setMiniFollowUpOpen] = useState(false);
   const navigate = useNavigate();
