@@ -78,6 +78,16 @@ export const customerApi = buildCrud(customers, {
   },
 });
 
+export const contactApi = buildCrud(contacts, {
+  idPrefix: "ct",
+  searchFields: ["name", "code", "phone", "customerName", "position"],
+  filter: (it, q) => {
+    if (q.customerId && q.customerId !== "all" && it.customerId !== q.customerId) return false;
+    if (q.isPrimary === true && !it.isPrimary) return false;
+    return true;
+  },
+});
+
 export const productApi = buildCrud(products, {
   idPrefix: "p",
   searchFields: ["name", "code", "spec"],
