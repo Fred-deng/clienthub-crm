@@ -106,7 +106,12 @@ export default function Payments() {
             <tbody>
               {loading && <tr><td colSpan={8} className="py-12 text-center text-xs text-muted-foreground">加载中…</td></tr>}
               {data.list.map((p) => (
-                <tr key={p.id}>
+                <tr
+                  key={p.id}
+                  className="clickable"
+                  onDoubleClick={() => toast.message(`${p.code} · ${p.partyName}`, { description: `${p.direction === "in" ? "回款" : "付款"} ${fmtMoney(p.amount)} · ${p.method} · ${p.paidAt}${p.remark ? " · " + p.remark : ""}` })}
+                  title="双击查看详情"
+                >
                   <td className="font-mono text-xs">{p.code}</td>
                   <td className="text-xs">
                     {p.direction === "in" ? (
@@ -122,12 +127,25 @@ export default function Payments() {
                   </td>
                   <td className="text-xs">{p.method}</td>
                   <td className="text-xs text-muted-foreground">{p.paidAt}</td>
-                  <td className="px-5 py-3">
+                  <td className="px-5 py-3" onDoubleClick={(e) => e.stopPropagation()}>
                     <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeletingId(p.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
                   </td>
                 </tr>
               ))}
             </tbody>
+            {data.list.length > 0 && (
+              <tfoot>
+                <tr>
+                  <td colSpan={4} className="label">本页 {data.list.length} 笔 / 共 {data.total} 笔 · 合计</td>
+                  <td className="num">
+                    <span className="text-accent">+{fmtMoney(totals.in)}</span>
+                    <span className="mx-1 text-foreground/30">/</span>
+                    <span className="text-warning">-{fmtMoney(totals.out)}</span>
+                  </td>
+                  <td colSpan={3} className="text-[11px] text-foreground/55">净流水 <span className="mono font-bold text-foreground">{fmtMoney(totals.in - totals.out)}</span></td>
+                </tr>
+              </tfoot>
+            )}
           </table>
         </div>
         <PaginationBar page={query.page!} pageSize={query.pageSize!} total={data.total} onPageChange={setPage} />
