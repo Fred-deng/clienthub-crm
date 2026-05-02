@@ -17,7 +17,7 @@ import Sales from "./pages/Sales";
 import Payments from "./pages/Payments";
 import Receivables from "./pages/Receivables";
 import Payables from "./pages/Payables";
-import Reports from "./pages/Reports";
+
 import Reconciliation from "./pages/Reconciliation";
 import NotFound from "./pages/NotFound";
 
@@ -44,7 +44,7 @@ const App = () => (
             <Route path="/payments" element={<Payments />} />
             <Route path="/receivables" element={<Receivables />} />
             <Route path="/payables" element={<Payables />} />
-            <Route path="/reports" element={<Reports />} />
+            
             <Route path="/reconciliation" element={<Reconciliation />} />
           </Route>
           <Route path="*" element={<NotFound />} />

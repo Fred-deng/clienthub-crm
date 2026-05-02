@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
-  LayoutDashboard, Users, Package, ShoppingCart, FileText, Receipt, Wallet, Truck, BarChart3, Contact as ContactIcon, ClipboardList, ArrowDownLeft, ArrowUpRight,
+  LayoutDashboard, Users, Package, ShoppingCart, FileText, Receipt, Wallet, Truck, Contact as ContactIcon, ClipboardList, ArrowDownLeft, ArrowUpRight,
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
@@ -39,12 +39,6 @@ const groups = [
     items: [
       { title: "应收账款", url: "/receivables", icon: ArrowDownLeft, dot: "tomato" },
       { title: "应付账款", url: "/payables", icon: ArrowUpRight, dot: "cobalt" },
-    ],
-  },
-  {
-    label: "分析",
-    items: [
-      { title: "数据报表", url: "/reports", icon: BarChart3, dot: "mustard" },
     ],
   },
 ];
