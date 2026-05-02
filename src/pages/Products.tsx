@@ -16,7 +16,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { productApi } from "@/services/api";
 import { adjustStock, logProductChange } from "@/services/inventory";
 import { usePagedList } from "@/hooks/usePagedList";
-import { fmtMoney, productCategoryLabel } from "@/lib/format";
+import { fmtMoney } from "@/lib/format";
+import { useCategories, categoryStore } from "@/services/categories";
 import type { Product } from "@/types";
 
 const empty: Omit<Product, "id"> = {
