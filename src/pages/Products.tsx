@@ -111,7 +111,7 @@ export default function Products() {
               <SelectTrigger className="h-8 w-28 text-xs"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">全部分类</SelectItem>
-                {Object.entries(productCategoryLabel).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+                {categories.map((c) => <SelectItem key={c.id} value={c.id}>{c.label}</SelectItem>)}
               </SelectContent>
             </Select>
             <Button
