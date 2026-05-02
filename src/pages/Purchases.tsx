@@ -461,9 +461,6 @@ export default function Purchases() {
             </Field>
             <Field label="签订日期"><Input type="date" {...register("signedAt")} /></Field>
             <Field label="合同到期日"><Input type="date" {...register("contractExpireAt")} /></Field>
-            <Field label="合同金额">
-              <Input type="number" step="0.01" className="mono text-right" {...register("contractAmount", { valueAsNumber: true })} />
-            </Field>
             <Field label="是否关联销售合同" required span={12}>
               <div className="flex items-center gap-3 h-10">
                 <Switch
