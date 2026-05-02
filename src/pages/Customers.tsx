@@ -652,13 +652,14 @@ export default function Customers() {
 
 // —— 客户详情内：快速新增联系人对话框 ——
 function MiniContactDialog({
-  open, onOpenChange, customer, employees, onCreated,
+  open, onOpenChange, customer, employees, onCreated, onDraft,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   customer: Customer;
   employees: Employee[];
-  onCreated: () => void;
+  onCreated?: () => void;
+  onDraft?: (draft: Omit<Contact, "id">) => void;
 }) {
   const { register, handleSubmit, reset, setValue, watch } = useForm<Omit<Contact, "id">>({
     defaultValues: {
@@ -682,10 +683,15 @@ function MiniContactDialog({
   }, [open, customer.id, customer.name, customer.ownerId, reset]);
 
   const submit = handleSubmit(async (values) => {
-    await contactApi.create({ ...values, customerId: customer.id, customerName: customer.name });
-    toast.success("联系人已新增");
+    if (onDraft) {
+      onDraft({ ...values, customerId: customer.id, customerName: customer.name });
+      toast.success("已加入草稿，将在保存客户时一起创建");
+    } else {
+      await contactApi.create({ ...values, customerId: customer.id, customerName: customer.name });
+      toast.success("联系人已新增");
+      onCreated?.();
+    }
     onOpenChange(false);
-    onCreated();
   });
 
   return (
