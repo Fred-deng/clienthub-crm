@@ -28,7 +28,7 @@ const empty: Omit<Supplier, "id"> = {
   buyerId: "", assistantIds: [],
   bankAccountName: "", bankName: "", bankAccountNo: "",
   remark: "", attachment: "",
-  category: "工控机", payable: 0,
+  category: "ipc", payable: 0,
   createdAt: new Date().toISOString().slice(0, 10),
 };
 
