@@ -394,17 +394,17 @@ export default function Purchases() {
               })}
             </tbody>
             {data.list.length > 0 && (() => {
-              const sumContract = data.list.reduce((s, o) => s + (o.contractAmount || 0), 0);
               const sumTotal = data.list.reduce((s, o) => s + o.totalAmount, 0);
               const sumPaid = data.list.reduce((s, o) => s + o.paid, 0);
+              const sumUnpaid = data.list.reduce((s, o) => s + (o.totalAmount - o.paid), 0);
               const sumInvoice = data.list.reduce((s, o) => s + (o.invoices || []).reduce((a, r) => a + (r.amount || 0), 0), 0);
               return (
                 <tfoot>
                   <tr>
                     <td colSpan={6} className="label">本页 {data.list.length} 单 / 共 {data.total} 单 · 合计</td>
-                    <td className="num">{fmtMoney(sumContract)}</td>
                     <td className="num">{fmtMoney(sumTotal)}</td>
                     <td className="num text-tomato">{fmtMoney(sumPaid)}</td>
+                    <td className="num text-warning">{fmtMoney(sumUnpaid)}</td>
                     <td className="num text-cobalt">{fmtMoney(sumInvoice)}</td>
                     <td colSpan={4} />
                   </tr>
