@@ -122,7 +122,9 @@ export default function Customers() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const onSubmit = handleSubmit(async (values) => {
+  const onSubmit = handleSubmit(async (raw) => {
+    // 自动从「客户状态」推导阶段（潜在/意向 = lead，否则 formal）
+    const values = { ...raw, stage: deriveCustomerStage(raw.status) } as Omit<Customer, "id">;
     if (editing) {
       await customerApi.update(editing.id, values);
       toast.success("客户已更新");
