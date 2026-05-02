@@ -143,7 +143,7 @@ export default function Products() {
                   <tr key={p.id} className="clickable" onDoubleClick={() => openEdit(p)} title="双击查看详情">
                     <td className="font-mono text-xs">{p.code}</td>
                     <td className="font-medium">{p.name}</td>
-                    <td className="text-xs text-muted-foreground">{productCategoryLabel[p.category]}</td>
+                    <td className="text-xs text-muted-foreground">{categoryStore.labelOf(p.category)}</td>
                     <td className="text-xs text-muted-foreground">{p.spec || "-"}</td>
                     <td className="text-xs">{p.unit}</td>
                     <td className="font-mono text-xs">{fmtMoney(p.price)}</td>
