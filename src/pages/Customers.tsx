@@ -83,27 +83,12 @@ export default function Customers() {
   const [draftFollowUps, setDraftFollowUps] = useState<Omit<FollowUp, "id">[]>([]);
   const [miniContactOpen, setMiniContactOpen] = useState(false);
   const [miniFollowUpOpen, setMiniFollowUpOpen] = useState(false);
-  const [bizMap, setBizMap] = useState<Map<string, { sw: boolean; hw: boolean }>>(new Map());
+  
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => { employeeApi.all().then(setEmployees); }, []);
 
-  // 聚合每个客户的业务覆盖（软/硬/双）
-  useEffect(() => {
-    Promise.all([salesApi.all(), productApi.all()]).then(([orders, prods]: [SalesOrder[], Product[]]) => {
-      const m = new Map<string, { sw: boolean; hw: boolean }>();
-      orders.forEach((o) => {
-        const cur = m.get(o.customerId) || { sw: false, hw: false };
-        o.items.forEach((it) => {
-          const p = prods.find((pp) => pp.id === it.productId);
-          if (p?.category === "software") cur.sw = true; else cur.hw = true;
-        });
-        m.set(o.customerId, cur);
-      });
-      setBizMap(m);
-    });
-  }, []);
 
   const { register, handleSubmit, reset, setValue, watch } = useForm<Omit<Customer, "id">>({ defaultValues: emptyCustomer });
 
@@ -243,7 +228,6 @@ export default function Customers() {
               <tr>
                 <th>编号</th>
                 <th>客户</th>
-                <th>业务覆盖</th>
                 <th>类别</th>
                 <th>区域</th>
                 <th>负责人</th>
@@ -254,28 +238,17 @@ export default function Customers() {
               </tr>
             </thead>
             <tbody>
-              {loading && <tr className="empty"><td colSpan={10} className="empty">加载中…</td></tr>}
+              {loading && <tr className="empty"><td colSpan={9} className="empty">加载中…</td></tr>}
               {!loading && data.list.length === 0 && (
-                <tr className="empty"><td colSpan={10} className="empty">暂无客户数据</td></tr>
+                <tr className="empty"><td colSpan={9} className="empty">暂无客户数据</td></tr>
               )}
               {data.list.map((c) => {
-                const biz = bizMap.get(c.id);
-                const bizCat: "software" | "hardware" | "both" | "none" = !biz
-                  ? "none" : biz.sw && biz.hw ? "both" : biz.sw ? "software" : "hardware";
-                const avatarTone = bizCat === "software" ? "bg-cobalt text-white"
-                  : bizCat === "hardware" ? "bg-mint text-foreground"
-                  : bizCat === "both" ? "bg-mustard text-foreground"
-                  : "bg-foreground/10 text-foreground";
-                const bizChip = bizCat === "software" ? { c: "bg-cobalt/10 text-cobalt ring-1 ring-cobalt/20", t: "软件" }
-                  : bizCat === "hardware" ? { c: "bg-mint/20 text-foreground ring-1 ring-mint/40", t: "硬件" }
-                  : bizCat === "both" ? { c: "bg-mustard/20 text-foreground ring-1 ring-mustard/40", t: "软+硬" }
-                  : { c: "bg-foreground/5 text-foreground/55 ring-1 ring-foreground/10", t: "—" };
                 return (
                   <tr key={c.id} className="clickable" onDoubleClick={() => openEdit(c)} title="双击查看详情">
                     <td className="mono">{c.code}</td>
                     <td>
                       <div className="flex items-center gap-2.5">
-                        <div className={"size-8 rounded-full flex items-center justify-center font-display font-black text-sm shrink-0 " + avatarTone}>
+                        <div className="size-8 rounded-full flex items-center justify-center font-display font-black text-sm shrink-0 bg-foreground/10 text-foreground">
                           {c.name.slice(0, 1)}
                         </div>
                         <div className="min-w-0">
@@ -283,9 +256,6 @@ export default function Customers() {
                           <div className="text-[11px] text-foreground/45 truncate">{c.industry || "—"}</div>
                         </div>
                       </div>
-                    </td>
-                    <td>
-                      <span className={"cell-chip " + bizChip.c}>{bizChip.t}</span>
                     </td>
                     <td className="text-foreground/70">{c.category || "—"}</td>
                     <td className="text-foreground/70">{c.region || "—"}</td>
