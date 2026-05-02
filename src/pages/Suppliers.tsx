@@ -127,6 +127,12 @@ export default function Suppliers() {
 
   const onDelete = async () => {
     if (!deletingId) return;
+    const linked = allPurchases.filter((p) => p.supplierId === deletingId).length;
+    if (linked > 0) {
+      toast.error(`该供应商存在 ${linked} 笔采购订单，无法删除。请先处理相关订单。`);
+      setDeletingId(null);
+      return;
+    }
     await supplierApi.remove(deletingId);
     toast.success("供应商已删除");
     setDeletingId(null);

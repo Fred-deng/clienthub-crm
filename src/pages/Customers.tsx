@@ -176,6 +176,12 @@ export default function Customers() {
 
   const onDelete = async () => {
     if (!deletingId) return;
+    const linked = allSales.filter((o) => o.customerId === deletingId).length;
+    if (linked > 0) {
+      toast.error(`该客户存在 ${linked} 笔销售订单，无法删除。请先处理或将订单划转给其他客户。`);
+      setDeletingId(null);
+      return;
+    }
     await customerApi.remove(deletingId);
     toast.success("客户已删除");
     setDeletingId(null);
