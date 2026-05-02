@@ -128,7 +128,18 @@ export default function Customers() {
       reload();
     } else {
       const created = await customerApi.create(values);
-      toast.success("客户已创建");
+      // 批量写入草稿子记录
+      if (draftContacts.length) {
+        await Promise.all(draftContacts.map((c) =>
+          contactApi.create({ ...c, customerId: created.id, customerName: created.name })
+        ));
+      }
+      if (draftFollowUps.length) {
+        await Promise.all(draftFollowUps.map((f) =>
+          followUpApi.create({ ...f, customerId: created.id, customerName: created.name, customerStatus: created.status })
+        ));
+      }
+      toast.success(`客户已创建${draftContacts.length ? `，含 ${draftContacts.length} 位联系人` : ""}${draftFollowUps.length ? `，含 ${draftFollowUps.length} 条跟进` : ""}`);
       setOpen(false);
       reload();
       // 如果是从联系人页跳转过来的，回跳并带上新建的客户ID
