@@ -1,4 +1,4 @@
-import { useEffect, useState, ReactNode } from "react";
+import { useEffect, useMemo, useState, ReactNode } from "react";
 import { useForm } from "react-hook-form";
 import { Plus, Pencil, Trash2, Search, X, Star } from "lucide-react";
 import { toast } from "sonner";
@@ -14,11 +14,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { supplierApi, supplierContactApi, employeeApi } from "@/services/api";
+import { supplierApi, supplierContactApi, employeeApi, purchaseApi } from "@/services/api";
 import { usePagedList } from "@/hooks/usePagedList";
 import { fmtMoney } from "@/lib/format";
 import { useCategories, categoryStore } from "@/services/categories";
-import type { Supplier, SupplierContact, Employee } from "@/types";
+import type { Supplier, SupplierContact, Employee, PurchaseOrder } from "@/types";
 
 const empty: Omit<Supplier, "id"> = {
   code: "", name: "", taxNo: "",
@@ -71,7 +71,20 @@ export default function Suppliers() {
   const [draftContacts, setDraftContacts] = useState<Omit<SupplierContact, "id">[]>([]);
   const [miniContactOpen, setMiniContactOpen] = useState(false);
 
-  useEffect(() => { employeeApi.all().then(setEmployees); }, []);
+  const [allPurchases, setAllPurchases] = useState<PurchaseOrder[]>([]);
+  useEffect(() => { employeeApi.all().then(setEmployees); purchaseApi.all().then(setAllPurchases); }, []);
+
+  // 动态应付：按供应商聚合「明细合计 - 已付」
+  const payableBySupplier = useMemo(() => {
+    const m = new Map<string, number>();
+    allPurchases.forEach((o) => {
+      const total = o.contractAmount || o.totalAmount;
+      const remain = Math.max(total - (o.paid || 0), 0);
+      m.set(o.supplierId, (m.get(o.supplierId) || 0) + remain);
+    });
+    return m;
+  }, [allPurchases]);
+  const payableOf = (id: string) => payableBySupplier.get(id) || 0;
 
   const { register, handleSubmit, reset, setValue, watch } = useForm<Omit<Supplier, "id">>({ defaultValues: empty });
 
@@ -194,7 +207,7 @@ export default function Suppliers() {
                   <td className="mono text-[12px]">{s.phone}</td>
                   <td className="text-foreground/70">{empName(s.buyerId)}</td>
                   <td className="text-[12px] text-foreground/65 truncate max-w-[180px]">{s.bankName || "—"}</td>
-                  <td className="num text-tomato font-semibold">{fmtMoney(s.payable)}</td>
+                  <td className="num text-tomato font-semibold">{fmtMoney(payableOf(s.id))}</td>
                   <td className="num" onDoubleClick={(e) => e.stopPropagation()}>
                     <div className="inline-flex gap-1">
                       <button className="size-8 rounded-full hover:bg-foreground/5 text-foreground/55 hover:text-foreground inline-flex items-center justify-center transition-colors" onClick={() => openEdit(s)}>
@@ -212,7 +225,7 @@ export default function Suppliers() {
               <tfoot>
                 <tr>
                   <td colSpan={7} className="label">本页 {data.list.length} 家 · 共 {data.total} 家 · 应付合计</td>
-                  <td className="num text-tomato">{fmtMoney(data.list.reduce((s, x) => s + (x.payable || 0), 0))}</td>
+                  <td className="num text-tomato">{fmtMoney(data.list.reduce((s, x) => s + payableOf(x.id), 0))}</td>
                   <td />
                 </tr>
               </tfoot>

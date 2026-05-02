@@ -23,7 +23,7 @@ import { customerApi, contactApi, followUpApi, employeeApi, salesApi, productApi
 import { usePagedList } from "@/hooks/usePagedList";
 import { fmtMoney, customerStageLabel, customerStatusLabel, customerStatusTone, deriveCustomerStage } from "@/lib/format";
 import type { Customer, Contact, FollowUp, Employee, SalesOrder, Product } from "@/types";
-import { useEffect, ReactNode } from "react";
+import { useEffect, ReactNode, useMemo } from "react";
 
 const emptyCustomer: Omit<Customer, "id"> = {
   code: "", name: "", taxNo: "", status: "potential", region: "",
@@ -94,7 +94,20 @@ export default function Customers() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  useEffect(() => { employeeApi.all().then(setEmployees); }, []);
+  const [allSales, setAllSales] = useState<SalesOrder[]>([]);
+  useEffect(() => { employeeApi.all().then(setEmployees); salesApi.all().then(setAllSales); }, []);
+
+  // 动态应收：按客户聚合「合同金额(优先) - 已回款」
+  const receivableByCustomer = useMemo(() => {
+    const m = new Map<string, number>();
+    allSales.forEach((o) => {
+      const total = o.contractAmount ?? o.totalAmount;
+      const remain = Math.max(total - (o.received || 0), 0);
+      m.set(o.customerId, (m.get(o.customerId) || 0) + remain);
+    });
+    return m;
+  }, [allSales]);
+  const receivableOf = (id: string) => receivableByCustomer.get(id) || 0;
 
 
   const { register, handleSubmit, reset, setValue, watch } = useForm<Omit<Customer, "id">>({ defaultValues: emptyCustomer });
@@ -384,7 +397,7 @@ export default function Customers() {
                     <td className="text-foreground/70">{ownerName(c.ownerId)}</td>
                     <td>{c.contact}</td>
                     <td className="mono">{c.phone}</td>
-                    <td className="num">{fmtMoney(c.receivable)}</td>
+                    <td className="num">{fmtMoney(receivableOf(c.id))}</td>
                     <td className="num" onDoubleClick={(e) => e.stopPropagation()}>
                       <div className="inline-flex gap-1">
                         <Link to={`/contacts?customerId=${c.id}`} title="查看联系人" className="size-8 rounded-full hover:bg-cobalt/10 text-foreground/55 hover:text-cobalt inline-flex items-center justify-center transition-colors">
@@ -408,8 +421,8 @@ export default function Customers() {
             {data.list.length > 0 && (
               <tfoot>
                 <tr>
-                  <td colSpan={10} className="label">本页合计 · {data.list.length} 条 / 共 {data.total} 条</td>
-                  <td className="num">{fmtMoney(data.list.reduce((s, c) => s + (c.receivable || 0), 0))}</td>
+                  <td colSpan={9} className="label">本页合计 · {data.list.length} 条 / 共 {data.total} 条</td>
+                  <td className="num">{fmtMoney(data.list.reduce((s, c) => s + receivableOf(c.id), 0))}</td>
                   <td />
                 </tr>
               </tfoot>

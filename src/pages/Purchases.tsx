@@ -178,8 +178,9 @@ export default function Purchases() {
     const totalAmount = normalizedItems.reduce((s, it) => s + it.qty * it.price, 0);
     const payload: any = {
       ...v,
-      contractAmount: Number(v.contractAmount) || 0,
-      paid: Number(v.paid) || 0,
+      // 合同金额 = 明细合计（与销售订单逻辑一致）
+      contractAmount: totalAmount,
+      paid: editing ? editing.paid : (Number(v.paid) || 0),
       supplierName: sup?.name ?? "-",
       items: normalizedItems,
       totalAmount,
@@ -505,7 +506,7 @@ export default function Purchases() {
             <Field label="预计入库"><Input type="date" {...register("expectedAt")} /></Field>
             <Field label="下单日期"><Input type="date" {...register("createdAt")} /></Field>
             <Field label="已付款">
-              <Input type="number" step="0.01" className="mono text-right" {...register("paid", { valueAsNumber: true })} />
+              <Input type="number" step="0.01" className="mono text-right bg-muted/40" readOnly value={editing?.paid ?? 0} title="由付款记录自动累计，无法直接修改" />
             </Field>
 
             {/* 采购明细（保留子表） */}

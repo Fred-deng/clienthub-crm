@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Users, Package, ShoppingCart, FileText, Receipt, Wallet, Truck, BarChart3, Contact as ContactIcon, ClipboardList, ArrowDownLeft, ArrowUpRight,
@@ -6,6 +7,7 @@ import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter,
 } from "@/components/ui/sidebar";
+import { salesApi, purchaseApi } from "@/services/api";
 
 const groups = [
   {
@@ -57,6 +59,14 @@ const dotMap: Record<string, string> = {
 export function AppSidebar() {
   const { pathname } = useLocation();
   const isActive = (url: string) => (url === "/" ? pathname === "/" : pathname.startsWith(url));
+  const [pending, setPending] = useState(0);
+  useEffect(() => {
+    Promise.all([salesApi.all(), purchaseApi.all()]).then(([sales, purs]) => {
+      const a = sales.filter((o) => (o.contractAmount ?? o.totalAmount) - (o.received || 0) > 0).length;
+      const b = purs.filter((o) => (o.contractAmount || o.totalAmount) - (o.paid || 0) > 0).length;
+      setPending(a + b);
+    });
+  }, [pathname]);
 
   return (
     <Sidebar collapsible="icon" className="border-r-0">
@@ -136,7 +146,7 @@ export function AppSidebar() {
             月度对账
           </div>
           <div className="font-display italic text-[14px] leading-snug relative opacity-95">
-            本月还有 <span className="text-mustard not-italic font-bold">12</span> 笔账单待核对
+            本月还有 <span className="text-mustard not-italic font-bold">{pending}</span> 笔账单待核对
           </div>
           <button className="py-2 rounded-full bg-[hsl(var(--paper))] text-foreground font-bold text-[11px] hover:bg-mustard transition-colors relative tracking-wide">
             前往核对 →

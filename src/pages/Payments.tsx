@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { paymentApi, salesApi, purchaseApi, productApi } from "@/services/api";
+import { createPaymentAndSync, removePaymentAndSync } from "@/services/payments";
 import { usePagedList } from "@/hooks/usePagedList";
 import { fmtMoney } from "@/lib/format";
 import { splitPayment, pickByFilter, matchFilter, bizLabel, bizTone, type BizFilter } from "@/lib/biz";
@@ -81,7 +82,7 @@ export default function Payments() {
       amount: Number(v.amount),
       code: `${v.direction === "in" ? "RC" : "PY"}-${Date.now().toString().slice(-6)}`,
     };
-    await paymentApi.create(payload);
+    await createPaymentAndSync(payload);
     toast.success("已记账"); setOpen(false); reload();
   });
 
@@ -244,7 +245,7 @@ export default function Payments() {
         </DialogContent>
       </Dialog>
       <ConfirmDialog open={!!deletingId} onOpenChange={(v) => !v && setDeletingId(null)} title="删除流水" onConfirm={async () => {
-        if (deletingId) { await paymentApi.remove(deletingId); toast.success("已删除"); setDeletingId(null); reload(); }
+        if (deletingId) { await removePaymentAndSync(deletingId); toast.success("已删除"); setDeletingId(null); reload(); }
       }} />
     </>
   );
