@@ -255,7 +255,13 @@ export default function Purchases() {
         title="采购订单"
         meta="PURCHASE ORDER"
         subtitle="采购合同与订单一体化管理：申请 → 签约 → 执行 → 入库。"
-        actions={<><BizTabs value={biz} onChange={setBiz} /><Button size="sm" onClick={openCreate}><Plus className="h-4 w-4 mr-1.5" />新建采购订单</Button></>}
+        actions={<>
+          <BizTabs value={biz} onChange={setBiz} />
+          <Button size="sm" variant="outline" onClick={() => { setLogRefId(undefined); setLogRefCode(undefined); setLogOpen(true); }}>
+            <History className="h-4 w-4 mr-1.5" />全部日志
+          </Button>
+          <Button size="sm" onClick={openCreate}><Plus className="h-4 w-4 mr-1.5" />新建采购订单</Button>
+        </>}
       />
       <DataPanel
         title="采购订单列表"
