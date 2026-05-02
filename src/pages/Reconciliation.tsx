@@ -137,7 +137,7 @@ export default function Reconciliation() {
         subtitle={`${groups.length} parties · ${filtered.length} orders`}
         accent={tab === "in" ? "tomato" : "cobalt"}
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <div className="relative">
               <Search className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-foreground/40" />
               <Input placeholder="搜索对手方/单号" value={keyword} onChange={(e) => setKeyword(e.target.value)} className="pl-9 h-9 w-56 text-xs rounded-full" />
@@ -149,6 +149,7 @@ export default function Reconciliation() {
                 <SelectItem value="all">全部</SelectItem>
               </SelectContent>
             </Select>
+            <DateRangeFilter label="下单" value={range} onChange={setRange} />
           </div>
         }
       >
