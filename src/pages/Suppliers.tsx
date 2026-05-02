@@ -66,6 +66,7 @@ export default function Suppliers() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [supplierContacts, setSupplierContacts] = useState<SupplierContact[]>([]);
+  const [draftContacts, setDraftContacts] = useState<Omit<SupplierContact, "id">[]>([]);
   const [miniContactOpen, setMiniContactOpen] = useState(false);
 
   useEffect(() => { employeeApi.all().then(setEmployees); }, []);
