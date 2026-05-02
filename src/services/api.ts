@@ -114,6 +114,15 @@ export const supplierApi = buildCrud(suppliers, {
   searchFields: ["name", "code", "contact"],
 });
 
+export const supplierContactApi = buildCrud(supplierContacts, {
+  idPrefix: "sc",
+  searchFields: ["name", "code", "phone", "supplierName", "position"],
+  filter: (it, q) => {
+    if (q.supplierId && q.supplierId !== "all" && it.supplierId !== q.supplierId) return false;
+    return true;
+  },
+});
+
 export const purchaseApi = buildCrud(purchases, {
   idPrefix: "po",
   searchFields: ["code", "supplierName"],
