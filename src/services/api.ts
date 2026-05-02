@@ -71,7 +71,6 @@ export const customerApi = buildCrud(customers, {
   idPrefix: "c",
   searchFields: ["name", "code", "contact", "phone"],
   filter: (it, q) => {
-    if (q.type && q.type !== "all" && it.type !== q.type) return false;
     if (q.stage && q.stage !== "all" && it.stage !== q.stage) return false;
     if (q.level && q.level !== "all" && it.level !== q.level) return false;
     return true;
@@ -205,10 +204,29 @@ export const statsApi = {
     // 低库存
     const lowStock = products.filter((p) => p.stock <= p.safetyStock && p.category !== "software").slice(0, 6);
 
-    // 客户类型分布
+    // 客户业务覆盖分布（从订单聚合：纯软/纯硬/双业务）
+    const cusBiz = new Map<string, { sw: boolean; hw: boolean }>();
+    salesOrders.forEach((o) => {
+      const has = cusBiz.get(o.customerId) || { sw: false, hw: false };
+      o.items.forEach((it) => {
+        const p = products.find((pp) => pp.id === it.productId);
+        if (p?.category === "software") has.sw = true; else has.hw = true;
+      });
+      cusBiz.set(o.customerId, has);
+    });
+    let swOnly = 0, hwOnly = 0, both = 0, none = 0;
+    customers.forEach((c) => {
+      const b = cusBiz.get(c.id);
+      if (!b) none++;
+      else if (b.sw && b.hw) both++;
+      else if (b.sw) swOnly++;
+      else hwOnly++;
+    });
     const typeDist = [
-      { name: "软件客户", value: customers.filter((c) => c.type === "software").length },
-      { name: "硬件客户", value: customers.filter((c) => c.type === "hardware").length },
+      { name: "纯软件客户", value: swOnly },
+      { name: "纯硬件客户", value: hwOnly },
+      { name: "软+硬客户", value: both },
+      { name: "无订单", value: none },
     ];
 
     return {

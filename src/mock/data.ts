@@ -28,7 +28,6 @@ export const employees: Employee[] = [
 
 // ---------- Customers ----------
 export const customers: Customer[] = Array.from({ length: 48 }).map((_, i) => {
-  const type = Random.pick(["software", "hardware"]) as Customer["type"];
   const stage = Random.pick(["lead", "lead", "formal", "formal", "formal"]) as Customer["stage"];
   const name = (Random as any).cnCompany();
   return {
@@ -36,7 +35,6 @@ export const customers: Customer[] = Array.from({ length: 48 }).map((_, i) => {
     code: `CUS-${pad(1001 + i)}`,
     name,
     taxNo: "91" + Mock.mock(/[0-9A-Z]{16}/),
-    type,
     status: Random.pick(["active", "active", "potential", "inactive", "lost"]) as Customer["status"],
     region: Random.pick(["华东", "华南", "华北", "华中", "西南", "西北", "东北"]),
     stage,
