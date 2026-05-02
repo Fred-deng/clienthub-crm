@@ -377,14 +377,7 @@ export default function Customers() {
             {/* 合作信息 */}
             <GroupTitle>合作信息</GroupTitle>
             <Field label="首次合作时间"><Input type="date" {...register("firstCooperationAt")} /></Field>
-            <Field label="合作状态">
-              <Select value={watch("cooperationStatus") || ""} onValueChange={(v: any) => setValue("cooperationStatus", v)}>
-                <SelectTrigger><SelectValue placeholder="请选择" /></SelectTrigger>
-                <SelectContent>
-                  {["未合作","意向中","合作中","已暂停","已终止"].map(n => <SelectItem key={n} value={n}>{n}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </Field>
+            {/* 合作状态已合并至顶部「客户状态」，此处不再单独展示 */}
             <Field label="合作产品/服务"><Input placeholder="请输入合作产品/服务" {...register("cooperationProducts")} /></Field>
             <Field label="销售负责人">
               <Select value={watch("ownerId")} onValueChange={(v: any) => setValue("ownerId", v)}>
