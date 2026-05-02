@@ -84,6 +84,12 @@ export default function Customers() {
   const [draftFollowUps, setDraftFollowUps] = useState<Omit<FollowUp, "id">[]>([]);
   const [miniContactOpen, setMiniContactOpen] = useState(false);
   const [miniFollowUpOpen, setMiniFollowUpOpen] = useState(false);
+  // 批量选择
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [bulkSeaOpen, setBulkSeaOpen] = useState(false);
+  const [bulkStatusOpen, setBulkStatusOpen] = useState(false);
+  const [bulkSeaValue, setBulkSeaValue] = useState<"公海" | "私海">("私海");
+  const [bulkStatusValue, setBulkStatusValue] = useState<string>("active");
   
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
