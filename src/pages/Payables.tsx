@@ -166,6 +166,7 @@ export default function Payables() {
                 <SelectItem value="settled">已结清</SelectItem>
               </SelectContent>
             </Select>
+            <DateRangeFilter label="下单" value={range} onChange={setRange} />
           </div>
         }
       >
