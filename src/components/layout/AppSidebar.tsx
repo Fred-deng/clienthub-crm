@@ -123,7 +123,12 @@ export function AppSidebar() {
                             }
                           />
                           <span className="text-[13px] tracking-tight">{item.title}</span>
-                          {active && (
+                          {item.url === "/products" && lowStockCount > 0 && (
+                            <span className="ml-auto inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-tomato text-[hsl(var(--paper))] text-[10px] font-bold leading-none">
+                              {lowStockCount}
+                            </span>
+                          )}
+                          {active && item.url !== "/products" && (
                             <span className="ml-auto font-mono text-[9px] text-foreground/40">
                               ●
                             </span>
