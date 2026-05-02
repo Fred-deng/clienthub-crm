@@ -211,7 +211,7 @@ export const statsApi = {
 
     // 月度销售趋势（按 createdAt 分组，软硬件分列）
     const trendMap = new Map<string, { software: number; hardware: number; amount: number }>();
-    salesOrders.forEach((o) => {
+    activeSales.forEach((o) => {
       const m = o.createdAt.slice(0, 7);
       const cur = trendMap.get(m) || { software: 0, hardware: 0, amount: 0 };
       const s = splitSales(o, products);
@@ -227,7 +227,7 @@ export const statsApi = {
 
     // 销售员业绩（拆分软硬件）
     const ownerMap = new Map<string, { amount: number; software: number; hardware: number }>();
-    salesOrders.forEach((o) => {
+    activeSales.forEach((o) => {
       const cur = ownerMap.get(o.ownerId) || { amount: 0, software: 0, hardware: 0 };
       const s = splitSales(o, products);
       cur.amount += s.total; cur.software += s.software; cur.hardware += s.hardware;
