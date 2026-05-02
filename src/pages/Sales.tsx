@@ -284,7 +284,7 @@ export default function Sales() {
               })}
             </tbody>
             {data.list.length > 0 && (() => {
-              const sumContract = data.list.reduce((s, o) => s + (o.contractAmount ?? o.totalAmount), 0);
+              const sumContract = data.list.reduce((s, o) => s + o.totalAmount, 0);
               const sumReceived = data.list.reduce((s, o) => s + o.received, 0);
               const sumInvoice = data.list.reduce((s, o) => s + (o.invoices || []).reduce((a, r) => a + (r.amount || 0), 0), 0);
               return (
