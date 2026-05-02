@@ -189,12 +189,35 @@ export interface PurchaseItem {
 }
 export interface PurchaseOrder {
   id: string;
-  code: string;
-  supplierId: string;
+  code: string;                 // 采购订单号
+
+  // —— 申请信息 ——
+  applicantId: string;          // 申请人
+  department?: string;          // 所属部门
+  appliedAt: string;            // 申请日期
+
+  // —— 合同与签约 ——
+  supplierId: string;           // 供应商
   supplierName: string;
+  contractTitle?: string;       // 合同名称
+  signingParty?: string;        // 签约单位（我方主体）
+  signedAt?: string;            // 签订日期
+  contractExpireAt?: string;    // 合同到期日
+  contractAmount?: number;      // 合同金额
+  linkedSalesContract?: boolean;// 是否关联销售合同
+  linkedSalesContractId?: string;
+
+  // —— 采购执行 ——
+  buyerId?: string;             // 采购经理
+
+  // —— 附件 ——
+  contractAttachments?: string[];
+  invoiceAttachments?: string[];
+
+  // —— 业务字段 ——
   status: PurchaseStatus;
   items: PurchaseItem[];
-  totalAmount: number;
+  totalAmount: number;          // 明细合计
   paid: number;
   createdAt: string;
   expectedAt: string;
