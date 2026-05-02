@@ -294,6 +294,15 @@ export default function Purchases() {
           <table className="data-table">
             <thead>
               <tr>
+                <th className="w-10">
+                  <Checkbox
+                    checked={data.list.length > 0 && data.list.every((o) => selectedIds.includes(o.id))}
+                    onCheckedChange={(v) => {
+                      if (v) setSelectedIds(Array.from(new Set([...selectedIds, ...data.list.map((o) => o.id)])));
+                      else setSelectedIds(selectedIds.filter((id) => !data.list.find((o) => o.id === id)));
+                    }}
+                  />
+                </th>
                 <th>单号</th>
                 <th>合同/订单</th>
                 <th>供应商</th>
@@ -310,17 +319,24 @@ export default function Purchases() {
               </tr>
             </thead>
             <tbody>
-              {loading && <tr className="empty"><td colSpan={13} className="empty">加载中…</td></tr>}
+              {loading && <tr className="empty"><td colSpan={14} className="empty">加载中…</td></tr>}
               {!loading && data.list.length === 0 && (
-                <tr className="empty"><td colSpan={13} className="empty">暂无采购订单</td></tr>
+                <tr className="empty"><td colSpan={14} className="empty">暂无采购订单</td></tr>
               )}
               {data.list
                 .map((o) => ({ o, split: splitPurchase(o, products) }))
                 .filter(({ split }) => biz === "all" || (biz === "software" ? split.software > 0 : split.hardware > 0))
                 .map(({ o, split }) => {
                 const unpaid = o.totalAmount - o.paid;
+                const checked = selectedIds.includes(o.id);
                 return (
                   <tr key={o.id} className="clickable" onDoubleClick={() => openEdit(o)} title="双击查看详情">
+                    <td onDoubleClick={(e) => e.stopPropagation()}>
+                      <Checkbox
+                        checked={checked}
+                        onCheckedChange={(v) => setSelectedIds(v ? [...selectedIds, o.id] : selectedIds.filter((x) => x !== o.id))}
+                      />
+                    </td>
                     <td className="mono">{o.code}</td>
                     <td>
                       <div className="font-semibold truncate max-w-[200px]">{o.contractTitle || "—"}</div>
