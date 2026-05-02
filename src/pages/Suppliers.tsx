@@ -364,14 +364,13 @@ export default function Suppliers() {
         </DialogContent>
       </Dialog>
 
-      {editing && (
-        <MiniSupplierContactDialog
-          open={miniContactOpen}
-          onOpenChange={setMiniContactOpen}
-          supplier={editing}
-          onCreated={reloadSupplierContacts}
-        />
-      )}
+      <MiniSupplierContactDialog
+        open={miniContactOpen}
+        onOpenChange={setMiniContactOpen}
+        supplier={editing ?? ({ id: "", name: watch("name") || "（未保存供应商）" } as Supplier)}
+        onCreated={editing ? reloadSupplierContacts : undefined}
+        onDraft={editing ? undefined : (d) => setDraftContacts((arr) => [...arr, d])}
+      />
 
       <ConfirmDialog
         open={!!deletingId}
