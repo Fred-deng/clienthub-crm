@@ -154,6 +154,47 @@ export function revertSalesDeliver(order: SalesOrder, operator?: string, reason 
   });
 }
 
+/**
+ * 销售订单保存时统一同步出库（覆盖创建/编辑/状态切换/明细变更）
+ *  - prev 为 null：新建
+ *  - 仅当 next.status === "delivered" 时占用库存；从 delivered 撤离时回滚
+ *  - delivered → delivered 且明细变化：先按旧明细回滚，再按新明细扣减
+ */
+export function syncSalesStock(
+  prev: SalesOrder | null,
+  next: SalesOrder,
+  operator?: string,
+) {
+  const wasDelivered = prev?.status === "delivered";
+  const isDelivered = next.status === "delivered";
+  if (!wasDelivered && isDelivered) {
+    applySalesDeliver(next, operator);
+  } else if (wasDelivered && !isDelivered) {
+    revertSalesDeliver(prev!, operator, "状态变更撤销出库");
+  } else if (wasDelivered && isDelivered) {
+    revertSalesDeliver(prev!, operator, "明细变更回滚");
+    applySalesDeliver(next, operator);
+  }
+}
+
+/** 采购订单保存时统一同步入库（与 syncSalesStock 对称） */
+export function syncPurchaseStock(
+  prev: PurchaseOrder | null,
+  next: PurchaseOrder,
+  operator?: string,
+) {
+  const wasReceived = prev?.status === "received";
+  const isReceived = next.status === "received";
+  if (!wasReceived && isReceived) {
+    applyPurchaseReceive(next, operator);
+  } else if (wasReceived && !isReceived) {
+    revertPurchaseReceive(prev!, operator, "状态变更撤销入库");
+  } else if (wasReceived && isReceived) {
+    revertPurchaseReceive(prev!, operator, "明细变更回滚");
+    applyPurchaseReceive(next, operator);
+  }
+}
+
 /** 记录产品信息修改/删除（非数量） */
 export function logProductChange(p: Product, action: "update" | "delete", remark?: string, operator?: string) {
   writeLog({

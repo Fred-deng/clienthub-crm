@@ -22,7 +22,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { salesApi, customerApi, productApi, employeeApi } from "@/services/api";
 import { logOrderUpdate, logOrderDelete } from "@/services/orderLog";
-import { applySalesDeliver, revertSalesDeliver } from "@/services/inventory";
+import { syncSalesStock, revertSalesDeliver } from "@/services/inventory";
 import { readCurrentOperator } from "@/context/CurrentUserContext";
 import { OrderLogDialog } from "@/components/common/OrderLogDialog";
 import { usePagedList } from "@/hooks/usePagedList";
@@ -186,24 +186,14 @@ export default function Sales() {
       productStdCost: Number(v.productStdCost) || 0,
     };
     const op = readCurrentOperator();
-    const nextStatus = payload.status as SalesOrder["status"];
     if (editing) {
-      const prevStatus = editing.status;
-      if (prevStatus === "delivered" && nextStatus !== "delivered") {
-        revertSalesDeliver(editing, op, "状态变更撤销出库");
-      }
-      if (nextStatus === "delivered" && prevStatus !== "delivered") {
-        applySalesDeliver({ ...editing, ...payload }, op);
-      }
-      if (prevStatus === "delivered" && nextStatus === "delivered") {
-        revertSalesDeliver(editing, op, "明细变更回滚");
-        applySalesDeliver({ ...editing, ...payload }, op);
-      }
+      const merged = { ...editing, ...payload } as SalesOrder;
+      syncSalesStock(editing, merged, op);
       logOrderUpdate("sales", editing, payload);
       await salesApi.update(editing.id, payload);
     } else {
       const created = await salesApi.create(payload);
-      if (nextStatus === "delivered") applySalesDeliver(created, op);
+      syncSalesStock(null, created, op);
     }
     toast.success("已保存"); setOpen(false); reload();
   });
@@ -311,7 +301,9 @@ export default function Sales() {
                     <td className="num">{fmtMoney(sumContract)}</td>
                     <td className="num text-mint">{fmtMoney(sumReceived)}</td>
                     <td className="num text-cobalt">{fmtMoney(sumInvoice)}</td>
-                    <td colSpan={3} />
+                    <td />
+                    <td />
+                    <td />
                   </tr>
                 </tfoot>
               );

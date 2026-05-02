@@ -62,8 +62,8 @@ export function AppSidebar() {
   const [pending, setPending] = useState(0);
   useEffect(() => {
     Promise.all([salesApi.all(), purchaseApi.all()]).then(([sales, purs]) => {
-      const a = sales.filter((o) => (o.contractAmount ?? o.totalAmount) - (o.received || 0) > 0).length;
-      const b = purs.filter((o) => (o.contractAmount || o.totalAmount) - (o.paid || 0) > 0).length;
+      const a = sales.filter((o) => o.status !== "cancelled" && (o.contractAmount ?? o.totalAmount) - (o.received || 0) > 0).length;
+      const b = purs.filter((o) => o.status !== "cancelled" && o.status !== "draft" && (o.contractAmount || o.totalAmount) - (o.paid || 0) > 0).length;
       setPending(a + b);
     });
   }, [pathname]);
@@ -143,10 +143,10 @@ export function AppSidebar() {
           <div className="absolute -left-6 -bottom-6 size-20 rounded-full bg-tomato/20 blur-2xl" />
           <div className="flex items-center gap-2 text-[9px] opacity-80 font-bold tracking-[0.28em] uppercase relative">
             <span className="size-1 rounded-full bg-mint" />
-            月度对账
+            账款核对
           </div>
           <div className="font-display italic text-[14px] leading-snug relative opacity-95">
-            本月还有 <span className="text-mustard not-italic font-bold">{pending}</span> 笔账单待核对
+            还有 <span className="text-mustard not-italic font-bold">{pending}</span> 笔账款待结清
           </div>
           <button className="py-2 rounded-full bg-[hsl(var(--paper))] text-foreground font-bold text-[11px] hover:bg-mustard transition-colors relative tracking-wide">
             前往核对 →

@@ -91,7 +91,7 @@ export const contactApi = buildCrud(contacts, {
 
 export const followUpApi = buildCrud(followUps, {
   idPrefix: "fu",
-  searchFields: ["code", "customerName", "subject", "content", "contactName"],
+  searchFields: ["code", "customerName", "subject", "content", "contactName", "oppStatus", "salesLead", "intentProduct"],
   filter: (it, q) => {
     if (q.customerId && q.customerId !== "all" && it.customerId !== q.customerId) return false;
     if (q.contactWay && q.contactWay !== "all" && it.contactWay !== q.contactWay) return false;
@@ -177,10 +177,13 @@ export const statsApi = {
   async dashboard() {
     await delay(150);
     const month = new Date().toISOString().slice(0, 7);
-    const monthSales = salesOrders.filter((o) => (o.createdAt || "").startsWith(month));
+    // 有效销售订单：排除已取消（统计销售额时用全部已生效订单）
+    const activeSales = salesOrders.filter((o) => o.status !== "cancelled");
+    const activePurs = purchases.filter((p) => p.status !== "cancelled" && p.status !== "draft");
+    const monthSales = activeSales.filter((o) => (o.createdAt || "").startsWith(month));
     const monthRevenue = monthSales.reduce((s, o) => s + (o.contractAmount ?? o.totalAmount), 0);
-    const receivable = salesOrders.reduce((s, o) => s + Math.max((o.contractAmount ?? o.totalAmount) - o.received, 0), 0);
-    const payable = purchases.reduce((s, p) => s + Math.max((p.contractAmount || p.totalAmount) - p.paid, 0), 0);
+    const receivable = activeSales.reduce((s, o) => s + Math.max((o.contractAmount ?? o.totalAmount) - o.received, 0), 0);
+    const payable = activePurs.reduce((s, p) => s + Math.max((p.contractAmount || p.totalAmount) - p.paid, 0), 0);
     const activeContracts = contracts.filter((c) => c.status === "active").length;
     const formalCustomers = customers.filter((c) => c.stage === "formal").length;
     const leadCustomers = customers.filter((c) => c.stage === "lead").length;
@@ -191,12 +194,12 @@ export const statsApi = {
       const s = splitSales(o, products);
       revSw += s.software; revHw += s.hardware;
     });
-    salesOrders.forEach((o) => {
+    activeSales.forEach((o) => {
       const r = splitSalesReceived(o, products);
       recvSw += r.software; recvHw += r.hardware;
     });
     let payableSw = 0, payableHw = 0;
-    purchases.forEach((p) => {
+    activePurs.forEach((p) => {
       const s = splitPurchase(p, products);
       payableSw += s.software; payableHw += s.hardware;
       const paid = splitPurchasePaid(p, products);
@@ -208,7 +211,7 @@ export const statsApi = {
 
     // 月度销售趋势（按 createdAt 分组，软硬件分列）
     const trendMap = new Map<string, { software: number; hardware: number; amount: number }>();
-    salesOrders.forEach((o) => {
+    activeSales.forEach((o) => {
       const m = o.createdAt.slice(0, 7);
       const cur = trendMap.get(m) || { software: 0, hardware: 0, amount: 0 };
       const s = splitSales(o, products);
@@ -224,7 +227,7 @@ export const statsApi = {
 
     // 销售员业绩（拆分软硬件）
     const ownerMap = new Map<string, { amount: number; software: number; hardware: number }>();
-    salesOrders.forEach((o) => {
+    activeSales.forEach((o) => {
       const cur = ownerMap.get(o.ownerId) || { amount: 0, software: 0, hardware: 0 };
       const s = splitSales(o, products);
       cur.amount += s.total; cur.software += s.software; cur.hardware += s.hardware;

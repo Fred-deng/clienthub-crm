@@ -74,10 +74,10 @@ export default function Suppliers() {
   const [allPurchases, setAllPurchases] = useState<PurchaseOrder[]>([]);
   useEffect(() => { employeeApi.all().then(setEmployees); purchaseApi.all().then(setAllPurchases); }, []);
 
-  // 动态应付：按供应商聚合「明细合计 - 已付」
+  // 动态应付：按供应商聚合「明细合计 - 已付」（排除草稿/已取消）
   const payableBySupplier = useMemo(() => {
     const m = new Map<string, number>();
-    allPurchases.forEach((o) => {
+    allPurchases.filter((o) => o.status !== "cancelled" && o.status !== "draft").forEach((o) => {
       const total = o.contractAmount || o.totalAmount;
       const remain = Math.max(total - (o.paid || 0), 0);
       m.set(o.supplierId, (m.get(o.supplierId) || 0) + remain);

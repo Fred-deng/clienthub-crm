@@ -43,7 +43,7 @@ export default function Receivables() {
 
   const rows: Row[] = useMemo(() => {
     const map = new Map<string, Row>();
-    orders.forEach((o) => {
+    orders.filter((o) => o.status !== "cancelled").forEach((o) => {
       const contract = o.contractAmount ?? o.totalAmount;
       const invoiced = (o.invoices || []).reduce((s, r) => s + (r.amount || 0), 0);
       const sCon = splitSales(o, products);
@@ -56,7 +56,7 @@ export default function Receivables() {
         invoiced: 0,
         received: 0,
         outstanding: 0,
-        oldest: o.signedAt ?? o.createdAt,
+        oldest: o.createdAt,
         swContract: 0, hwContract: 0,
         swReceived: 0, hwReceived: 0,
         swOutstanding: 0, hwOutstanding: 0,
@@ -70,7 +70,7 @@ export default function Receivables() {
       r.outstanding = r.contractAmount - r.received;
       r.swOutstanding = r.swContract - r.swReceived;
       r.hwOutstanding = r.hwContract - r.hwReceived;
-      const t = o.signedAt ?? o.createdAt;
+      const t = o.createdAt;
       if (t < r.oldest) r.oldest = t;
       map.set(o.customerId, r);
     });
@@ -177,16 +177,16 @@ export default function Receivables() {
                 <th>等级</th>
                 <th className="num">合同数</th>
                 <th className="num">合同金额{biz !== "all" && <span className="text-[10px] text-foreground/45 ml-1">({biz === "software" ? "软" : "硬"})</span>}</th>
-                <th className="num">已开票</th>
+                {biz === "all" && <th className="num">已开票</th>}
                 <th className="num">已回款</th>
                 <th className="num">未收账款</th>
-                <th className="num">最早签约</th>
+                <th className="num">最早下单</th>
                 <th className="num">账龄(天)</th>
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 && (
-                <tr className="empty"><td colSpan={9} className="empty">暂无应收数据</td></tr>
+                <tr className="empty"><td colSpan={biz === "all" ? 9 : 8} className="empty">暂无应收数据</td></tr>
               )}
               {filtered.map((r) => {
                 const days = aging(r.oldest);
@@ -203,7 +203,7 @@ export default function Receivables() {
                         <div className="text-[10px] text-foreground/45 mono">软{fmtMoneyShort(r.swContract)} · 硬{fmtMoneyShort(r.hwContract)}</div>
                       )}
                     </td>
-                    <td className="num text-cobalt">{fmtMoney(r.invoiced)}</td>
+                    {biz === "all" && <td className="num text-cobalt">{fmtMoney(r.invoiced)}</td>}
                     <td className="num text-mint">{fmtMoney(v.received)}</td>
                     <td className={"num " + (v.outstanding > 0 ? "text-tomato" : "text-foreground/40")}>{fmtMoney(v.outstanding)}</td>
                     <td className="num mono text-[12px] text-foreground/60">{r.oldest}</td>
@@ -217,7 +217,7 @@ export default function Receivables() {
                 <tr>
                   <td colSpan={3} className="label">合计 {filtered.length} 客户</td>
                   <td className="num">{fmtMoney(totals.contract)}</td>
-                  <td className="num text-cobalt">{fmtMoney(totals.invoiced)}</td>
+                  {biz === "all" && <td className="num text-cobalt">{fmtMoney(totals.invoiced)}</td>}
                   <td className="num text-mint">{fmtMoney(totals.received)}</td>
                   <td className="num text-tomato">{fmtMoney(totals.outstanding)}</td>
                   <td colSpan={2} />

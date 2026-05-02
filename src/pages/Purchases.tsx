@@ -21,7 +21,7 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { purchaseApi, supplierApi, productApi, employeeApi, contractApi } from "@/services/api";
-import { applyPurchaseReceive, revertPurchaseReceive, findOrCreateProductByName } from "@/services/inventory";
+import { syncPurchaseStock, applyPurchaseReceive, revertPurchaseReceive, findOrCreateProductByName } from "@/services/inventory";
 import { logOrderUpdate, logOrderDelete } from "@/services/orderLog";
 import { useCurrentUser } from "@/context/CurrentUserContext";
 import { OrderLogDialog } from "@/components/common/OrderLogDialog";
@@ -189,25 +189,15 @@ export default function Purchases() {
 
     // 2) 库存联动：状态切换涉及 received 时加减
     const op = current.name;
-    const prevStatus = editing?.status;
-    const nextStatus = payload.status as PurchaseOrder["status"];
     if (editing) {
-      if (prevStatus === "received" && nextStatus !== "received") {
-        revertPurchaseReceive(editing, op, "状态变更撤销入库");
-      }
-      if (nextStatus === "received" && prevStatus !== "received") {
-        applyPurchaseReceive({ ...editing, ...payload }, op);
-      }
-      if (prevStatus === "received" && nextStatus === "received") {
-        revertPurchaseReceive(editing, op, "明细变更回滚");
-        applyPurchaseReceive({ ...editing, ...payload }, op);
-      }
+      const merged = { ...editing, ...payload } as PurchaseOrder;
+      syncPurchaseStock(editing, merged, op);
       // 写订单操作日志（仅修改）
       logOrderUpdate("purchase", editing, payload);
       await purchaseApi.update(editing.id, payload);
     } else {
       const created = await purchaseApi.create(payload);
-      if (nextStatus === "received") applyPurchaseReceive(created, op);
+      syncPurchaseStock(null, created, op);
     }
     toast.success("已保存");
     setOpen(false);
