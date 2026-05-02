@@ -544,6 +544,12 @@ export default function Sales() {
         refId={logRefId}
         refCode={logRefCode}
       />
+      <CancelOrderDialog
+        open={cancelOpen}
+        onOpenChange={setCancelOpen}
+        refCode={editing?.code}
+        onConfirm={(reason) => { setCancelReason(reason); setValue("status", "cancelled"); }}
+      />
     </>
   );
 }
