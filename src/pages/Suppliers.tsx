@@ -185,7 +185,7 @@ export default function Suppliers() {
                     </div>
                   </td>
                   <td>
-                    <span className="cell-chip bg-foreground/5 text-foreground/75 ring-1 ring-foreground/10">{s.category}</span>
+                    <span className="cell-chip bg-foreground/5 text-foreground/75 ring-1 ring-foreground/10">{categoryStore.labelOf(s.category)}</span>
                   </td>
                   <td>
                     <div className="font-medium">{s.contact}</div>
