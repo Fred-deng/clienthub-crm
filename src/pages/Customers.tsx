@@ -447,138 +447,161 @@ export default function Customers() {
             </Field>
 
             {/* 客户联系人子表（仅编辑现有客户时显示） */}
-            {editing && (
-              <>
-                <GroupTitle>客户联系人</GroupTitle>
-                <div className="col-span-12 rounded-xl border border-foreground/10 bg-card overflow-hidden">
-                  <div className="flex items-center justify-between px-4 py-2.5 bg-foreground/[0.03] border-b border-foreground/8">
-                    <div className="text-xs text-foreground/60">
-                      共 <span className="font-bold text-foreground">{customerContacts.length}</span> 位联系人
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Link
-                        to={`/contacts?customerId=${editing.id}`}
-                        className="text-[11px] text-cobalt hover:underline"
-                      >
-                        前往联系人页 →
-                      </Link>
-                      <Button type="button" size="sm" variant="outline" onClick={() => setMiniContactOpen(true)}>
-                        <Plus className="h-3.5 w-3.5 mr-1" />新增联系人
-                      </Button>
-                    </div>
-                  </div>
-                  {customerContacts.length === 0 ? (
-                    <div className="px-4 py-6 text-center text-xs text-foreground/45">暂无联系人，点击右上角新增。</div>
-                  ) : (
-                    <table className="data-table">
-                      <thead>
-                        <tr>
-                          <th>姓名</th>
-                          <th>职位</th>
-                          <th>手机号</th>
-                          <th>邮箱</th>
-                          <th>负责人</th>
-                          <th className="num">操作</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {customerContacts.map((ct) => (
-                          <tr key={ct.id}>
-                            <td>
-                              <div className="flex items-center gap-1.5 font-semibold">
-                                {ct.name}
-                                {ct.isPrimary && <Star className="h-3 w-3 fill-tomato text-tomato" />}
-                              </div>
-                            </td>
-                            <td className="text-foreground/70">{ct.position || "—"}</td>
-                            <td className="mono">{ct.phone}</td>
-                            <td className="text-foreground/65 text-[12px]">{ct.email || "—"}</td>
-                            <td className="text-foreground/70">{ownerName(ct.ownerId)}</td>
-                            <td className="num">
+            {/* 客户联系人子表（编辑：真实数据 / 新增：草稿） */}
+            <GroupTitle>客户联系人</GroupTitle>
+            <div className="col-span-12 rounded-xl border border-foreground/10 bg-card overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-2.5 bg-foreground/[0.03] border-b border-foreground/8">
+                <div className="text-xs text-foreground/60">
+                  共 <span className="font-bold text-foreground">{editing ? customerContacts.length : draftContacts.length}</span> 位联系人
+                  {!editing && <span className="ml-2 text-foreground/40">（保存客户时一并创建）</span>}
+                </div>
+                <div className="flex items-center gap-2">
+                  {editing && (
+                    <Link
+                      to={`/contacts?customerId=${editing.id}`}
+                      className="text-[11px] text-cobalt hover:underline"
+                    >
+                      前往联系人页 →
+                    </Link>
+                  )}
+                  <Button type="button" size="sm" variant="outline" onClick={() => setMiniContactOpen(true)}>
+                    <Plus className="h-3.5 w-3.5 mr-1" />新增联系人
+                  </Button>
+                </div>
+              </div>
+              {(editing ? customerContacts.length : draftContacts.length) === 0 ? (
+                <div className="px-4 py-6 text-center text-xs text-foreground/45">暂无联系人，点击右上角新增。</div>
+              ) : (
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>姓名</th>
+                      <th>职位</th>
+                      <th>手机号</th>
+                      <th>邮箱</th>
+                      <th>负责人</th>
+                      <th className="num">操作</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(editing ? customerContacts : draftContacts).map((ct, idx) => (
+                      <tr key={(ct as any).id ?? `draft-${idx}`}>
+                        <td>
+                          <div className="flex items-center gap-1.5 font-semibold">
+                            {ct.name}
+                            {ct.isPrimary && <Star className="h-3 w-3 fill-tomato text-tomato" />}
+                          </div>
+                        </td>
+                        <td className="text-foreground/70">{ct.position || "—"}</td>
+                        <td className="mono">{ct.phone}</td>
+                        <td className="text-foreground/65 text-[12px]">{ct.email || "—"}</td>
+                        <td className="text-foreground/70">{ownerName(ct.ownerId)}</td>
+                        <td className="num">
+                          {editing ? (
+                            <Link
+                              to={`/contacts?customerId=${editing.id}&editId=${(ct as any).id}`}
+                              className="text-[11px] text-cobalt hover:underline"
+                            >
+                              编辑
+                            </Link>
+                          ) : (
+                            <button
+                              type="button"
+                              className="text-[11px] text-tomato hover:underline"
+                              onClick={() => setDraftContacts((arr) => arr.filter((_, i) => i !== idx))}
+                            >
+                              移除
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+
+            <GroupTitle>跟进记录</GroupTitle>
+            <div className="col-span-12 rounded-xl border border-foreground/10 bg-card overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-2.5 bg-foreground/[0.03] border-b border-foreground/8">
+                <div className="text-xs text-foreground/60">
+                  共 <span className="font-bold text-foreground">{editing ? customerFollowUps.length : draftFollowUps.length}</span> 条跟进
+                  {!editing && <span className="ml-2 text-foreground/40">（保存客户时一并创建）</span>}
+                </div>
+                <div className="flex items-center gap-2">
+                  {editing && (
+                    <Link
+                      to={`/follow-ups?customerId=${editing.id}`}
+                      className="text-[11px] text-cobalt hover:underline"
+                    >
+                      前往跟进记录页 →
+                    </Link>
+                  )}
+                  <Button type="button" size="sm" variant="outline" onClick={() => setMiniFollowUpOpen(true)}>
+                    <Plus className="h-3.5 w-3.5 mr-1" />新增跟进
+                  </Button>
+                </div>
+              </div>
+              {(editing ? customerFollowUps.length : draftFollowUps.length) === 0 ? (
+                <div className="px-4 py-6 text-center text-xs text-foreground/45">暂无跟进记录，点击右上角新增。</div>
+              ) : (
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>主题</th>
+                      <th>形式</th>
+                      <th>商机状态</th>
+                      <th>联系日期</th>
+                      <th>下次回访</th>
+                      <th className="num">预计金额</th>
+                      <th>负责人</th>
+                      <th className="num">操作</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(editing ? customerFollowUps : draftFollowUps).map((f, idx) => {
+                      const Icon = wayIcon[f.contactWay] ?? MoreHorizontal;
+                      return (
+                        <tr key={(f as any).id ?? `draft-${idx}`}>
+                          <td>
+                            <div className="font-semibold">{f.subject}</div>
+                            <div className="text-[11px] text-foreground/45 truncate max-w-[260px]">{f.content}</div>
+                          </td>
+                          <td>
+                            <span className="cell-chip bg-foreground/5 text-foreground/75 ring-1 ring-foreground/10 inline-flex items-center gap-1">
+                              <Icon className="h-3 w-3" />{f.contactWay}
+                            </span>
+                          </td>
+                          <td className="text-foreground/70">{f.oppStatus || "—"}</td>
+                          <td className="mono text-[12px]">{f.contactDate}</td>
+                          <td className="mono text-[12px] text-foreground/65">{f.nextVisitAt || "—"}</td>
+                          <td className="num">{f.expectedAmount ? fmtMoney(f.expectedAmount) : "—"}</td>
+                          <td className="text-foreground/70">{ownerName(f.ownerId)}</td>
+                          <td className="num">
+                            {editing ? (
                               <Link
-                                to={`/contacts?customerId=${editing.id}&editId=${ct.id}`}
+                                to={`/follow-ups?customerId=${editing.id}&editId=${(f as any).id}`}
                                 className="text-[11px] text-cobalt hover:underline"
                               >
                                 编辑
                               </Link>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  )}
-                </div>
-
-                <GroupTitle>跟进记录</GroupTitle>
-                <div className="col-span-12 rounded-xl border border-foreground/10 bg-card overflow-hidden">
-                  <div className="flex items-center justify-between px-4 py-2.5 bg-foreground/[0.03] border-b border-foreground/8">
-                    <div className="text-xs text-foreground/60">
-                      共 <span className="font-bold text-foreground">{customerFollowUps.length}</span> 条跟进
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Link
-                        to={`/follow-ups?customerId=${editing.id}`}
-                        className="text-[11px] text-cobalt hover:underline"
-                      >
-                        前往跟进记录页 →
-                      </Link>
-                      <Button type="button" size="sm" variant="outline" onClick={() => setMiniFollowUpOpen(true)}>
-                        <Plus className="h-3.5 w-3.5 mr-1" />新增跟进
-                      </Button>
-                    </div>
-                  </div>
-                  {customerFollowUps.length === 0 ? (
-                    <div className="px-4 py-6 text-center text-xs text-foreground/45">暂无跟进记录，点击右上角新增。</div>
-                  ) : (
-                    <table className="data-table">
-                      <thead>
-                        <tr>
-                          <th>主题</th>
-                          <th>形式</th>
-                          <th>商机状态</th>
-                          <th>联系日期</th>
-                          <th>下次回访</th>
-                          <th className="num">预计金额</th>
-                          <th>负责人</th>
-                          <th className="num">操作</th>
+                            ) : (
+                              <button
+                                type="button"
+                                className="text-[11px] text-tomato hover:underline"
+                                onClick={() => setDraftFollowUps((arr) => arr.filter((_, i) => i !== idx))}
+                              >
+                                移除
+                              </button>
+                            )}
+                          </td>
                         </tr>
-                      </thead>
-                      <tbody>
-                        {customerFollowUps.map((f) => {
-                          const Icon = wayIcon[f.contactWay] ?? MoreHorizontal;
-                          return (
-                            <tr key={f.id}>
-                              <td>
-                                <div className="font-semibold">{f.subject}</div>
-                                <div className="text-[11px] text-foreground/45 truncate max-w-[260px]">{f.content}</div>
-                              </td>
-                              <td>
-                                <span className="cell-chip bg-foreground/5 text-foreground/75 ring-1 ring-foreground/10 inline-flex items-center gap-1">
-                                  <Icon className="h-3 w-3" />{f.contactWay}
-                                </span>
-                              </td>
-                              <td className="text-foreground/70">{f.oppStatus || "—"}</td>
-                              <td className="mono text-[12px]">{f.contactDate}</td>
-                              <td className="mono text-[12px] text-foreground/65">{f.nextVisitAt || "—"}</td>
-                              <td className="num">{f.expectedAmount ? fmtMoney(f.expectedAmount) : "—"}</td>
-                              <td className="text-foreground/70">{ownerName(f.ownerId)}</td>
-                              <td className="num">
-                                <Link
-                                  to={`/follow-ups?customerId=${editing.id}&editId=${f.id}`}
-                                  className="text-[11px] text-cobalt hover:underline"
-                                >
-                                  编辑
-                                </Link>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  )}
-                </div>
-              </>
-            )}
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </div>
 
             <DialogFooter className="col-span-12 mt-4">
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>取消</Button>
