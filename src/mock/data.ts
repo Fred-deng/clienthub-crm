@@ -220,6 +220,7 @@ export const contracts: Contract[] = Array.from({ length: 30 }).map((_, i) => {
 });
 
 // ---------- Sales orders ----------
+const salesContractTitlePool = ["年度系统服务合同", "工控设备销售合同", "MES 项目实施合同", "运维服务合同", "定制开发合同"];
 export const salesOrders: SalesOrder[] = Array.from({ length: 40 }).map((_, i) => {
   const cus = Random.pick(customers.filter((c) => c.stage === "formal"));
   const items = Array.from({ length: Random.integer(1, 4) }).map(() => {
@@ -230,11 +231,38 @@ export const salesOrders: SalesOrder[] = Array.from({ length: 40 }).map((_, i) =
   const total = items.reduce((s, it) => s + it.qty * it.price, 0);
   const status = Random.pick(["pending", "shipped", "delivered", "delivered"]) as SalesOrder["status"];
   const received = status === "delivered" ? Random.pick([total, total, Math.floor(total * 0.5), 0]) : 0;
+  const applicant = Random.pick(employees.filter((e) => e.role !== "管理员"));
+  const account = Random.pick(["u3", "u4", "u5"]);
+  const assistants = Random.shuffle(["u3", "u4", "u5"].filter((b) => b !== account)).slice(0, Random.integer(0, 2));
   return {
     id: `so${i + 1}`,
-    code: `SO-2024-${pad(801 + i)}`,
+    code: `XSHT${Mock.mock(/[0-9]{8}/)}MA`,
     customerId: cus.id,
     customerName: cus.name,
+    contractTitle: Random.pick(salesContractTitlePool),
+    contractExpireDate: Random.date("yyyy-MM-dd"),
+    contractAmount: total,
+    salesMode: Random.pick(["普通销售", "渠道销售", "项目销售", "服务销售"]) as any,
+    contractProperty: Random.pick(["新签", "新签", "续签", "升级", "补充"]) as any,
+    taxNo: cus.taxNo,
+    applicantId: applicant.id,
+    department: Random.pick(["销售一部", "销售二部", "大客户部", "项目部"]),
+    appliedAt: Random.date("yyyy-MM-dd"),
+    signedAt: Random.date("yyyy-MM-dd"),
+    contractExpireAt: Random.date("yyyy-MM-dd"),
+    accountManagerId: account,
+    assistantIds: assistants,
+    isSettled: Random.boolean(),
+    isPartyA: Random.boolean(),
+    serviceFee: Random.integer(0, 20000),
+    outsourceFee: Random.integer(0, 15000),
+    salesFee: Random.integer(0, 10000),
+    productStdCost: Math.floor(total * 0.6),
+    contractAttachments: [`销售合同_${cus.name}.pdf`],
+    stampedContractAttachments: [],
+    licenseAttachments: [],
+    invoiceAttachments: [],
+    otherAttachments: [],
     contractId: Random.pick([undefined, ...contracts.map((c) => c.id).slice(0, 5)]),
     status,
     items,
