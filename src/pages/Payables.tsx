@@ -44,7 +44,7 @@ export default function Payables() {
 
   const rows: Row[] = useMemo(() => {
     const map = new Map<string, Row>();
-    orders.filter((o) => o.status !== "cancelled" && o.status !== "draft").forEach((o) => {
+    orders.filter((o) => o.status !== "cancelled" && o.status !== "draft" && inRange(o.createdAt, range)).forEach((o) => {
       const contract = o.contractAmount || o.totalAmount;
       const invoiced = (o.invoices || []).reduce((s, r) => s + (r.amount || 0), 0);
       const sCon = splitPurchase(o, products);
