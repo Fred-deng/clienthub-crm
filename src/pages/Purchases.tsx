@@ -102,6 +102,8 @@ export default function Purchases() {
   const [biz, setBiz] = useState<BizFilter>("all");
   const [quickPay, setQuickPay] = useState<PurchaseOrder | null>(null);
   const [quickInv, setQuickInv] = useState<PurchaseOrder | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [bulkStatus, setBulkStatus] = useState<PurchaseOrder["status"] | "">("");
 
   useEffect(() => {
     supplierApi.all().then(setSuppliers);
@@ -151,21 +153,89 @@ export default function Purchases() {
 
   const onSubmit = handleSubmit(async (v) => {
     const sup = suppliers.find((s) => s.id === v.supplierId);
-    const totalAmount = items.reduce((s, it) => s + it.qty * it.price, 0);
+    // 1) 行明细：缺产品 → 自动建档；统一回填 productId / category
+    const normalizedItems: PurchaseItem[] = items
+      .filter((it) => it.productName.trim() && it.qty > 0)
+      .map((it) => {
+        let prodId = it.productId;
+        let cat = it.category;
+        if (!prodId) {
+          const p = findOrCreateProductByName(it.productName, it.category, it.price, "采购订单");
+          prodId = p.id;
+          cat = p.category;
+        }
+        return { productId: prodId, productName: it.productName.trim(), category: cat, qty: it.qty, price: it.price };
+      });
+    const totalAmount = normalizedItems.reduce((s, it) => s + it.qty * it.price, 0);
     const payload: any = {
       ...v,
       contractAmount: Number(v.contractAmount) || 0,
       paid: Number(v.paid) || 0,
       supplierName: sup?.name ?? "-",
-      items,
+      items: normalizedItems,
       totalAmount,
       code: editing?.code ?? `CG-${Date.now().toString().slice(-6)}`,
     };
-    if (editing) await purchaseApi.update(editing.id, payload); else await purchaseApi.create(payload);
+
+    // 2) 库存联动：状态切换涉及 received 时加减
+    const prevStatus = editing?.status;
+    const nextStatus = payload.status as PurchaseOrder["status"];
+    if (editing) {
+      // 旧订单已入库 → 先用旧明细回滚
+      if (prevStatus === "received" && nextStatus !== "received") {
+        revertPurchaseReceive(editing, "采购订单", "状态变更撤销入库");
+      }
+      // 新订单将入库 → 用新明细入库
+      if (nextStatus === "received" && prevStatus !== "received") {
+        applyPurchaseReceive({ ...editing, ...payload }, "采购订单");
+      }
+      // 入库状态下明细变更 → 先回滚旧、再按新入库
+      if (prevStatus === "received" && nextStatus === "received") {
+        revertPurchaseReceive(editing, "采购订单", "明细变更回滚");
+        applyPurchaseReceive({ ...editing, ...payload }, "采购订单");
+      }
+      await purchaseApi.update(editing.id, payload);
+    } else {
+      const created = await purchaseApi.create(payload);
+      if (nextStatus === "received") applyPurchaseReceive(created, "采购订单");
+    }
     toast.success("已保存");
     setOpen(false);
     reload();
+    productApi.all().then(setProducts);
   });
+
+  const handleDelete = async (id: string) => {
+    const order = data.list.find((o) => o.id === id);
+    if (order && order.status === "received") {
+      revertPurchaseReceive(order, "采购订单", "订单删除回滚入库");
+    }
+    await purchaseApi.remove(id);
+    toast.success("已删除");
+    setDeletingId(null);
+    reload();
+    productApi.all().then(setProducts);
+  };
+
+  const applyBulkStatus = async () => {
+    if (!bulkStatus || selectedIds.length === 0) return;
+    for (const id of selectedIds) {
+      const order = data.list.find((o) => o.id === id);
+      if (!order || order.status === bulkStatus) continue;
+      if (order.status === "received" && bulkStatus !== "received") {
+        revertPurchaseReceive(order, "批量操作", "批量改状态回滚入库");
+      }
+      if (bulkStatus === "received" && order.status !== "received") {
+        applyPurchaseReceive(order, "批量操作");
+      }
+      await purchaseApi.update(id, { status: bulkStatus });
+    }
+    toast.success(`已将 ${selectedIds.length} 单更新为「${bulkStatus}」`);
+    setSelectedIds([]);
+    setBulkStatus("");
+    reload();
+    productApi.all().then(setProducts);
+  };
 
   const empName = (id?: string) => employees.find((e) => e.id === id)?.name ?? "—";
 
