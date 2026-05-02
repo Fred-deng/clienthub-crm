@@ -62,8 +62,8 @@ export function AppSidebar() {
   const [pending, setPending] = useState(0);
   useEffect(() => {
     Promise.all([salesApi.all(), purchaseApi.all()]).then(([sales, purs]) => {
-      const a = sales.filter((o) => (o.contractAmount ?? o.totalAmount) - (o.received || 0) > 0).length;
-      const b = purs.filter((o) => (o.contractAmount || o.totalAmount) - (o.paid || 0) > 0).length;
+      const a = sales.filter((o) => o.status !== "cancelled" && (o.contractAmount ?? o.totalAmount) - (o.received || 0) > 0).length;
+      const b = purs.filter((o) => o.status !== "cancelled" && o.status !== "draft" && (o.contractAmount || o.totalAmount) - (o.paid || 0) > 0).length;
       setPending(a + b);
     });
   }, [pathname]);
