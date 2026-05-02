@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Plus, Pencil, Trash2, Search, Download, Users as UsersIcon, Star, ArrowLeft } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Download, Users as UsersIcon, Star, ArrowLeft, ClipboardList, Phone, MapPin, MessageCircle, Mail, MessageSquare, MoreHorizontal } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -18,10 +18,10 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { customerApi, contactApi, employeeApi } from "@/services/api";
+import { customerApi, contactApi, followUpApi, employeeApi } from "@/services/api";
 import { usePagedList } from "@/hooks/usePagedList";
 import { fmtMoney, customerStageLabel, customerTypeLabel } from "@/lib/format";
-import type { Customer, Contact, Employee } from "@/types";
+import type { Customer, Contact, FollowUp, Employee } from "@/types";
 import { useEffect, ReactNode } from "react";
 
 const emptyCustomer: Omit<Customer, "id"> = {
@@ -77,7 +77,9 @@ export default function Customers() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [customerContacts, setCustomerContacts] = useState<Contact[]>([]);
+  const [customerFollowUps, setCustomerFollowUps] = useState<FollowUp[]>([]);
   const [miniContactOpen, setMiniContactOpen] = useState(false);
+  const [miniFollowUpOpen, setMiniFollowUpOpen] = useState(false);
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -89,14 +91,19 @@ export default function Customers() {
     reset({ ...emptyCustomer, code: `CUS-${Date.now().toString().slice(-6)}` });
     setEditing(null);
     setCustomerContacts([]);
+    setCustomerFollowUps([]);
     setOpen(true);
   };
   const openEdit = async (c: Customer) => {
     reset({ ...emptyCustomer, ...c });
     setEditing(c);
     setOpen(true);
-    const list = await contactApi.list({ customerId: c.id, pageSize: 100 });
-    setCustomerContacts(list.list);
+    const [cl, fl] = await Promise.all([
+      contactApi.list({ customerId: c.id, pageSize: 100 }),
+      followUpApi.list({ customerId: c.id, pageSize: 100 }),
+    ]);
+    setCustomerContacts(cl.list);
+    setCustomerFollowUps(fl.list);
   };
 
   // —— 跨页流程：从「联系人」过来新增客户 ——
@@ -142,6 +149,15 @@ export default function Customers() {
     if (!editing) return;
     const list = await contactApi.list({ customerId: editing.id, pageSize: 100 });
     setCustomerContacts(list.list);
+  };
+  const reloadCustomerFollowUps = async () => {
+    if (!editing) return;
+    const list = await followUpApi.list({ customerId: editing.id, pageSize: 100 });
+    setCustomerFollowUps(list.list);
+  };
+
+  const wayIcon: Record<string, any> = {
+    "电话": Phone, "拜访": MapPin, "微信": MessageCircle, "邮件": Mail, "短信": MessageSquare, "其他": MoreHorizontal,
   };
 
   return (
@@ -248,6 +264,9 @@ export default function Customers() {
                       <div className="inline-flex gap-1">
                         <Link to={`/contacts?customerId=${c.id}`} title="查看联系人" className="size-8 rounded-full hover:bg-cobalt/10 text-foreground/55 hover:text-cobalt inline-flex items-center justify-center transition-colors">
                           <UsersIcon className="h-3.5 w-3.5" />
+                        </Link>
+                        <Link to={`/follow-ups?customerId=${c.id}`} title="查看跟进记录" className="size-8 rounded-full hover:bg-mustard/25 text-foreground/55 hover:text-foreground inline-flex items-center justify-center transition-colors">
+                          <ClipboardList className="h-3.5 w-3.5" />
                         </Link>
                         <button className="size-8 rounded-full hover:bg-foreground/5 text-foreground/55 hover:text-foreground inline-flex items-center justify-center transition-colors" onClick={() => openEdit(c)}>
                           <Pencil className="h-3.5 w-3.5" />
@@ -470,6 +489,75 @@ export default function Customers() {
                     </table>
                   )}
                 </div>
+
+                <GroupTitle>跟进记录</GroupTitle>
+                <div className="col-span-12 rounded-xl border border-foreground/10 bg-card overflow-hidden">
+                  <div className="flex items-center justify-between px-4 py-2.5 bg-foreground/[0.03] border-b border-foreground/8">
+                    <div className="text-xs text-foreground/60">
+                      共 <span className="font-bold text-foreground">{customerFollowUps.length}</span> 条跟进
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Link
+                        to={`/follow-ups?customerId=${editing.id}`}
+                        className="text-[11px] text-cobalt hover:underline"
+                      >
+                        前往跟进记录页 →
+                      </Link>
+                      <Button type="button" size="sm" variant="outline" onClick={() => setMiniFollowUpOpen(true)}>
+                        <Plus className="h-3.5 w-3.5 mr-1" />新增跟进
+                      </Button>
+                    </div>
+                  </div>
+                  {customerFollowUps.length === 0 ? (
+                    <div className="px-4 py-6 text-center text-xs text-foreground/45">暂无跟进记录，点击右上角新增。</div>
+                  ) : (
+                    <table className="data-table">
+                      <thead>
+                        <tr>
+                          <th>主题</th>
+                          <th>形式</th>
+                          <th>商机状态</th>
+                          <th>联系日期</th>
+                          <th>下次回访</th>
+                          <th className="num">预计金额</th>
+                          <th>负责人</th>
+                          <th className="num">操作</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {customerFollowUps.map((f) => {
+                          const Icon = wayIcon[f.contactWay] ?? MoreHorizontal;
+                          return (
+                            <tr key={f.id}>
+                              <td>
+                                <div className="font-semibold">{f.subject}</div>
+                                <div className="text-[11px] text-foreground/45 truncate max-w-[260px]">{f.content}</div>
+                              </td>
+                              <td>
+                                <span className="cell-chip bg-foreground/5 text-foreground/75 ring-1 ring-foreground/10 inline-flex items-center gap-1">
+                                  <Icon className="h-3 w-3" />{f.contactWay}
+                                </span>
+                              </td>
+                              <td className="text-foreground/70">{f.oppStatus || "—"}</td>
+                              <td className="mono text-[12px]">{f.contactDate}</td>
+                              <td className="mono text-[12px] text-foreground/65">{f.nextVisitAt || "—"}</td>
+                              <td className="num">{f.expectedAmount ? fmtMoney(f.expectedAmount) : "—"}</td>
+                              <td className="text-foreground/70">{ownerName(f.ownerId)}</td>
+                              <td className="num">
+                                <Link
+                                  to={`/follow-ups?customerId=${editing.id}&editId=${f.id}`}
+                                  className="text-[11px] text-cobalt hover:underline"
+                                >
+                                  编辑
+                                </Link>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
               </>
             )}
 
@@ -489,6 +577,17 @@ export default function Customers() {
           customer={editing}
           employees={employees}
           onCreated={reloadCustomerContacts}
+        />
+      )}
+
+      {editing && (
+        <MiniFollowUpDialog
+          open={miniFollowUpOpen}
+          onOpenChange={setMiniFollowUpOpen}
+          customer={editing}
+          contacts={customerContacts}
+          employees={employees}
+          onCreated={reloadCustomerFollowUps}
         />
       )}
 
@@ -572,6 +671,131 @@ function MiniContactDialog({
           <DialogFooter className="col-span-12 mt-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>取消</Button>
             <Button type="submit">创建联系人</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// —— 客户详情内：快速新增跟进记录对话框 ——
+function MiniFollowUpDialog({
+  open, onOpenChange, customer, contacts, employees, onCreated,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  customer: Customer;
+  contacts: Contact[];
+  employees: Employee[];
+  onCreated: () => void;
+}) {
+  const { register, handleSubmit, reset, setValue, watch } = useForm<Omit<FollowUp, "id">>({
+    defaultValues: {
+      code: "", customerId: customer.id, customerName: customer.name, customerStatus: customer.status,
+      contactId: "", contactName: "",
+      ownerId: customer.ownerId || "u3",
+      subject: "", content: "",
+      contactWay: "电话", salesLead: "", oppStatus: "意向初探",
+      contactDate: new Date().toISOString().slice(0, 10),
+      nextVisitAt: "", intentProduct: "", expectedAmount: 0, expectedSignAt: "",
+      attachment: "", remark: "",
+      createdAt: new Date().toISOString().slice(0, 10),
+    },
+  });
+
+  useEffect(() => {
+    if (open) {
+      reset({
+        code: `GJ-${Date.now().toString().slice(-6)}`,
+        customerId: customer.id, customerName: customer.name, customerStatus: customer.status,
+        contactId: "", contactName: "",
+        ownerId: customer.ownerId || "u3",
+        subject: "", content: "",
+        contactWay: "电话", salesLead: "", oppStatus: "意向初探",
+        contactDate: new Date().toISOString().slice(0, 10),
+        nextVisitAt: "", intentProduct: "", expectedAmount: 0, expectedSignAt: "",
+        attachment: "", remark: "",
+        createdAt: new Date().toISOString().slice(0, 10),
+      });
+    }
+  }, [open, customer.id, customer.name, customer.ownerId, customer.status, reset]);
+
+  const submit = handleSubmit(async (values) => {
+    const ct = contacts.find((x) => x.id === values.contactId);
+    await followUpApi.create({
+      ...values,
+      customerId: customer.id,
+      customerName: customer.name,
+      customerStatus: customer.status,
+      contactName: ct?.name ?? "",
+    });
+    toast.success("跟进记录已新增");
+    onOpenChange(false);
+    onCreated();
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-3xl max-h-[88vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>新增跟进记录 · {customer.name}</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={submit} className="grid grid-cols-12 gap-x-4 gap-y-3 text-sm">
+          <Field label="主题" required span={6}>
+            <Input placeholder="本次跟进主题" {...register("subject", { required: true })} />
+          </Field>
+          <Field label="联系形式" required>
+            <Select value={watch("contactWay")} onValueChange={(v: any) => setValue("contactWay", v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {["电话","拜访","微信","邮件","短信","其他"].map((w) => <SelectItem key={w} value={w}>{w}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </Field>
+          <Field label="联系日期" required><Input type="date" {...register("contactDate", { required: true })} /></Field>
+
+          <Field label="联系人">
+            <Select value={watch("contactId") || ""} onValueChange={(v) => setValue("contactId", v)}>
+              <SelectTrigger><SelectValue placeholder={contacts.length ? "请选择" : "暂无联系人"} /></SelectTrigger>
+              <SelectContent>
+                {contacts.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}（{c.position || "联系人"}）</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </Field>
+          <Field label="商机状态">
+            <Select value={watch("oppStatus") || ""} onValueChange={(v: any) => setValue("oppStatus", v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {["意向初探","需求确认","方案沟通","报价中","商务谈判","已签约","已流失"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </Field>
+          <Field label="负责人">
+            <Select value={watch("ownerId")} onValueChange={(v) => setValue("ownerId", v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {employees.map((e) => <SelectItem key={e.id} value={e.id}>{e.name}（{e.role}）</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </Field>
+
+          <Field label="跟进记录" required span={12}>
+            <Textarea rows={3} placeholder="请详细记录本次沟通内容" {...register("content", { required: true })} />
+          </Field>
+
+          <Field label="意向产品"><Input {...register("intentProduct")} /></Field>
+          <Field label="预计金额（元）"><Input type="number" step="0.01" {...register("expectedAmount", { valueAsNumber: true })} /></Field>
+          <Field label="下次回访日期"><Input type="date" {...register("nextVisitAt")} /></Field>
+
+          <Field label="销售线索"><Input {...register("salesLead")} /></Field>
+          <Field label="预计签单时间"><Input type="date" {...register("expectedSignAt")} /></Field>
+          <Field label="跟进编号"><Input {...register("code")} /></Field>
+
+          <Field label="备注" span={12}><Textarea rows={2} {...register("remark")} /></Field>
+
+          <DialogFooter className="col-span-12 mt-2">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>取消</Button>
+            <Button type="submit">创建跟进</Button>
           </DialogFooter>
         </form>
       </DialogContent>

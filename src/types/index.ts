@@ -83,6 +83,34 @@ export interface Contact {
   createdAt: string;
 }
 
+// —— 客户跟进记录 ——
+export type FollowUpContactWay = "电话" | "拜访" | "微信" | "邮件" | "短信" | "其他";
+export type FollowUpOppStatus = "意向初探" | "需求确认" | "方案沟通" | "报价中" | "商务谈判" | "已签约" | "已流失";
+
+export interface FollowUp {
+  id: string;
+  code: string;             // 跟进记录编号
+  customerId: string;       // 关联客户
+  customerName: string;
+  customerStatus?: string;  // 客户状态（冗余）
+  contactId?: string;       // 关联联系人
+  contactName?: string;
+  ownerId: string;          // 负责人
+  subject: string;          // 主题
+  content: string;          // 跟进记录内容
+  contactWay: FollowUpContactWay; // 联系形式
+  salesLead?: string;       // 销售线索
+  oppStatus?: FollowUpOppStatus; // 商机状态
+  contactDate: string;      // 联系日期
+  nextVisitAt?: string;     // 下次回访日期
+  intentProduct?: string;   // 意向产品
+  expectedAmount?: number;  // 预计金额
+  expectedSignAt?: string;  // 预计签单时间
+  attachment?: string;
+  remark?: string;
+  createdAt: string;
+}
+
 export type ProductCategory = "software" | "ipc" | "pda" | "mouse" | "cable" | "power" | "other";
 
 export interface Product {

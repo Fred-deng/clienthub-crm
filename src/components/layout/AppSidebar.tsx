@@ -1,6 +1,6 @@
 import { NavLink, useLocation } from "react-router-dom";
 import {
-  LayoutDashboard, Users, Package, ShoppingCart, FileText, Receipt, Wallet, Truck, BarChart3, Contact as ContactIcon,
+  LayoutDashboard, Users, Package, ShoppingCart, FileText, Receipt, Wallet, Truck, BarChart3, Contact as ContactIcon, ClipboardList,
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
@@ -19,6 +19,7 @@ const groups = [
     items: [
       { title: "客户管理", url: "/customers", icon: Users, dot: "mustard" },
       { title: "客户联系人", url: "/contacts", icon: ContactIcon, dot: "tomato" },
+      { title: "跟进记录", url: "/follow-ups", icon: ClipboardList, dot: "mustard" },
       { title: "产品库存", url: "/products", icon: Package, dot: "mint" },
       { title: "供应商", url: "/suppliers", icon: Truck, dot: "cobalt" },
     ],
