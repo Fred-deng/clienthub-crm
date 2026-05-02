@@ -493,7 +493,7 @@ export default function Purchases() {
             {/* 采购明细（保留子表） */}
             <GroupTitle>采购明细</GroupTitle>
             <div className="col-span-12">
-              <LineItemsEditor items={items} products={products} onChange={setItems} />
+              <LineItemsEditor items={items} products={products} onChange={setItems} excludeCategories={["software"]} />
             </div>
 
             {/* 付款记录（子表，按 refType=purchase 过滤） */}
@@ -544,7 +544,7 @@ export default function Purchases() {
         title="删除采购订单"
         description="删除后无法恢复。"
         onConfirm={async () => {
-          if (deletingId) { await purchaseApi.remove(deletingId); toast.success("已删除"); setDeletingId(null); reload(); }
+          if (deletingId) await handleDelete(deletingId);
         }}
       />
 
