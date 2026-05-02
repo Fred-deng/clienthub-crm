@@ -408,6 +408,71 @@ export default function Customers() {
               <Textarea rows={2} placeholder="请输入备注信息" {...register("remark")} />
             </Field>
 
+            {/* 客户联系人子表（仅编辑现有客户时显示） */}
+            {editing && (
+              <>
+                <GroupTitle>客户联系人</GroupTitle>
+                <div className="col-span-12 rounded-xl border border-foreground/10 bg-card overflow-hidden">
+                  <div className="flex items-center justify-between px-4 py-2.5 bg-foreground/[0.03] border-b border-foreground/8">
+                    <div className="text-xs text-foreground/60">
+                      共 <span className="font-bold text-foreground">{customerContacts.length}</span> 位联系人
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Link
+                        to={`/contacts?customerId=${editing.id}`}
+                        className="text-[11px] text-cobalt hover:underline"
+                      >
+                        前往联系人页 →
+                      </Link>
+                      <Button type="button" size="sm" variant="outline" onClick={() => setMiniContactOpen(true)}>
+                        <Plus className="h-3.5 w-3.5 mr-1" />新增联系人
+                      </Button>
+                    </div>
+                  </div>
+                  {customerContacts.length === 0 ? (
+                    <div className="px-4 py-6 text-center text-xs text-foreground/45">暂无联系人，点击右上角新增。</div>
+                  ) : (
+                    <table className="data-table">
+                      <thead>
+                        <tr>
+                          <th>姓名</th>
+                          <th>职位</th>
+                          <th>手机号</th>
+                          <th>邮箱</th>
+                          <th>负责人</th>
+                          <th className="num">操作</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {customerContacts.map((ct) => (
+                          <tr key={ct.id}>
+                            <td>
+                              <div className="flex items-center gap-1.5 font-semibold">
+                                {ct.name}
+                                {ct.isPrimary && <Star className="h-3 w-3 fill-tomato text-tomato" />}
+                              </div>
+                            </td>
+                            <td className="text-foreground/70">{ct.position || "—"}</td>
+                            <td className="mono">{ct.phone}</td>
+                            <td className="text-foreground/65 text-[12px]">{ct.email || "—"}</td>
+                            <td className="text-foreground/70">{ownerName(ct.ownerId)}</td>
+                            <td className="num">
+                              <Link
+                                to={`/contacts?customerId=${editing.id}&editId=${ct.id}`}
+                                className="text-[11px] text-cobalt hover:underline"
+                              >
+                                编辑
+                              </Link>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              </>
+            )}
+
             <DialogFooter className="col-span-12 mt-4">
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>取消</Button>
               <Button type="submit">{editing ? "保存修改" : "创建客户"}</Button>
@@ -415,6 +480,17 @@ export default function Customers() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* 在客户编辑窗口内快速新增联系人 */}
+      {editing && (
+        <MiniContactDialog
+          open={miniContactOpen}
+          onOpenChange={setMiniContactOpen}
+          customer={editing}
+          employees={employees}
+          onCreated={reloadCustomerContacts}
+        />
+      )}
 
       <ConfirmDialog
         open={!!deletingId}
