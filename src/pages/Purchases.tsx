@@ -247,10 +247,16 @@ export default function Purchases() {
                     <td className="text-[12px] text-foreground/60 mono">{o.appliedAt}</td>
                     <td className="num" onDoubleClick={(e) => e.stopPropagation()}>
                       <div className="inline-flex gap-1">
-                        <button className="size-8 rounded-full hover:bg-foreground/5 text-foreground/55 hover:text-foreground inline-flex items-center justify-center transition-colors" onClick={() => openEdit(o)}>
+                        <button title="登记付款" className="size-8 rounded-full hover:bg-warning/10 text-foreground/55 hover:text-warning inline-flex items-center justify-center transition-colors" onClick={() => setQuickPay(o)}>
+                          <ArrowUpRight className="h-3.5 w-3.5" />
+                        </button>
+                        <button title="新增发票" className="size-8 rounded-full hover:bg-cobalt/10 text-foreground/55 hover:text-cobalt inline-flex items-center justify-center transition-colors" onClick={() => setQuickInv(o)}>
+                          <Receipt className="h-3.5 w-3.5" />
+                        </button>
+                        <button title="编辑" className="size-8 rounded-full hover:bg-foreground/5 text-foreground/55 hover:text-foreground inline-flex items-center justify-center transition-colors" onClick={() => openEdit(o)}>
                           <Pencil className="h-3.5 w-3.5" />
                         </button>
-                        <button className="size-8 rounded-full hover:bg-tomato/10 text-foreground/55 hover:text-tomato inline-flex items-center justify-center transition-colors" onClick={() => setDeletingId(o.id)}>
+                        <button title="删除" className="size-8 rounded-full hover:bg-tomato/10 text-foreground/55 hover:text-tomato inline-flex items-center justify-center transition-colors" onClick={() => setDeletingId(o.id)}>
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
                       </div>
