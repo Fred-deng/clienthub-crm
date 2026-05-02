@@ -396,7 +396,14 @@ export default function Sales() {
 
             <GroupTitle>回款记录</GroupTitle>
             <div className="col-span-12">
-              <PaymentSubList orderId={editing?.id} reloadKey={open} />
+              <PaymentSubList
+                orderId={editing?.id}
+                orderCode={editing?.code}
+                partyName={customers.find((c) => c.id === watch("customerId"))?.name}
+                refType="sales"
+                remaining={Math.max((editing?.contractAmount ?? editing?.totalAmount ?? 0) - (editing?.received ?? 0), 0)}
+                reloadKey={open}
+              />
             </div>
 
             <GroupTitle>订单执行</GroupTitle>
@@ -422,7 +429,12 @@ export default function Sales() {
 
             <GroupTitle>发票管理（开给客户）</GroupTitle>
             <div className="col-span-12">
-              <InvoiceList direction="out" value={watch("invoices") || []} onChange={(v) => setValue("invoices", v)} />
+              <InvoiceList
+                direction="out"
+                value={watch("invoices") || []}
+                onChange={(v) => setValue("invoices", v)}
+                defaultParty={customers.find((c) => c.id === watch("customerId"))?.name}
+              />
             </div>
 
             <GroupTitle>附件与备注</GroupTitle>
