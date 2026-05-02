@@ -43,6 +43,7 @@ export default function Reconciliation() {
   const [keyword, setKeyword] = useState("");
   const [filter, setFilter] = useState<"outstanding" | "all">("outstanding");
   const [dlg, setDlg] = useState<Row | null>(null);
+  const [range, setRange] = useState<DateRangeValue>({});
 
   const reload = () => {
     salesApi.all().then(setSales);
