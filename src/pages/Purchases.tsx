@@ -326,9 +326,9 @@ export default function Purchases() {
                 <th>供应商</th>
                 <th>业务</th>
                 <th>状态</th>
-                <th className="num">合同金额</th>
                 <th className="num">明细合计</th>
                 <th className="num">已付</th>
+                <th className="num">未付</th>
                 <th className="num">发票</th>
                 <th>申请人</th>
                 <th>采购经理</th>
