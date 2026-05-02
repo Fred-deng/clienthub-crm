@@ -152,6 +152,11 @@ export default function Customers() {
         subtitle="软件客户与硬件客户档案，区分潜在与正式客户。"
         actions={
           <>
+            {searchParams.get("returnTo") && (
+              <Button variant="outline" size="sm" onClick={() => navigate(searchParams.get("returnTo")!)}>
+                <ArrowLeft className="h-4 w-4 mr-1.5" />返回联系人
+              </Button>
+            )}
             <Button variant="outline" size="sm"><Download className="h-4 w-4 mr-1.5" />导出</Button>
             <Button size="sm" onClick={openCreate}><Plus className="h-4 w-4 mr-1.5" />新增客户</Button>
           </>
