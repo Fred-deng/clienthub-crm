@@ -35,6 +35,7 @@ export default function Receivables() {
   const [keyword, setKeyword] = useState("");
   const [filter, setFilter] = useState<"all" | "outstanding" | "settled">("outstanding");
   const [biz, setBiz] = useState<BizFilter>("all");
+  const [range, setRange] = useState<DateRangeValue>({});
 
   useEffect(() => {
     salesApi.all().then(setOrders);
