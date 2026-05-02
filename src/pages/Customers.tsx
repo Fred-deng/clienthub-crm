@@ -674,3 +674,128 @@ function MiniContactDialog({
     </Dialog>
   );
 }
+
+// —— 客户详情内：快速新增跟进记录对话框 ——
+function MiniFollowUpDialog({
+  open, onOpenChange, customer, contacts, employees, onCreated,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  customer: Customer;
+  contacts: Contact[];
+  employees: Employee[];
+  onCreated: () => void;
+}) {
+  const { register, handleSubmit, reset, setValue, watch } = useForm<Omit<FollowUp, "id">>({
+    defaultValues: {
+      code: "", customerId: customer.id, customerName: customer.name, customerStatus: customer.status,
+      contactId: "", contactName: "",
+      ownerId: customer.ownerId || "u3",
+      subject: "", content: "",
+      contactWay: "电话", salesLead: "", oppStatus: "意向初探",
+      contactDate: new Date().toISOString().slice(0, 10),
+      nextVisitAt: "", intentProduct: "", expectedAmount: 0, expectedSignAt: "",
+      attachment: "", remark: "",
+      createdAt: new Date().toISOString().slice(0, 10),
+    },
+  });
+
+  useEffect(() => {
+    if (open) {
+      reset({
+        code: `GJ-${Date.now().toString().slice(-6)}`,
+        customerId: customer.id, customerName: customer.name, customerStatus: customer.status,
+        contactId: "", contactName: "",
+        ownerId: customer.ownerId || "u3",
+        subject: "", content: "",
+        contactWay: "电话", salesLead: "", oppStatus: "意向初探",
+        contactDate: new Date().toISOString().slice(0, 10),
+        nextVisitAt: "", intentProduct: "", expectedAmount: 0, expectedSignAt: "",
+        attachment: "", remark: "",
+        createdAt: new Date().toISOString().slice(0, 10),
+      });
+    }
+  }, [open, customer.id, customer.name, customer.ownerId, customer.status, reset]);
+
+  const submit = handleSubmit(async (values) => {
+    const ct = contacts.find((x) => x.id === values.contactId);
+    await followUpApi.create({
+      ...values,
+      customerId: customer.id,
+      customerName: customer.name,
+      customerStatus: customer.status,
+      contactName: ct?.name ?? "",
+    });
+    toast.success("跟进记录已新增");
+    onOpenChange(false);
+    onCreated();
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-3xl max-h-[88vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>新增跟进记录 · {customer.name}</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={submit} className="grid grid-cols-12 gap-x-4 gap-y-3 text-sm">
+          <Field label="主题" required span={6}>
+            <Input placeholder="本次跟进主题" {...register("subject", { required: true })} />
+          </Field>
+          <Field label="联系形式" required>
+            <Select value={watch("contactWay")} onValueChange={(v: any) => setValue("contactWay", v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {["电话","拜访","微信","邮件","短信","其他"].map((w) => <SelectItem key={w} value={w}>{w}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </Field>
+          <Field label="联系日期" required><Input type="date" {...register("contactDate", { required: true })} /></Field>
+
+          <Field label="联系人">
+            <Select value={watch("contactId") || ""} onValueChange={(v) => setValue("contactId", v)}>
+              <SelectTrigger><SelectValue placeholder={contacts.length ? "请选择" : "暂无联系人"} /></SelectTrigger>
+              <SelectContent>
+                {contacts.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}（{c.position || "联系人"}）</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </Field>
+          <Field label="商机状态">
+            <Select value={watch("oppStatus") || ""} onValueChange={(v: any) => setValue("oppStatus", v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {["意向初探","需求确认","方案沟通","报价中","商务谈判","已签约","已流失"].map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </Field>
+          <Field label="负责人">
+            <Select value={watch("ownerId")} onValueChange={(v) => setValue("ownerId", v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {employees.map((e) => <SelectItem key={e.id} value={e.id}>{e.name}（{e.role}）</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </Field>
+
+          <Field label="跟进记录" required span={12}>
+            <Textarea rows={3} placeholder="请详细记录本次沟通内容" {...register("content", { required: true })} />
+          </Field>
+
+          <Field label="意向产品"><Input {...register("intentProduct")} /></Field>
+          <Field label="预计金额（元）"><Input type="number" step="0.01" {...register("expectedAmount", { valueAsNumber: true })} /></Field>
+          <Field label="下次回访日期"><Input type="date" {...register("nextVisitAt")} /></Field>
+
+          <Field label="销售线索"><Input {...register("salesLead")} /></Field>
+          <Field label="预计签单时间"><Input type="date" {...register("expectedSignAt")} /></Field>
+          <Field label="跟进编号"><Input {...register("code")} /></Field>
+
+          <Field label="备注" span={12}><Textarea rows={2} {...register("remark")} /></Field>
+
+          <DialogFooter className="col-span-12 mt-2">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>取消</Button>
+            <Button type="submit">创建跟进</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
