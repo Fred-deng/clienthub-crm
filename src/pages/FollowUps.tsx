@@ -353,8 +353,8 @@ export default function FollowUps() {
           <DialogHeader><DialogTitle>{editing ? "编辑跟进记录" : "新增跟进记录"}</DialogTitle></DialogHeader>
           <form onSubmit={onSubmit} className="grid grid-cols-12 gap-x-4 gap-y-3 text-sm">
             <GroupTitle tone="tomato">基本信息</GroupTitle>
-            <Field label="客户名称" required>
-              <div className="flex items-center gap-2">
+            <Field label="客户名称" required span={12}>
+              <div className="flex items-center gap-2 max-w-md">
                 <div className="flex-1 min-w-0">
                   <Select value={watch("customerId")} onValueChange={(v) => {
                     setValue("customerId", v);
