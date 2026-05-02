@@ -9,6 +9,7 @@ import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { StatusBadge } from "@/components/common/StatusBadge";
 import { LineItemsEditor, LineItem } from "@/components/common/LineItemsEditor";
 import { InvoiceList, InvoiceRecord } from "@/components/common/InvoiceList";
+import { PaymentSubList } from "@/components/common/PaymentSubList";
 import { AttachmentField } from "@/components/common/AttachmentField";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -293,8 +294,6 @@ export default function Sales() {
             </Field>
             <Field label="合同名称" required span={4}><Input {...register("contractTitle")} placeholder="请输入合同名称" /></Field>
             <Field label="合同编号" span={4}><Input {...register("code")} /></Field>
-            <Field label="合同到期日期" span={3}><Input type="date" {...register("contractExpireDate")} /></Field>
-            <Field label="合同金额" required span={3}><Input type="number" step="0.01" {...register("contractAmount", { valueAsNumber: true })} /></Field>
             <Field label="销售方式" required span={3}>
               <Select value={watch("salesMode")} onValueChange={(v) => setValue("salesMode", v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
@@ -384,9 +383,14 @@ export default function Sales() {
             <Field label="销售费用" span={3}><Input type="number" step="0.01" {...register("salesFee", { valueAsNumber: true })} /></Field>
             <Field label="产品标准成本" span={3}><Input type="number" step="0.01" {...register("productStdCost", { valueAsNumber: true })} /></Field>
 
-            <GroupTitle>采购明细</GroupTitle>
+            <GroupTitle>销售明细</GroupTitle>
             <div className="col-span-12">
               <LineItemsEditor items={items} products={products} onChange={setItems} />
+            </div>
+
+            <GroupTitle>回款记录</GroupTitle>
+            <div className="col-span-12">
+              <PaymentSubList orderId={editing?.id} reloadKey={open} />
             </div>
 
             <GroupTitle>订单执行</GroupTitle>
@@ -418,7 +422,7 @@ export default function Sales() {
             <GroupTitle>附件与备注</GroupTitle>
             <Field label="合同附件" span={4}><AttachmentField value={watch("contractAttachments") || []} onChange={(v) => setValue("contractAttachments", v)} /></Field>
             <Field label="双方盖章合同扫描件" span={4}><AttachmentField value={watch("stampedContractAttachments") || []} onChange={(v) => setValue("stampedContractAttachments", v)} /></Field>
-            <Field label="营业执照" span={4}><AttachmentField value={watch("licenseAttachments") || []} onChange={(v) => setValue("licenseAttachments", v)} /></Field>
+            
             <Field label="开票资料" span={4}><AttachmentField value={watch("invoiceAttachments") || []} onChange={(v) => setValue("invoiceAttachments", v)} /></Field>
             <Field label="其他附件" span={4}><AttachmentField value={watch("otherAttachments") || []} onChange={(v) => setValue("otherAttachments", v)} /></Field>
             <Field label="备注" span={4}><Textarea rows={3} {...register("remark")} /></Field>

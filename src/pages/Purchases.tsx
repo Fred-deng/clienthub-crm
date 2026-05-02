@@ -380,11 +380,8 @@ export default function Purchases() {
 
             {/* 附件资料 */}
             <GroupTitle>附件资料</GroupTitle>
-            <Field label="采购合同附件" span={6}>
+            <Field label="采购合同附件" span={12}>
               <AttachmentField value={watch("contractAttachments") || []} onChange={(v) => setValue("contractAttachments", v)} />
-            </Field>
-            <Field label="开票资料附件" span={6}>
-              <AttachmentField value={watch("invoiceAttachments") || []} onChange={(v) => setValue("invoiceAttachments", v)} />
             </Field>
 
             {/* 发票管理（子表）：供应商开给我方 */}

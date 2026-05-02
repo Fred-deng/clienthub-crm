@@ -123,6 +123,16 @@ export function InvoiceList({
               </tr>
             ))}
           </tbody>
+          {(value || []).length > 0 && (
+            <tfoot>
+              <tr className="border-t-2 border-foreground/15 bg-foreground/[0.025]">
+                <td colSpan={6} className="py-2 px-2 text-right text-[11px] font-semibold text-foreground/65 uppercase tracking-wider">列合计</td>
+                <td className="py-2 px-2 num mono font-bold text-foreground">{fmtMoney(total)}</td>
+                <td className="py-2 px-2 num mono font-semibold text-foreground/80">{fmtMoney(totalTax)}</td>
+                <td colSpan={2}></td>
+              </tr>
+            </tfoot>
+          )}
         </table>
       </div>
 
