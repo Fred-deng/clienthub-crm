@@ -238,6 +238,7 @@ export default function Purchases() {
                 <th className="num">合同金额</th>
                 <th className="num">明细合计</th>
                 <th className="num">已付</th>
+                <th className="num">发票</th>
                 <th>申请人</th>
                 <th>采购经理</th>
                 <th>申请日期</th>
@@ -245,9 +246,9 @@ export default function Purchases() {
               </tr>
             </thead>
             <tbody>
-              {loading && <tr className="empty"><td colSpan={11} className="empty">加载中…</td></tr>}
+              {loading && <tr className="empty"><td colSpan={12} className="empty">加载中…</td></tr>}
               {!loading && data.list.length === 0 && (
-                <tr className="empty"><td colSpan={11} className="empty">暂无采购订单</td></tr>
+                <tr className="empty"><td colSpan={12} className="empty">暂无采购订单</td></tr>
               )}
               {data.list.map((o) => {
                 const unpaid = o.totalAmount - o.paid;
@@ -263,6 +264,7 @@ export default function Purchases() {
                     <td className="num mono">{fmtMoney(o.contractAmount || 0)}</td>
                     <td className="num mono">{fmtMoney(o.totalAmount)}</td>
                     <td className={"num mono " + (unpaid > 0 ? "text-tomato" : "text-foreground/55")}>{fmtMoney(o.paid)}</td>
+                    <td className="num mono text-[12px] text-foreground/70">{(o.invoices?.length ?? 0)} 张 / {fmtMoney((o.invoices || []).reduce((s, r) => s + (r.amount || 0), 0))}</td>
                     <td className="text-foreground/70">{empName(o.applicantId)}</td>
                     <td className="text-foreground/70">{empName(o.buyerId)}</td>
                     <td className="text-[12px] text-foreground/60 mono">{o.appliedAt}</td>
