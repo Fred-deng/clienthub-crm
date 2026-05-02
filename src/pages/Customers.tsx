@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/select";
 import { customerApi, contactApi, followUpApi, employeeApi, salesApi, productApi } from "@/services/api";
 import { usePagedList } from "@/hooks/usePagedList";
-import { fmtMoney, customerStageLabel } from "@/lib/format";
+import { fmtMoney, customerStageLabel, customerStatusLabel, customerStatusTone, deriveCustomerStage } from "@/lib/format";
 import type { Customer, Contact, FollowUp, Employee, SalesOrder, Product } from "@/types";
 import { useEffect, ReactNode } from "react";
 
