@@ -336,10 +336,9 @@ export default function Customers() {
               <Select value={watch("status") || ""} onValueChange={(v: any) => setValue("status", v)}>
                 <SelectTrigger><SelectValue placeholder="请选择" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="potential">潜在</SelectItem>
-                  <SelectItem value="active">活跃</SelectItem>
-                  <SelectItem value="inactive">沉默</SelectItem>
-                  <SelectItem value="lost">流失</SelectItem>
+                  {Object.entries(customerStatusLabel).map(([v, l]) => (
+                    <SelectItem key={v} value={v}>{l}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </Field>
