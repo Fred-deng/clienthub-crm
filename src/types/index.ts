@@ -17,7 +17,8 @@ export interface InvoiceRecord {
 
 export type CustomerStage = "lead" | "formal"; // 潜在 / 正式
 export type CustomerLevel = "A" | "B" | "C";
-export type CustomerStatus = "active" | "inactive" | "potential" | "lost"; // 客户状态
+// 客户状态（已整合：合并原「合作状态/阶段」为统一生命周期）
+export type CustomerStatus = "potential" | "intent" | "active" | "paused" | "inactive" | "lost";
 export type CompanyNature = "国企" | "民营" | "外资" | "合资" | "上市公司" | "事业单位" | "其他";
 export type CooperationStatus = "未合作" | "意向中" | "合作中" | "已暂停" | "已终止";
 export type CustomerCategory = "战略客户" | "重点客户" | "普通客户" | "潜在客户";
