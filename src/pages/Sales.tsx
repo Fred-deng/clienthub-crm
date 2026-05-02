@@ -22,7 +22,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { salesApi, customerApi, productApi, employeeApi } from "@/services/api";
 import { logOrderUpdate, logOrderDelete } from "@/services/orderLog";
-import { applySalesDeliver, revertSalesDeliver } from "@/services/inventory";
+import { syncSalesStock, revertSalesDeliver } from "@/services/inventory";
 import { readCurrentOperator } from "@/context/CurrentUserContext";
 import { OrderLogDialog } from "@/components/common/OrderLogDialog";
 import { usePagedList } from "@/hooks/usePagedList";
