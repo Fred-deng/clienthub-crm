@@ -28,11 +28,11 @@ export const customerStatusLabel: Record<string, string> = {
   lost: "流失",
 };
 
-// 用于 Badge 配色的 tone（对应 index.css 中的语义色）
+// 用于 Badge 配色的 tone（对应 index.css/tailwind 中的语义色）
 export const customerStatusTone: Record<string, string> = {
-  potential: "muted",
+  potential: "cobalt",
   intent: "mustard",
-  active: "leaf",
+  active: "mint",
   paused: "mustard",
   inactive: "muted",
   lost: "tomato",
