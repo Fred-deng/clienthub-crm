@@ -257,6 +257,10 @@ export default function Sales() {
                 <SelectItem value="cancelled">已取消</SelectItem>
               </SelectContent>
             </Select>
+            <DateRangeFilter
+              value={{ from: query.dateFrom, to: query.dateTo }}
+              onChange={(v) => setFilter({ dateFrom: v.from, dateTo: v.to })}
+            />
           </div>
         }
       >
