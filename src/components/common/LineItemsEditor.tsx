@@ -58,6 +58,14 @@ export function LineItemsEditor({
   const headerTitle = title
     ?? (logModule === "sales" ? "销售明细（不存在的名称将自动建档）" : "采购明细（不存在的名称将自动建档）");
 
+  const logPendingAddIfReady = (i: number, item: LineItem) => {
+    if (!canLog || !pendingAddRef.current[i] || !item.productName.trim()) return false;
+    logLineItemAdd(logModule!, logScope!, item);
+    delete pendingAddRef.current[i];
+    setLogTick((t) => t + 1);
+    return true;
+  };
+
   /** 静默更新（不写日志），用于输入过程中只更新 UI */
   const updateSilent = (i: number, patch: Partial<LineItem>) => {
     const next = [...items];
@@ -81,6 +89,7 @@ export function LineItemsEditor({
     const next = [...items];
     next[i] = { ...next[i], ...patch };
     onChange(next);
+    if (logPendingAddIfReady(i, next[i])) return;
     if (canLog && logLineItemUpdate(logModule!, logScope!, before, next[i])) {
       setLogTick((t) => t + 1);
     }
@@ -97,6 +106,10 @@ export function LineItemsEditor({
     delete focusSnapshotRef.current[key];
     const after = items[i];
     if (!before || !after) return;
+    if (pendingAddRef.current[i]) {
+      logPendingAddIfReady(i, after);
+      return;
+    }
     if (logLineItemUpdate(logModule!, logScope!, before, after)) {
       setLogTick((t) => t + 1);
     }
