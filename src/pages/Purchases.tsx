@@ -376,6 +376,9 @@ export default function Purchases() {
                         <button title="新增发票" className="size-8 rounded-full hover:bg-cobalt/10 text-foreground/55 hover:text-cobalt inline-flex items-center justify-center transition-colors" onClick={() => setQuickInv(o)}>
                           <Receipt className="h-3.5 w-3.5" />
                         </button>
+                        <button title="操作日志" className="size-8 rounded-full hover:bg-foreground/5 text-foreground/55 hover:text-foreground inline-flex items-center justify-center transition-colors" onClick={() => { setLogRefId(o.id); setLogRefCode(o.code); setLogOpen(true); }}>
+                          <History className="h-3.5 w-3.5" />
+                        </button>
                         <button title="编辑" className="size-8 rounded-full hover:bg-foreground/5 text-foreground/55 hover:text-foreground inline-flex items-center justify-center transition-colors" onClick={() => openEdit(o)}>
                           <Pencil className="h-3.5 w-3.5" />
                         </button>
