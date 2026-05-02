@@ -41,12 +41,6 @@ const groups = [
       { title: "应付账款", url: "/payables", icon: ArrowUpRight, dot: "cobalt" },
     ],
   },
-  {
-    label: "分析",
-    items: [
-      { title: "数据报表", url: "/reports", icon: BarChart3, dot: "mustard" },
-    ],
-  },
 ];
 
 const dotMap: Record<string, string> = {
