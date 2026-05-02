@@ -232,10 +232,10 @@ export default function Suppliers() {
             <Field label="税号"><Input placeholder="请输入税号" {...register("taxNo")} /></Field>
             <Field label="供应商编号" required><Input placeholder="请输入编号" {...register("code", { required: true })} /></Field>
             <Field label="分类">
-              <Select value={watch("category")} onValueChange={(v) => setValue("category", v)}>
+              <Select value={categoryStore.normalize(watch("category"))} onValueChange={(v) => setValue("category", v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {["工控机", "外设", "线缆", "电源", "综合", "软件", "服务"].map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  {categories.map((c) => <SelectItem key={c.id} value={c.id}>{c.label}</SelectItem>)}
                 </SelectContent>
               </Select>
             </Field>
