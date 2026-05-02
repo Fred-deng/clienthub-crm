@@ -222,3 +222,29 @@ export const payments: Payment[] = [
       remark: "",
     })),
 ];
+
+// ---------- Contacts ----------
+const positionPool = ["采购经理", "信息总监", "技术总监", "总经理", "财务主管", "项目经理", "运维主管", "副总经理"];
+export const contacts: Contact[] = [];
+customers.forEach((c, ci) => {
+  const n = Random.integer(1, 4);
+  for (let i = 0; i < n; i++) {
+    contacts.push({
+      id: `ct-${ci}-${i}`,
+      code: `LXR-${pad(9001 + contacts.length)}`,
+      customerId: c.id,
+      customerName: c.name,
+      name: i === 0 ? c.contact : Random.cname(),
+      phone: i === 0 ? c.phone : Mock.mock(/^1[3-9]\d{9}$/),
+      position: Random.pick(positionPool),
+      email: i === 0 ? c.email : Random.email(),
+      address: c.address,
+      birthday: Random.date("yyyy-MM-dd"),
+      ownerId: c.ownerId,
+      isPrimary: i === 0,
+      remark: "",
+      attachment: "",
+      createdAt: Random.date("yyyy-MM-dd"),
+    });
+  }
+});
