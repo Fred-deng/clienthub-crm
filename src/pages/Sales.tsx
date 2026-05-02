@@ -175,7 +175,7 @@ export default function Sales() {
       customerName: cus.name,
       items,
       totalAmount,
-      contractAmount: Number(v.contractAmount) || totalAmount,
+      contractAmount: totalAmount,
       received: Number(v.received) || 0,
       serviceFee: Number(v.serviceFee) || 0,
       outsourceFee: Number(v.outsourceFee) || 0,
@@ -265,7 +265,7 @@ export default function Sales() {
                     <td><span className={"cell-chip " + bizTone[split.category]}>{bizLabel[split.category]}</span></td>
                     <td className="text-xs">{o.contractProperty ?? "—"}</td>
                     <td><StatusBadge status={o.status} /></td>
-                    <td className="num">{fmtMoney(o.contractAmount ?? o.totalAmount)}</td>
+                    <td className="num">{fmtMoney(o.totalAmount)}</td>
                     <td className={"num " + (o.received > 0 ? "!text-mint" : "!text-foreground/40")}>{fmtMoney(o.received)}</td>
                     <td className="num text-xs"><span className="mono">{(o.invoices?.length ?? 0)}</span> 张<div className="text-[10px] text-foreground/55 mono">{fmtMoney((o.invoices || []).reduce((s, r) => s + (r.amount || 0), 0))}</div></td>
                     <td className="text-xs">{owner?.name ?? "—"}</td>
@@ -284,7 +284,7 @@ export default function Sales() {
               })}
             </tbody>
             {data.list.length > 0 && (() => {
-              const sumContract = data.list.reduce((s, o) => s + (o.contractAmount ?? o.totalAmount), 0);
+              const sumContract = data.list.reduce((s, o) => s + o.totalAmount, 0);
               const sumReceived = data.list.reduce((s, o) => s + o.received, 0);
               const sumInvoice = data.list.reduce((s, o) => s + (o.invoices || []).reduce((a, r) => a + (r.amount || 0), 0), 0);
               return (
