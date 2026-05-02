@@ -160,6 +160,10 @@ export default function Payments() {
                 <SelectItem value="out">付款</SelectItem>
               </SelectContent>
             </Select>
+            <DateRangeFilter
+              value={{ from: query.dateFrom, to: query.dateTo }}
+              onChange={(v) => setFilter({ dateFrom: v.from, dateTo: v.to })}
+            />
           </div>
         }
 >
