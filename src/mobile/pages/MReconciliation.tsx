@@ -1,114 +1,149 @@
+// 账款核对（移动端）— 1:1 复刻 PC Reconciliation
 import { useEffect, useMemo, useState } from "react";
-import { salesApi, purchaseApi, paymentApi } from "@/services/api";
-import { useToast } from "@/hooks/use-toast";
+import { ArrowDownLeft, ArrowUpRight, CheckCircle2 } from "lucide-react";
+import { toast } from "sonner";
+import {
+  MPageHeader, MSearchBar, MCard, MList, MTag, MKpi, MChipFilter, MSheet, MField, MInput,
+  MTextarea, MSelect, MButton, MAccordion, MFilterBar,
+} from "../components/MUI";
+import { salesApi, purchaseApi } from "@/services/api";
+import { createPaymentAndSync } from "@/services/payments";
+import { fmtMoney, fmtMoneyShort } from "@/lib/format";
 import type { SalesOrder, PurchaseOrder } from "@/types";
-import { MPageHeader, MSearchBar, MList, MCard, MTag, MKpi, MChipFilter, MDateRange, MSheet, MField, MInput, MTextarea, MSelect, MButton } from "../components/MUI";
 
 type Dir = "in" | "out";
-const inRange = (d: string, f: string, t: string) => (!f || d >= f) && (!t || d <= t);
+interface Row { id: string; code: string; partyId: string; partyName: string; contract: number; paid: number; outstanding: number; createdAt: string; status: string; dir: Dir; refType: "sales" | "purchase"; }
+
+const statusZh: Record<string, string> = { pending: "待发货", shipped: "已发货", delivered: "已送达", cancelled: "已取消", draft: "草稿", ordered: "已下单", received: "已入库" };
+const today = () => new Date().toISOString().slice(0, 10);
 
 export default function MReconciliation() {
-  const { toast } = useToast();
   const [sales, setSales] = useState<SalesOrder[]>([]);
   const [purs, setPurs] = useState<PurchaseOrder[]>([]);
   const [tab, setTab] = useState<Dir>("in");
-  const [filter, setFilter] = useState<"outstanding" | "all">("outstanding");
   const [keyword, setKeyword] = useState("");
-  const [date, setDate] = useState({ from: "", to: "" });
-  const [pay, setPay] = useState<{ open: boolean; row: any | null; amount: number; method: string; paidAt: string; remark: string }>({ open: false, row: null, amount: 0, method: "对公转账", paidAt: new Date().toISOString().slice(0, 10), remark: "" });
+  const [filter, setFilter] = useState<"outstanding" | "all">("outstanding");
+  const [pay, setPay] = useState<Row | null>(null);
+  const [payForm, setPayForm] = useState({ amount: 0, method: "对公转账", paidAt: today(), remark: "" });
 
   const reload = () => { salesApi.all().then(setSales); purchaseApi.all().then(setPurs); };
-  useEffect(() => { reload(); }, []);
+  useEffect(reload, []);
 
-  const rows = useMemo(() => {
-    const list = tab === "in"
-      ? sales.filter(o => o.status !== "cancelled").map(o => { const c = o.contractAmount ?? o.totalAmount; return { id: o.id, code: o.code, partyId: o.customerId, partyName: o.customerName, contract: c, paid: o.received, outstanding: c - o.received, createdAt: o.createdAt, status: o.status, refType: "sales" as const }; })
-      : purs.filter(o => o.status !== "cancelled" && o.status !== "draft").map(o => { const c = o.contractAmount || o.totalAmount; return { id: o.id, code: o.code, partyId: o.supplierId, partyName: o.supplierName, contract: c, paid: o.paid, outstanding: c - o.paid, createdAt: o.createdAt, status: o.status, refType: "purchase" as const }; });
-    const k = keyword.toLowerCase();
-    return list.filter(r => {
-      if (!inRange(r.createdAt, date.from, date.to)) return false;
-      if (filter === "outstanding" && r.outstanding <= 0) return false;
-      if (k && !r.partyName.toLowerCase().includes(k) && !r.code.toLowerCase().includes(k)) return false;
-      return true;
-    }).sort((a, b) => b.outstanding - a.outstanding);
-  }, [tab, sales, purs, keyword, filter, date]);
+  const inRows: Row[] = useMemo(() => sales.filter(o => o.status !== "cancelled").map(o => {
+    const c = o.contractAmount ?? o.totalAmount;
+    return { id: o.id, code: o.code, partyId: o.customerId, partyName: o.customerName, contract: c, paid: o.received || 0, outstanding: c - (o.received || 0), createdAt: o.createdAt, status: o.status, dir: "in" as const, refType: "sales" as const };
+  }), [sales]);
+  const outRows: Row[] = useMemo(() => purs.filter(o => o.status !== "cancelled" && o.status !== "draft").map(o => {
+    const c = o.contractAmount || o.totalAmount;
+    return { id: o.id, code: o.code, partyId: o.supplierId, partyName: o.supplierName, contract: c, paid: o.paid || 0, outstanding: c - (o.paid || 0), createdAt: o.createdAt, status: o.status, dir: "out" as const, refType: "purchase" as const };
+  }), [purs]);
 
-  const totals = rows.reduce((acc, r) => ({ contract: acc.contract + r.contract, paid: acc.paid + r.paid, outstanding: acc.outstanding + r.outstanding }), { contract: 0, paid: 0, outstanding: 0 });
+  const all = tab === "in" ? inRows : outRows;
+  const filtered = all.filter(r => {
+    if (filter === "outstanding" && r.outstanding <= 0) return false;
+    if (keyword) { const k = keyword.toLowerCase(); if (!r.partyName.toLowerCase().includes(k) && !r.code.toLowerCase().includes(k)) return false; }
+    return true;
+  }).sort((a, b) => b.outstanding - a.outstanding);
 
-  const openPay = (r: any) => setPay({ open: true, row: r, amount: r.outstanding, method: "对公转账", paidAt: new Date().toISOString().slice(0, 10), remark: "" });
+  const totals = all.reduce((s, r) => ({ contract: s.contract + r.contract, paid: s.paid + r.paid, outstanding: s.outstanding + Math.max(r.outstanding, 0), settled: s.settled + (r.outstanding <= 0 ? 1 : 0) }), { contract: 0, paid: 0, outstanding: 0, settled: 0 });
 
+  const groups = useMemo(() => {
+    const m = new Map<string, { partyName: string; rows: Row[]; outstanding: number }>();
+    filtered.forEach(r => { const g = m.get(r.partyId) || { partyName: r.partyName, rows: [], outstanding: 0 }; g.rows.push(r); g.outstanding += r.outstanding; m.set(r.partyId, g); });
+    return Array.from(m.entries()).map(([id, g]) => ({ id, ...g })).sort((a, b) => b.outstanding - a.outstanding);
+  }, [filtered]);
+
+  const today2 = new Date();
+  const aging = (d: string) => Math.max(0, Math.floor((today2.getTime() - new Date(d).getTime()) / 86400000));
+
+  const openPay = (r: Row) => { setPay(r); setPayForm({ amount: r.outstanding, method: "对公转账", paidAt: today(), remark: "" }); };
   const submitPay = async () => {
-    if (!pay.row || !pay.amount) return toast({ title: "请填写金额" });
-    const r = pay.row;
-    await paymentApi.create({
-      direction: tab, refType: r.refType, refId: r.id, refCode: r.code, partyName: r.partyName,
-      amount: pay.amount, method: pay.method as any, paidAt: pay.paidAt, remark: pay.remark, code: `PAY-${Date.now().toString().slice(-6)}`,
+    if (!pay) return;
+    if (!payForm.amount || payForm.amount <= 0) return toast.error("金额需大于 0");
+    await createPaymentAndSync({
+      direction: pay.dir, refType: pay.refType, refId: pay.id, refCode: pay.code,
+      partyName: pay.partyName, amount: Number(payForm.amount), method: payForm.method,
+      paidAt: payForm.paidAt, remark: payForm.remark,
+      code: `${pay.dir === "in" ? "RC" : "PY"}-${Date.now().toString().slice(-6)}`,
     } as any);
-    if (tab === "in") {
-      const o = sales.find(s => s.id === r.id); if (o) await salesApi.update(o.id, { received: (o.received || 0) + pay.amount });
-    } else {
-      const o = purs.find(p => p.id === r.id); if (o) await purchaseApi.update(o.id, { paid: (o.paid || 0) + pay.amount });
-    }
-    toast({ title: "登记成功" });
-    setPay({ ...pay, open: false });
-    reload();
+    toast.success("已记账"); setPay(null); reload();
   };
 
   return (
-    <div>
-      <MPageHeader title="账款核对" subtitle={`${rows.length} 笔单据`} />
-      <MChipFilter value={tab} onChange={(v) => setTab(v as Dir)} options={[{ value: "in", label: "应收（客户）" }, { value: "out", label: "应付（供应商）" }]} />
-      <section className="px-4 py-2 grid grid-cols-3 gap-2">
-        <MKpi label="合同" value={`¥${(totals.contract / 10000).toFixed(1)}万`} />
-        <MKpi label={tab === "in" ? "已收" : "已付"} value={`¥${(totals.paid / 10000).toFixed(1)}万`} accent="mint" />
-        <MKpi label="未结" value={`¥${(totals.outstanding / 10000).toFixed(1)}万`} accent="tomato" />
-      </section>
-      <MSearchBar value={keyword} onChange={setKeyword} placeholder="单号 / 客户 / 供应商" />
-      <MChipFilter value={filter} onChange={(v) => setFilter(v as any)} options={[{ value: "outstanding", label: "未结清" }, { value: "all", label: "全部" }]} />
-      <MDateRange value={date} onChange={setDate} />
+    <>
+      <MPageHeader title="账款核对" subtitle={`${groups.length} 家 · ${filtered.length} 单`} />
+      <div className="px-4 pb-3 grid grid-cols-2 gap-2">
+        <button onClick={() => setTab("in")} className={`h-12 rounded-2xl text-sm font-bold inline-flex items-center justify-center gap-2 ${tab === "in" ? "bg-tomato text-[hsl(var(--paper))]" : "bg-card border border-foreground/10"}`}>
+          <ArrowDownLeft className="h-4 w-4" />应收（销售）
+        </button>
+        <button onClick={() => setTab("out")} className={`h-12 rounded-2xl text-sm font-bold inline-flex items-center justify-center gap-2 ${tab === "out" ? "bg-cobalt text-[hsl(var(--paper))]" : "bg-card border border-foreground/10"}`}>
+          <ArrowUpRight className="h-4 w-4" />应付（采购）
+        </button>
+      </div>
+      <div className="px-4 pb-3 grid grid-cols-2 gap-2">
+        <MKpi label={tab === "in" ? "已回款" : "已付款"} value={fmtMoneyShort(totals.paid)} accent="mint" />
+        <MKpi label={tab === "in" ? "未收" : "未付"} value={fmtMoneyShort(totals.outstanding)} accent="tomato" sub={`已结清 ${totals.settled} 笔`} />
+      </div>
+      <MSearchBar value={keyword} onChange={setKeyword} placeholder="搜索对手方/单号" />
+      <MChipFilter value={filter} onChange={setFilter as any} options={[{ value: "outstanding", label: "仅未结清" }, { value: "all", label: "全部" }]} />
 
-      <MList empty={!rows.length}>
-        {rows.map(r => {
-          const pct = r.contract ? (r.paid / r.contract) * 100 : 0;
-          return (
-            <MCard key={r.id}>
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0 flex-1">
-                  <div className="font-semibold text-sm truncate">{r.partyName}</div>
-                  <div className="text-[11px] font-mono text-foreground/45 mt-0.5">{r.code} · {r.createdAt}</div>
-                </div>
-                <MTag variant={r.outstanding > 0 ? "tomato" : "mint"}>{r.outstanding > 0 ? `欠 ¥${r.outstanding.toLocaleString()}` : "结清"}</MTag>
-              </div>
-              <div className="mt-2 h-1.5 rounded-full bg-foreground/8 overflow-hidden">
-                <div className="h-full bg-mint" style={{ width: `${Math.min(pct, 100)}%` }} />
-              </div>
-              <div className="flex items-center justify-between mt-2.5 text-[11px]">
-                <span className="text-foreground/55">合同 ¥{r.contract.toLocaleString()} · {tab === "in" ? "已收" : "已付"} ¥{r.paid.toLocaleString()}</span>
-                {r.outstanding > 0 && (
-                  <button onClick={() => openPay(r)} className="px-3 h-7 rounded-full bg-tomato text-[hsl(var(--paper))] text-[11px] font-semibold">
-                    {tab === "in" ? "登记回款" : "登记付款"}
-                  </button>
-                )}
-              </div>
-            </MCard>
-          );
-        })}
-      </MList>
-
-      <MSheet open={pay.open} onOpenChange={(o) => setPay({ ...pay, open: o })} title={tab === "in" ? "登记回款" : "登记付款"}
-        footer={<div className="flex gap-2"><MButton variant="ghost" className="flex-1" onClick={() => setPay({ ...pay, open: false })}>取消</MButton><MButton className="flex-1" onClick={submitPay}>提交</MButton></div>}
-      >
-        {pay.row && <div>
-          <div className="bg-foreground/[0.04] rounded-xl p-3 mb-3">
-            <div className="text-[11px] text-foreground/55">{pay.row.code} · {pay.row.partyName}</div>
-            <div className="flex justify-between mt-1 text-sm"><span>未结</span><span className="font-mono font-bold text-tomato">¥{pay.row.outstanding.toLocaleString()}</span></div>
+      <div className="px-4 pb-4 space-y-2">
+        {groups.length === 0 ? (
+          <div className="text-center py-12">
+            <CheckCircle2 className="h-8 w-8 mx-auto mb-2 text-mint" />
+            <div className="text-sm text-foreground/45">没有需要核对的账款</div>
           </div>
-          <MField label="金额" required><MInput type="number" value={pay.amount} onChange={(e) => setPay({ ...pay, amount: Number(e.target.value) })} /></MField>
-          <MField label="方式"><MSelect value={pay.method} onChange={(v) => setPay({ ...pay, method: v })} options={["对公转账", "现金", "支票", "支付宝", "微信"].map(m => ({ value: m, label: m }))} /></MField>
-          <MField label="日期"><MInput type="date" value={pay.paidAt} onChange={(e) => setPay({ ...pay, paidAt: e.target.value })} /></MField>
-          <MField label="备注"><MTextarea value={pay.remark} onChange={(e) => setPay({ ...pay, remark: e.target.value })} /></MField>
-        </div>}
+        ) : groups.map(g => (
+          <MAccordion key={g.id} title={<span className="flex items-center gap-2"><span className="font-bold">{g.partyName}</span><MTag variant="muted">{g.rows.length} 单</MTag></span>}
+            badge={<span className={`font-mono font-black text-[13px] ml-auto ${g.outstanding > 0 ? "text-tomato" : "text-foreground/40"}`}>{fmtMoney(g.outstanding)}</span>}>
+            <div className="space-y-1.5">
+              {g.rows.map(r => {
+                const days = aging(r.createdAt); const settled = r.outstanding <= 0;
+                return (
+                  <div key={r.id} className="p-2.5 rounded-lg bg-foreground/[0.03]">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="font-mono text-[11px] font-bold">{r.code}</span>
+                          <MTag variant="muted">{statusZh[r.status] || r.status}</MTag>
+                        </div>
+                        <div className="text-[11px] text-foreground/55 mt-1 font-mono">合同 {fmtMoneyShort(r.contract)} · 已{tab === "in" ? "回" : "付"} {fmtMoneyShort(r.paid)}</div>
+                        <div className="text-[10px] text-foreground/45 mt-0.5 font-mono">{r.createdAt} · {days}天</div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <div className={`font-mono font-bold text-[13px] ${settled ? "text-foreground/40" : "text-tomato"}`}>{fmtMoneyShort(r.outstanding)}</div>
+                        {settled ? <div className="text-[10px] text-mint mt-1">已结清</div> :
+                          <button onClick={() => openPay(r)} className="mt-1 px-2.5 h-7 rounded-full bg-foreground text-[hsl(var(--paper))] text-[10px] font-semibold">登记{tab === "in" ? "回款" : "付款"}</button>
+                        }
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </MAccordion>
+        ))}
+      </div>
+
+      <MSheet open={!!pay} onOpenChange={v => !v && setPay(null)} title={`登记${pay?.dir === "in" ? "回款" : "付款"}`}
+        footer={<div className="flex gap-2"><MButton variant="ghost" onClick={() => setPay(null)} className="flex-1">取消</MButton><MButton onClick={submitPay} className="flex-1">记录</MButton></div>}>
+        {pay && (
+          <>
+            <div className="rounded-xl bg-foreground/[0.04] p-3 mb-3">
+              <div className="font-bold text-[14px]">{pay.partyName}</div>
+              <div className="text-[11px] text-foreground/55 font-mono mt-0.5">{pay.code}</div>
+              <div className="text-[12px] mt-1.5 font-mono">合同 {fmtMoney(pay.contract)} · 余额 <span className="text-tomato font-bold">{fmtMoney(pay.outstanding)}</span></div>
+            </div>
+            <MField label="金额" required><MInput type="number" step="0.01" value={payForm.amount} onChange={e => setPayForm({ ...payForm, amount: Number(e.target.value) })} /></MField>
+            <MField label="方式">
+              <MSelect value={payForm.method} onChange={v => setPayForm({ ...payForm, method: v })}
+                options={["对公转账", "现金", "支票", "支付宝", "微信"].map(m => ({ value: m, label: m }))} />
+            </MField>
+            <MField label="日期"><MInput type="date" value={payForm.paidAt} onChange={e => setPayForm({ ...payForm, paidAt: e.target.value })} /></MField>
+            <MField label="备注"><MTextarea value={payForm.remark} onChange={e => setPayForm({ ...payForm, remark: e.target.value })} /></MField>
+          </>
+        )}
       </MSheet>
-    </div>
+    </>
   );
 }

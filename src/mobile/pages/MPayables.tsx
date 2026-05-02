@@ -1,73 +1,95 @@
+// 应付账款（移动端）— 1:1 复刻 PC Payables
 import { useEffect, useMemo, useState } from "react";
-import { purchaseApi } from "@/services/api";
-import type { PurchaseOrder } from "@/types";
-import { MPageHeader, MSearchBar, MList, MCard, MTag, MKpi, MChipFilter, MDateRange } from "../components/MUI";
+import { MPageHeader, MSearchBar, MCard, MList, MTag, MKpi, MChipFilter } from "../components/MUI";
+import { purchaseApi, supplierApi, productApi } from "@/services/api";
+import { fmtMoney, fmtMoneyShort } from "@/lib/format";
+import { splitPurchase, splitPurchasePaid, type BizFilter } from "@/lib/biz";
+import { categoryStore } from "@/services/categories";
+import type { PurchaseOrder, Supplier, Product } from "@/types";
 
-const inRange = (d: string, f: string, t: string) => (!f || d >= f) && (!t || d <= t);
+interface Row { supplierId: string; supplierName: string; orderCount: number; contractAmount: number; paid: number; outstanding: number; oldest: string; category?: string; swContract: number; hwContract: number; swPaid: number; hwPaid: number; swOut: number; hwOut: number; }
 
 export default function MPayables() {
   const [orders, setOrders] = useState<PurchaseOrder[]>([]);
-  const [keyword, setKeyword] = useState(""); const [tab, setTab] = useState<"outstanding" | "all" | "settled">("outstanding");
-  const [date, setDate] = useState({ from: "", to: "" });
-  useEffect(() => { purchaseApi.all().then(setOrders); }, []);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [keyword, setKeyword] = useState("");
+  const [biz, setBiz] = useState<BizFilter>("all");
+  const [filter, setFilter] = useState<"all" | "outstanding" | "settled">("outstanding");
 
-  const rows = useMemo(() => {
-    const map = new Map<string, { supplierId: string; supplierName: string; orderCount: number; contract: number; paid: number; outstanding: number; oldest: string }>();
-    orders.filter(o => o.status !== "cancelled" && o.status !== "draft" && inRange(o.createdAt, date.from, date.to)).forEach(o => {
+  useEffect(() => { purchaseApi.all().then(setOrders); supplierApi.all().then(setSuppliers); productApi.all().then(setProducts); }, []);
+
+  const rows: Row[] = useMemo(() => {
+    const map = new Map<string, Row>();
+    orders.filter(o => o.status !== "cancelled" && o.status !== "draft").forEach(o => {
       const c = o.contractAmount || o.totalAmount;
-      const r = map.get(o.supplierId) ?? { supplierId: o.supplierId, supplierName: o.supplierName, orderCount: 0, contract: 0, paid: 0, outstanding: 0, oldest: o.createdAt };
-      r.orderCount++; r.contract += c; r.paid += o.paid; r.outstanding = r.contract - r.paid;
+      const sCon = splitPurchase(o, products); const sPaid = splitPurchasePaid(o, products);
+      const r = map.get(o.supplierId) || { supplierId: o.supplierId, supplierName: o.supplierName, orderCount: 0, contractAmount: 0, paid: 0, outstanding: 0, oldest: o.createdAt, swContract: 0, hwContract: 0, swPaid: 0, hwPaid: 0, swOut: 0, hwOut: 0 };
+      r.orderCount += 1; r.contractAmount += c; r.paid += o.paid;
+      r.swContract += sCon.software; r.hwContract += sCon.hardware;
+      r.swPaid += sPaid.software; r.hwPaid += sPaid.hardware;
+      r.outstanding = r.contractAmount - r.paid;
+      r.swOut = r.swContract - r.swPaid; r.hwOut = r.hwContract - r.hwPaid;
       if (o.createdAt && o.createdAt < r.oldest) r.oldest = o.createdAt;
       map.set(o.supplierId, r);
     });
+    suppliers.forEach(s => { const r = map.get(s.id); if (r) r.category = s.category; });
     return Array.from(map.values()).sort((a, b) => b.outstanding - a.outstanding);
-  }, [orders, date]);
+  }, [orders, suppliers, products]);
 
-  const k = keyword.toLowerCase();
+  const view = (r: Row) => biz === "software" ? { contract: r.swContract, paid: r.swPaid, outstanding: r.swOut } : biz === "hardware" ? { contract: r.hwContract, paid: r.hwPaid, outstanding: r.hwOut } : { contract: r.contractAmount, paid: r.paid, outstanding: r.outstanding };
+
   const filtered = rows.filter(r => {
-    if (tab === "outstanding" && r.outstanding <= 0) return false;
-    if (tab === "settled" && r.outstanding > 0) return false;
-    if (k && !r.supplierName.toLowerCase().includes(k)) return false;
+    const v = view(r);
+    if (biz !== "all" && v.contract <= 0) return false;
+    if (filter === "outstanding" && v.outstanding <= 0) return false;
+    if (filter === "settled" && v.outstanding > 0) return false;
+    if (keyword && !r.supplierName.toLowerCase().includes(keyword.toLowerCase())) return false;
     return true;
   });
-  const totals = filtered.reduce((acc, r) => ({ contract: acc.contract + r.contract, paid: acc.paid + r.paid, outstanding: acc.outstanding + r.outstanding }), { contract: 0, paid: 0, outstanding: 0 });
+
+  const totals = filtered.reduce((s, r) => { const v = view(r); return { contract: s.contract + v.contract, paid: s.paid + v.paid, outstanding: s.outstanding + v.outstanding }; }, { contract: 0, paid: 0, outstanding: 0 });
+
+  const today = new Date();
+  const aging = (d: string) => Math.max(0, Math.floor((today.getTime() - new Date(d).getTime()) / 86400000));
 
   return (
-    <div>
-      <MPageHeader title="应付账款" subtitle={`${filtered.length} 家供应商`} />
-      <section className="px-4 py-3 grid grid-cols-3 gap-2">
-        <MKpi label="合同总额" value={`¥${(totals.contract / 10000).toFixed(1)}万`} />
-        <MKpi label="已付款" value={`¥${(totals.paid / 10000).toFixed(1)}万`} accent="mint" />
-        <MKpi label="未付款" value={`¥${(totals.outstanding / 10000).toFixed(1)}万`} accent="tomato" />
-      </section>
+    <>
+      <MPageHeader title="应付账款" subtitle={`${filtered.length} 供应商`} />
+      <div className="px-4 pb-3 grid grid-cols-3 gap-2">
+        <MKpi label="合同总额" value={fmtMoneyShort(totals.contract)} accent="cobalt" />
+        <MKpi label="已付款" value={fmtMoneyShort(totals.paid)} accent="mint" />
+        <MKpi label="未付" value={fmtMoneyShort(totals.outstanding)} accent="tomato" />
+      </div>
+      <MChipFilter value={biz} onChange={setBiz} options={[{ value: "all", label: "全部" }, { value: "software", label: "软件" }, { value: "hardware", label: "硬件" }] as any} />
+      <MChipFilter value={filter} onChange={setFilter as any} options={[{ value: "outstanding", label: "仅看未付" }, { value: "all", label: "全部" }, { value: "settled", label: "已结清" }]} />
       <MSearchBar value={keyword} onChange={setKeyword} placeholder="搜索供应商" />
-      <MChipFilter value={tab} onChange={(v) => setTab(v as any)} options={[{ value: "outstanding", label: "有欠款" }, { value: "settled", label: "已结清" }, { value: "all", label: "全部" }]} />
-      <MDateRange value={date} onChange={setDate} />
 
-      <MList empty={!filtered.length}>
+      <MList empty={filtered.length === 0}>
         {filtered.map(r => {
-          const pct = r.contract ? (r.paid / r.contract) * 100 : 0;
+          const v = view(r); const days = aging(r.oldest);
+          const ageTone = days > 90 ? "tomato" : days > 30 ? "mustard" : "muted";
           return (
             <MCard key={r.supplierId}>
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0 flex-1">
-                  <div className="font-semibold text-sm truncate">{r.supplierName}</div>
-                  <div className="text-[11px] text-foreground/55 mt-0.5">{r.orderCount} 单 · 最早 {r.oldest}</div>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="font-bold text-[14px] truncate">{r.supplierName}</span>
+                    {r.category && <MTag variant="cobalt">{categoryStore.labelOf(r.category)}</MTag>}
+                    <MTag variant={ageTone as any}>账龄 {days}d</MTag>
+                  </div>
+                  <div className="text-[11px] text-foreground/50 mt-0.5 font-mono">{r.orderCount} 单 · 最早 {r.oldest}</div>
+                  <div className="text-[12px] mt-1.5 font-mono">合同 <span className="font-bold">{fmtMoney(v.contract)}</span> · 已付 <span className="text-mint font-bold">{fmtMoney(v.paid)}</span></div>
                 </div>
-                <MTag variant={r.outstanding > 0 ? "tomato" : "mint"}>{r.outstanding > 0 ? "欠付" : "结清"}</MTag>
-              </div>
-              <div className="mt-2.5 grid grid-cols-3 gap-2 text-[11px]">
-                <div><div className="text-foreground/50">合同</div><div className="font-mono font-bold">¥{r.contract.toLocaleString()}</div></div>
-                <div><div className="text-foreground/50">已付</div><div className="font-mono font-bold text-mint">¥{r.paid.toLocaleString()}</div></div>
-                <div><div className="text-foreground/50">未付</div><div className="font-mono font-bold text-tomato">¥{r.outstanding.toLocaleString()}</div></div>
-              </div>
-              <div className="mt-2 h-1.5 rounded-full bg-foreground/8 overflow-hidden">
-                <div className="h-full bg-mint transition-all" style={{ width: `${Math.min(pct, 100)}%` }} />
+                <div className="text-right shrink-0">
+                  <div className="text-[10px] text-foreground/45 font-mono uppercase">未付</div>
+                  <div className={`text-lg font-display font-black tabular-nums ${v.outstanding > 0 ? "text-tomato" : "text-foreground/40"}`}>{fmtMoneyShort(v.outstanding)}</div>
+                </div>
               </div>
             </MCard>
           );
         })}
       </MList>
-    </div>
+    </>
   );
 }

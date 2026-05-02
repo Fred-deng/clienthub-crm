@@ -1,104 +1,138 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+// 控制面板（移动端）— 1:1 复刻 PC Dashboard
+import { useEffect, useState, useMemo } from "react";
+import { TrendingUp, Wallet, FileCheck2, AlertTriangle, ArrowRight } from "lucide-react";
+import { Link } from "react-router-dom";
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, AreaChart, Area, CartesianGrid } from "recharts";
+import { MPageHeader, MKpi, MChipFilter, MSection, MTag } from "../components/MUI";
 import { statsApi } from "@/services/api";
-import { ArrowDownToLine, ArrowUpFromLine, ShoppingCart, Wallet, Users, Package, Truck, FileBox, MessageSquareText, Scale, ChevronRight, TrendingUp } from "lucide-react";
-import { MPageHeader, MKpi, MSection, MCard, MTag } from "../components/MUI";
-
-const fmt = (n: number) => "¥" + (n >= 10000 ? (n / 10000).toFixed(1) + "万" : n.toFixed(0));
-
-const quickEntries = [
-  { to: "/m/customers", label: "客户", icon: Users, color: "bg-tomato/10 text-tomato" },
-  { to: "/m/contacts", label: "联系人", icon: Users, color: "bg-cobalt/10 text-cobalt" },
-  { to: "/m/follow-ups", label: "跟进", icon: MessageSquareText, color: "bg-mustard/15 text-foreground" },
-  { to: "/m/products", label: "产品", icon: Package, color: "bg-mint/20 text-foreground" },
-  { to: "/m/suppliers", label: "供应商", icon: Truck, color: "bg-foreground/8 text-foreground" },
-  { to: "/m/purchases", label: "采购", icon: FileBox, color: "bg-cobalt/10 text-cobalt" },
-  { to: "/m/sales", label: "销售", icon: ShoppingCart, color: "bg-tomato/10 text-tomato" },
-  { to: "/m/payments", label: "收支", icon: Wallet, color: "bg-mustard/15 text-foreground" },
-  { to: "/m/receivables", label: "应收", icon: ArrowDownToLine, color: "bg-mint/20 text-foreground" },
-  { to: "/m/payables", label: "应付", icon: ArrowUpFromLine, color: "bg-tomato/10 text-tomato" },
-  { to: "/m/reconciliation", label: "对账", icon: Scale, color: "bg-foreground/8 text-foreground" },
-];
+import { fmtMoney, fmtMoneyShort, currentMonth } from "@/lib/format";
+import type { BizFilter } from "@/lib/biz";
 
 export default function MDashboard() {
   const [data, setData] = useState<any>(null);
-  const nav = useNavigate();
+  const [biz, setBiz] = useState<BizFilter>("all");
+
   useEffect(() => { statsApi.dashboard().then(setData); }, []);
 
+  const view = useMemo(() => {
+    if (!data) return null;
+    const pick = (sw: number, hw: number, total: number) => biz === "software" ? sw : biz === "hardware" ? hw : total;
+    return {
+      revenue: pick(data.biz.revenue.software, data.biz.revenue.hardware, data.monthRevenue),
+      gross: pick(data.biz.grossProfit.software, data.biz.grossProfit.hardware, data.monthGrossProfit),
+      receivable: pick(data.biz.receivable.software, data.biz.receivable.hardware, data.receivable),
+      payable: pick(data.biz.payable.software, data.biz.payable.hardware, data.payable),
+      trend: data.trend.map((t: any) => ({ month: t.month, amount: biz === "software" ? t.software : biz === "hardware" ? t.hardware : t.amount, software: t.software, hardware: t.hardware })),
+      ranking: data.ranking.map((r: any) => ({ ...r, amount: biz === "software" ? r.software : biz === "hardware" ? r.hardware : r.amount })).sort((a: any, b: any) => b.amount - a.amount),
+    };
+  }, [data, biz]);
+
+  if (!data || !view) {
+    return <div className="px-4 py-12 text-center text-sm text-foreground/45">加载中…</div>;
+  }
+
   return (
-    <div>
-      <MPageHeader title="集马 · 工作台" subtitle={new Date().toLocaleDateString("zh-CN", { weekday: "long", month: "long", day: "numeric" })} />
+    <>
+      <MPageHeader title="控制面板" subtitle={`MISSION CONTROL · ${currentMonth()}`} />
+      <MChipFilter value={biz} onChange={setBiz}
+        options={[{ value: "all", label: "全部业务" }, { value: "software", label: "软件" }, { value: "hardware", label: "硬件" }] as any} />
 
-      <section className="px-4 pt-3 pb-2">
-        <div className="rounded-3xl bg-gradient-to-br from-tomato to-[hsl(8_72%_44%)] text-[hsl(var(--paper))] p-5 shadow-lg shadow-tomato/20">
-          <div className="text-[11px] font-mono uppercase tracking-wider opacity-80">本月销售额</div>
-          <div className="text-3xl font-display font-black tabular-nums mt-1">{data ? fmt(data.monthRevenue) : "—"}</div>
-          <div className="flex items-center gap-2 mt-3 text-[11px] opacity-90">
-            <TrendingUp className="h-3.5 w-3.5" />
-            毛利 {data ? fmt(data.monthGrossProfit) : "—"} · 活跃合同 {data?.activeContracts ?? 0}
-          </div>
-        </div>
-      </section>
+      <div className="px-4 grid grid-cols-2 gap-2 mb-4">
+        <MKpi label="本月销售" value={fmtMoneyShort(view.revenue)} accent="tomato" sub="Revenue" />
+        <MKpi label="本月毛利" value={fmtMoneyShort(view.gross)} accent="mint" sub={`毛利率 ${view.revenue > 0 ? ((view.gross / view.revenue) * 100).toFixed(1) : "0.0"}%`} />
+        <MKpi label="应收账款" value={fmtMoneyShort(view.receivable)} accent="mustard" sub="Receivable" />
+        <MKpi label="应付账款" value={fmtMoneyShort(view.payable)} accent="tomato" sub="Payable" />
+        <MKpi label="生效合同" value={`${data.activeContracts} 份`} accent="cobalt" sub={`正式 ${data.formalCustomers} · 潜在 ${data.leadCustomers}`} />
+        <MKpi label="低库存" value={`${data.lowStock.length}`} accent="tomato" sub="Stock alerts" />
+      </div>
 
-      <section className="px-4 pt-2 pb-4 grid grid-cols-2 gap-2.5">
-        <MKpi label="应收账款" value={data ? fmt(data.receivable) : "—"} accent="mustard" />
-        <MKpi label="应付账款" value={data ? fmt(data.payable) : "—"} accent="tomato" />
-        <MKpi label="正式客户" value={data?.formalCustomers ?? "—"} accent="cobalt" sub={`潜在 ${data?.leadCustomers ?? 0}`} />
-        <MKpi label="低库存" value={data?.lowStock?.length ?? "—"} accent="tomato" sub="件需补货" />
-      </section>
-
-      <MSection title="快捷入口">
-        <div className="grid grid-cols-4 gap-2">
-          {quickEntries.map((e) => (
-            <button key={e.to} onClick={() => nav(e.to)} className="flex flex-col items-center gap-1.5 py-3 rounded-2xl bg-card border border-foreground/8 active:scale-95 transition-transform">
-              <span className={`size-10 rounded-xl flex items-center justify-center ${e.color}`}>
-                <e.icon className="h-5 w-5" />
-              </span>
-              <span className="text-[11px] text-foreground/75">{e.label}</span>
-            </button>
-          ))}
-        </div>
-      </MSection>
-
-      <MSection title="销售员业绩" action={<button onClick={() => nav("/m/sales")} className="text-[11px] text-tomato">查看全部</button>}>
-        <div className="space-y-2">
-          {(data?.ranking ?? []).slice(0, 5).map((r: any, i: number) => (
-            <MCard key={r.ownerId} className="!p-3.5">
-              <div className="flex items-center gap-3">
-                <div className={`size-8 rounded-full font-display font-black flex items-center justify-center ${i === 0 ? "bg-tomato text-[hsl(var(--paper))]" : i < 3 ? "bg-mustard text-foreground" : "bg-foreground/8 text-foreground/65"}`}>{i + 1}</div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-sm">{r.name}</div>
-                  <div className="text-[11px] text-foreground/55 mt-0.5">软 {fmt(r.software)} · 硬 {fmt(r.hardware)}</div>
-                </div>
-                <div className="font-mono font-bold tabular-nums text-sm">{fmt(r.amount)}</div>
-              </div>
-            </MCard>
-          ))}
+      <MSection title="月度销售趋势">
+        <div className="bg-card rounded-2xl border border-foreground/8 p-3 h-[200px]">
+          <ResponsiveContainer width="100%" height="100%">
+            {biz === "all" ? (
+              <BarChart data={view.trend}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                <XAxis dataKey="month" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={v => v / 10000 + "万"} width={36} />
+                <Tooltip contentStyle={{ fontSize: 11 }} formatter={(v: number) => fmtMoney(v)} />
+                <Bar dataKey="software" stackId="a" fill="hsl(var(--cobalt))" />
+                <Bar dataKey="hardware" stackId="a" fill="hsl(var(--mint))" radius={[2, 2, 0, 0]} />
+              </BarChart>
+            ) : (
+              <AreaChart data={view.trend}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                <XAxis dataKey="month" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={v => v / 10000 + "万"} width={36} />
+                <Tooltip contentStyle={{ fontSize: 11 }} formatter={(v: number) => fmtMoney(v)} />
+                <Area type="monotone" dataKey="amount" stroke="hsl(var(--tomato))" fill="hsl(var(--tomato) / 0.2)" strokeWidth={2} />
+              </AreaChart>
+            )}
+          </ResponsiveContainer>
         </div>
       </MSection>
 
-      <MSection title="最近销售订单" action={<button onClick={() => nav("/m/sales")} className="text-[11px] text-tomato">更多 <ChevronRight className="inline h-3 w-3" /></button>}>
-        <div className="space-y-2">
-          {(data?.recentSales ?? []).slice(0, 5).map((o: any) => (
-            <MCard key={o.id} onClick={() => nav(`/m/sales/${o.id}`)} className="!p-3.5">
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0 flex-1">
-                  <div className="font-semibold text-sm truncate">{o.customerName}</div>
-                  <div className="text-[11px] font-mono text-foreground/45 mt-0.5">{o.code} · {o.createdAt}</div>
+      <MSection title="销售员业绩 TOP">
+        <div className="bg-card rounded-2xl border border-foreground/8 p-3 space-y-2">
+          {view.ranking.slice(0, 5).map((r: any, i: number) => {
+            const max = view.ranking[0]?.amount || 1;
+            return (
+              <div key={r.id || r.name}>
+                <div className="flex items-center justify-between text-[12px] mb-1">
+                  <span className="font-semibold"><span className="text-foreground/40 mr-1.5 font-mono">{String(i + 1).padStart(2, "0")}</span>{r.name}</span>
+                  <span className="font-mono font-bold tabular-nums">{fmtMoneyShort(r.amount)}</span>
                 </div>
-                <div className="text-right shrink-0">
-                  <div className="font-mono font-bold tabular-nums text-sm">{fmt(o.contractAmount ?? o.totalAmount)}</div>
-                  <MTag variant={o.status === "delivered" ? "mint" : o.status === "cancelled" ? "muted" : "mustard"}>{
-                    { pending: "待发货", shipped: "已发货", delivered: "已交付", cancelled: "已取消" }[o.status as string] ?? o.status
-                  }</MTag>
+                <div className="h-1.5 bg-foreground/[0.06] rounded-full overflow-hidden">
+                  <div className="h-full rounded-full bg-tomato" style={{ width: `${(r.amount / max) * 100}%` }} />
                 </div>
               </div>
-            </MCard>
+            );
+          })}
+        </div>
+      </MSection>
+
+      <MSection title="最近销售订单" action={<Link to="/m/sales" className="text-[11px] text-tomato inline-flex items-center gap-1">全部<ArrowRight className="h-3 w-3" /></Link>}>
+        <div className="bg-card rounded-2xl border border-foreground/8 divide-y divide-foreground/5">
+          {data.recentSales.slice(0, 5).map((s: any, i: number) => (
+            <div key={s.id} className="flex items-center justify-between p-3">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5">
+                  <span className="font-mono text-[11px] text-foreground/40">{String(i + 1).padStart(2, "0")}</span>
+                  <span className="font-mono text-[11px] font-bold">{s.code}</span>
+                </div>
+                <div className="text-[12px] text-foreground/75 truncate mt-0.5">{s.customerName}</div>
+              </div>
+              <div className="text-right shrink-0">
+                <div className="font-mono font-bold text-[13px] tabular-nums">{fmtMoney(s.totalAmount)}</div>
+              </div>
+            </div>
           ))}
         </div>
       </MSection>
 
-      <div className="h-4" />
-    </div>
+      <MSection title="低库存预警" action={<Link to="/m/products" className="text-[11px] text-tomato inline-flex items-center gap-1">详情<ArrowRight className="h-3 w-3" /></Link>}>
+        <div className="bg-card rounded-2xl border border-foreground/8 p-3 space-y-3">
+          {data.lowStock.length === 0 ? <div className="text-center py-4 text-[12px] text-foreground/45">无低库存</div> :
+            data.lowStock.map((p: any) => {
+              const ratio = Math.min(100, (p.stock / Math.max(1, p.safetyStock)) * 100);
+              const critical = ratio < 50;
+              return (
+                <div key={p.id}>
+                  <div className="flex justify-between items-baseline mb-1.5 text-[12px]">
+                    <div className="font-semibold truncate pr-2">{p.name}</div>
+                    <div className="font-mono shrink-0 tabular-nums">
+                      <span className={critical ? "text-tomato font-bold" : "text-foreground/70"}>{p.stock}</span>
+                      <span className="text-foreground/30">/{p.safetyStock} {p.unit}</span>
+                    </div>
+                  </div>
+                  <div className="h-1.5 bg-foreground/[0.06] rounded-full overflow-hidden">
+                    <div className={`h-full rounded-full ${critical ? "bg-tomato" : "bg-mustard"}`} style={{ width: `${ratio}%` }} />
+                  </div>
+                </div>
+              );
+            })
+          }
+        </div>
+      </MSection>
+    </>
   );
 }

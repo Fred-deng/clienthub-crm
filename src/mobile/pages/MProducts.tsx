@@ -1,96 +1,159 @@
-import { useState } from "react";
-import { productApi } from "@/services/api";
-import { usePagedList } from "@/hooks/usePagedList";
-import { useToast } from "@/hooks/use-toast";
-import type { Product, ProductCategory } from "@/types";
-import { Package, AlertTriangle } from "lucide-react";
-import { MPageHeader, MSearchBar, MList, MCard, MTag, MFab, MSheet, MField, MInput, MSelect, MButton, MChipFilter, MConfirm, MRow } from "../components/MUI";
+// 产品与库存（移动端）— 1:1 复刻 PC Products
+import { useEffect, useState } from "react";
+import { Trash2, AlertTriangle, History } from "lucide-react";
+import { toast } from "sonner";
+import {
+  MPageHeader, MSearchBar, MCard, MList, MTag, MFab, MSheet, MField, MInput,
+  MSelect, MButton, MConfirm, MGroupTitle, MChipFilter, MLogList, MAccordion,
+} from "../components/MUI";
+import { productApi, salesApi, purchaseApi } from "@/services/api";
+import { adjustStock, logProductChange, stockLogApi } from "@/services/inventory";
+import { fmtMoney } from "@/lib/format";
+import { useCategories, categoryStore } from "@/services/categories";
+import type { Product } from "@/types";
 
-const CATS: { value: ProductCategory | "all"; label: string }[] = [
-  { value: "all", label: "全部" }, { value: "software", label: "软件" }, { value: "ipc", label: "工控机" }, { value: "pda", label: "PDA" }, { value: "mouse", label: "鼠标" }, { value: "cable", label: "线材" }, { value: "power", label: "电源" }, { value: "other", label: "其他" },
-];
+const empty: Omit<Product, "id"> = { code: "", name: "", category: "ipc", unit: "台", price: 0, cost: 0, stock: 0, safetyStock: 10, spec: "" };
 
 export default function MProducts() {
-  const { toast } = useToast();
-  const { data, loading, setFilter, reload } = usePagedList<Product>(productApi.list, { pageSize: 20 });
-  const [keyword, setKeyword] = useState(""); const [cat, setCat] = useState("all");
-  const [editOpen, setEditOpen] = useState(false);
-  const [editing, setEditing] = useState<Partial<Product> | null>(null);
-  const [view, setView] = useState<Product | null>(null);
+  const cats = useCategories();
+  const [list, setList] = useState<Product[]>([]);
+  const [keyword, setKeyword] = useState("");
+  const [catF, setCatF] = useState<"all" | string>("all");
+  const [lowOnly, setLowOnly] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<Product | null>(null);
+  const [form, setForm] = useState<Omit<Product, "id">>(empty);
   const [delId, setDelId] = useState<string | null>(null);
+  const [logs, setLogs] = useState<any[]>([]);
 
-  const openCreate = () => { setEditing({ category: "ipc", unit: "台", price: 0, cost: 0, stock: 0, safetyStock: 0, name: "", code: "" }); setEditOpen(true); };
-  const save = async () => {
-    if (!editing?.name) return toast({ title: "请填写产品名称" });
-    if (editing.id) await productApi.update(editing.id, editing);
-    else await productApi.create({ ...editing, code: `PRD-${Date.now().toString().slice(-6)}` } as any);
-    toast({ title: "已保存" }); setEditOpen(false); reload();
+  const reload = async () => setList(await productApi.all());
+  useEffect(() => { reload(); }, []);
+
+  const filtered = list.filter(p => {
+    if (catF !== "all" && p.category !== catF) return false;
+    if (lowOnly && (p.category === "software" || p.stock > p.safetyStock)) return false;
+    if (!keyword) return true;
+    const k = keyword.toLowerCase();
+    return p.name.toLowerCase().includes(k) || p.code.toLowerCase().includes(k);
+  });
+
+  const openCreate = () => { setForm({ ...empty, code: `PRD-${Date.now().toString().slice(-6)}` }); setEditing(null); setLogs([]); setOpen(true); };
+  const openEdit = async (p: Product) => {
+    setForm(p); setEditing(p); setOpen(true);
+    const r = await stockLogApi.list({ productId: p.id, pageSize: 30 });
+    setLogs(r.list);
   };
-  const doDelete = async () => { if (!delId) return; await productApi.remove(delId); setDelId(null); setView(null); toast({ title: "已删除" }); reload(); };
+
+  const submit = async () => {
+    if (!form.name.trim()) return toast.error("请输入名称");
+    if (editing) {
+      const stockDiff = (Number(form.stock) || 0) - editing.stock;
+      const updated = await productApi.update(editing.id, form);
+      if (updated) {
+        if (stockDiff !== 0) {
+          updated.stock = editing.stock;
+          adjustStock({ productId: updated.id, delta: stockDiff, action: "adjust", refType: "manual", remark: "手工修改库存" });
+        }
+        const fieldChanged = Object.keys(form).some(k => k !== "stock" && (form as any)[k] !== (editing as any)[k]);
+        if (fieldChanged) logProductChange(updated, "update", "编辑产品资料");
+      }
+      toast.success("已更新");
+    } else {
+      const created = await productApi.create(form);
+      logProductChange(created, "create" as any, "新增产品");
+      if ((Number(form.stock) || 0) > 0) {
+        created.stock = 0;
+        adjustStock({ productId: created.id, delta: Number(form.stock) || 0, action: "in", refType: "manual", remark: "新增产品初始库存" });
+      }
+      toast.success("已创建");
+    }
+    setOpen(false); reload();
+  };
+
+  const onDelete = async () => {
+    if (!delId) return;
+    const p = list.find(x => x.id === delId);
+    const [s, pu] = await Promise.all([salesApi.all(), purchaseApi.all()]);
+    if (s.some(o => o.items.some(it => it.productId === delId)) || pu.some(o => o.items.some(it => it.productId === delId))) {
+      toast.error("产品已被订单引用，无法删除"); setDelId(null); return;
+    }
+    if (p) logProductChange(p, "delete", "删除产品");
+    await productApi.remove(delId); toast.success("已删除"); setDelId(null); reload();
+  };
+
+  const total = filtered.reduce((s, p) => s + p.stock * p.cost, 0);
 
   return (
-    <div>
-      <MPageHeader title="产品库" subtitle={`共 ${data.total} 个 SKU`} />
-      <MSearchBar value={keyword} onChange={(v) => { setKeyword(v); setFilter({ keyword: v }); }} placeholder="名称 / 编号 / 规格" />
-      <MChipFilter value={cat} onChange={(v) => { setCat(v); setFilter({ category: v }); }} options={CATS} />
-      <MList loading={loading && !data.list.length} empty={!loading && !data.list.length}>
-        {data.list.map((p) => {
+    <>
+      <MPageHeader title="产品与库存" subtitle={`共 ${filtered.length} 个 · 库存价值 ${fmtMoney(total)}`} />
+      <MSearchBar value={keyword} onChange={setKeyword} placeholder="搜索名称/编号" />
+      <MChipFilter value={catF as any} onChange={setCatF as any}
+        options={[{ value: "all", label: "全部" }, ...cats.map(c => ({ value: c.id, label: c.label }))]} />
+      <div className="px-4 pb-3">
+        <button onClick={() => setLowOnly(!lowOnly)} className={`px-3 h-8 rounded-full text-xs font-semibold inline-flex items-center gap-1 ${lowOnly ? "bg-tomato text-[hsl(var(--paper))]" : "bg-foreground/[0.06] text-foreground/65"}`}>
+          <AlertTriangle className="h-3 w-3" />仅看低库存
+        </button>
+      </div>
+
+      <MList empty={filtered.length === 0}>
+        {filtered.map(p => {
           const low = p.stock <= p.safetyStock && p.category !== "software";
           return (
-            <MCard key={p.id} onClick={() => setView(p)}>
-              <div className="flex items-start gap-3">
-                <div className="size-10 rounded-xl bg-mint/20 flex items-center justify-center"><Package className="h-5 w-5 text-foreground/65" /></div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <span className="font-semibold text-sm truncate flex-1">{p.name}</span>
-                    {low && <MTag variant="tomato"><AlertTriangle className="h-3 w-3 mr-0.5" />低库存</MTag>}
+            <MCard key={p.id} onClick={() => openEdit(p)}>
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="font-bold text-[14px] truncate">{p.name}</span>
+                    <MTag variant="muted">{categoryStore.labelOf(p.category)}</MTag>
+                    {low && <MTag variant="tomato">低</MTag>}
                   </div>
-                  <div className="text-[11px] font-mono text-foreground/45 mt-0.5">{p.code} · {p.spec ?? "—"}</div>
-                  <div className="flex justify-between items-center mt-1.5">
-                    <span className="text-[11px] text-foreground/55">库存 {p.stock} {p.unit}</span>
-                    <span className="font-mono font-bold tabular-nums text-sm">¥{p.price.toLocaleString()}</span>
-                  </div>
+                  <div className="text-[11px] text-foreground/50 mt-0.5 font-mono">{p.code} · {p.spec || "—"}</div>
+                  <div className="text-[12px] text-foreground/70 mt-1 font-mono">售 {fmtMoney(p.price)} · 成本 {fmtMoney(p.cost)}</div>
+                </div>
+                <div className="text-right shrink-0">
+                  <div className={`text-lg font-display font-black tabular-nums ${low ? "text-tomato" : ""}`}>{p.stock}</div>
+                  <div className="text-[10px] text-foreground/45 font-mono">/ {p.safetyStock} {p.unit}</div>
                 </div>
               </div>
             </MCard>
           );
         })}
       </MList>
+
       <MFab onClick={openCreate} />
 
-      <MSheet open={!!view} onOpenChange={(o) => !o && setView(null)} title={view?.name ?? "产品"}
-        footer={view && (<div className="flex gap-2"><MButton variant="outline" className="flex-1" onClick={() => setDelId(view.id)}>删除</MButton><MButton className="flex-1" onClick={() => { setEditing(view); setEditOpen(true); setView(null); }}>编辑</MButton></div>)}
-      >
-        {view && <div>
-          <MRow label="编号" value={view.code} mono />
-          <MRow label="类别" value={CATS.find(c => c.value === view.category)?.label} />
-          <MRow label="规格" value={view.spec} />
-          <MRow label="单位" value={view.unit} />
-          <MRow label="售价" value={`¥${view.price.toLocaleString()}`} mono />
-          <MRow label="成本" value={`¥${view.cost.toLocaleString()}`} mono />
-          <MRow label="库存" value={`${view.stock} ${view.unit}`} mono />
-          <MRow label="安全库存" value={view.safetyStock} mono />
-        </div>}
+      <MSheet open={open} onOpenChange={setOpen} size="full" title={editing ? "编辑产品" : "新增产品"}
+        footer={<div className="flex gap-2">
+          {editing && <MButton variant="danger" onClick={() => { setDelId(editing.id); setOpen(false); }}><Trash2 className="h-3.5 w-3.5" /></MButton>}
+          <MButton variant="ghost" onClick={() => setOpen(false)} className="flex-1">取消</MButton>
+          <MButton onClick={submit} className="flex-1">{editing ? "保存" : "创建"}</MButton>
+        </div>}>
+        <MGroupTitle>产品信息</MGroupTitle>
+        <MField label="编号" required><MInput value={form.code} onChange={e => setForm({ ...form, code: e.target.value })} /></MField>
+        <MField label="名称" required><MInput value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></MField>
+        <MField label="分类">
+          <MSelect value={form.category} onChange={v => setForm({ ...form, category: v as any })}
+            options={cats.map(c => ({ value: c.id, label: c.label }))} />
+        </MField>
+        <MField label="单位"><MInput value={form.unit || ""} onChange={e => setForm({ ...form, unit: e.target.value })} /></MField>
+        <MField label="规格"><MInput value={form.spec || ""} onChange={e => setForm({ ...form, spec: e.target.value })} /></MField>
+        <MGroupTitle>价格</MGroupTitle>
+        <MField label="售价"><MInput type="number" step="0.01" value={form.price} onChange={e => setForm({ ...form, price: Number(e.target.value) })} /></MField>
+        <MField label="成本"><MInput type="number" step="0.01" value={form.cost} onChange={e => setForm({ ...form, cost: Number(e.target.value) })} /></MField>
+        <MGroupTitle>库存</MGroupTitle>
+        <MField label="当前库存"><MInput type="number" value={form.stock} onChange={e => setForm({ ...form, stock: Number(e.target.value) })} hint={editing ? "调整后会自动写入库存日志" : ""} /></MField>
+        <MField label="安全库存">
+          <MInput type="number" disabled={form.category === "software"} value={form.safetyStock} onChange={e => setForm({ ...form, safetyStock: Number(e.target.value) })} />
+        </MField>
+
+        {editing && (
+          <MAccordion title="库存日志" badge={<MTag variant="muted">{logs.length}</MTag>} defaultOpen>
+            <MLogList logs={logs.map((l: any) => ({ id: l.id, action: l.action, refCode: l.refCode, operator: l.operator, createdAt: l.createdAt, remark: `${l.delta > 0 ? "+" : ""}${l.delta} → ${l.afterStock}${l.remark ? "（" + l.remark + "）" : ""}` }))} />
+          </MAccordion>
+        )}
       </MSheet>
 
-      <MSheet open={editOpen} onOpenChange={setEditOpen} title={editing?.id ? "编辑产品" : "新建产品"}
-        footer={<div className="flex gap-2"><MButton variant="ghost" className="flex-1" onClick={() => setEditOpen(false)}>取消</MButton><MButton className="flex-1" onClick={save}>保存</MButton></div>}
-      >
-        {editing && <div>
-          <MField label="名称" required><MInput value={editing.name ?? ""} onChange={(e) => setEditing({ ...editing, name: e.target.value })} /></MField>
-          <MField label="类别"><MSelect value={editing.category ?? "ipc"} onChange={(v) => setEditing({ ...editing, category: v as any })} options={CATS.filter(c => c.value !== "all").map(c => ({ value: c.value as string, label: c.label }))} /></MField>
-          <MField label="规格"><MInput value={editing.spec ?? ""} onChange={(e) => setEditing({ ...editing, spec: e.target.value })} /></MField>
-          <MField label="单位"><MInput value={editing.unit ?? ""} onChange={(e) => setEditing({ ...editing, unit: e.target.value })} /></MField>
-          <div className="grid grid-cols-2 gap-3">
-            <MField label="售价"><MInput type="number" value={editing.price ?? 0} onChange={(e) => setEditing({ ...editing, price: Number(e.target.value) })} /></MField>
-            <MField label="成本"><MInput type="number" value={editing.cost ?? 0} onChange={(e) => setEditing({ ...editing, cost: Number(e.target.value) })} /></MField>
-            <MField label="库存"><MInput type="number" value={editing.stock ?? 0} onChange={(e) => setEditing({ ...editing, stock: Number(e.target.value) })} /></MField>
-            <MField label="安全库存"><MInput type="number" value={editing.safetyStock ?? 0} onChange={(e) => setEditing({ ...editing, safetyStock: Number(e.target.value) })} /></MField>
-          </div>
-        </div>}
-      </MSheet>
-
-      <MConfirm open={!!delId} onOpenChange={(o) => !o && setDelId(null)} title="删除产品？" onConfirm={doDelete} confirmText="删除" danger />
-    </div>
+      <MConfirm open={!!delId} onOpenChange={v => !v && setDelId(null)} title="删除产品" onConfirm={onDelete} danger confirmText="删除" />
+    </>
   );
 }
