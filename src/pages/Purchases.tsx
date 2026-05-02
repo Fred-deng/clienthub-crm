@@ -389,6 +389,19 @@ export default function Purchases() {
               <LineItemsEditor items={items} products={products} onChange={setItems} />
             </div>
 
+            {/* 付款记录（子表，按 refType=purchase 过滤） */}
+            <GroupTitle>付款记录</GroupTitle>
+            <div className="col-span-12">
+              <PaymentSubList
+                orderId={editing?.id}
+                orderCode={editing?.code}
+                partyName={suppliers.find((s) => s.id === watch("supplierId"))?.name}
+                refType="purchase"
+                remaining={Math.max((editing?.contractAmount ?? editing?.totalAmount ?? 0) - (editing?.paid ?? 0), 0)}
+                reloadKey={open}
+              />
+            </div>
+
             {/* 附件资料 */}
             <GroupTitle>附件资料</GroupTitle>
             <Field label="采购合同附件" span={12}>
@@ -398,7 +411,12 @@ export default function Purchases() {
             {/* 发票管理（子表）：供应商开给我方 */}
             <GroupTitle>发票管理（供应商开票）</GroupTitle>
             <div className="col-span-12">
-              <InvoiceList direction="in" value={watch("invoices") || []} onChange={(v) => setValue("invoices", v)} />
+              <InvoiceList
+                direction="in"
+                value={watch("invoices") || []}
+                onChange={(v) => setValue("invoices", v)}
+                defaultParty={suppliers.find((s) => s.id === watch("supplierId"))?.name}
+              />
             </div>
 
             {/* 备注 */}
