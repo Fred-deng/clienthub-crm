@@ -185,26 +185,26 @@ export default function Purchases() {
     };
 
     // 2) 库存联动：状态切换涉及 received 时加减
+    const op = current.name;
     const prevStatus = editing?.status;
     const nextStatus = payload.status as PurchaseOrder["status"];
     if (editing) {
-      // 旧订单已入库 → 先用旧明细回滚
       if (prevStatus === "received" && nextStatus !== "received") {
-        revertPurchaseReceive(editing, "采购订单", "状态变更撤销入库");
+        revertPurchaseReceive(editing, op, "状态变更撤销入库");
       }
-      // 新订单将入库 → 用新明细入库
       if (nextStatus === "received" && prevStatus !== "received") {
-        applyPurchaseReceive({ ...editing, ...payload }, "采购订单");
+        applyPurchaseReceive({ ...editing, ...payload }, op);
       }
-      // 入库状态下明细变更 → 先回滚旧、再按新入库
       if (prevStatus === "received" && nextStatus === "received") {
-        revertPurchaseReceive(editing, "采购订单", "明细变更回滚");
-        applyPurchaseReceive({ ...editing, ...payload }, "采购订单");
+        revertPurchaseReceive(editing, op, "明细变更回滚");
+        applyPurchaseReceive({ ...editing, ...payload }, op);
       }
+      // 写订单操作日志（仅修改）
+      logOrderUpdate("purchase", editing, payload);
       await purchaseApi.update(editing.id, payload);
     } else {
       const created = await purchaseApi.create(payload);
-      if (nextStatus === "received") applyPurchaseReceive(created, "采购订单");
+      if (nextStatus === "received") applyPurchaseReceive(created, op);
     }
     toast.success("已保存");
     setOpen(false);
@@ -214,8 +214,9 @@ export default function Purchases() {
 
   const handleDelete = async (id: string) => {
     const order = data.list.find((o) => o.id === id);
-    if (order && order.status === "received") {
-      revertPurchaseReceive(order, "采购订单", "订单删除回滚入库");
+    if (order) {
+      if (order.status === "received") revertPurchaseReceive(order, current.name, "订单删除回滚入库");
+      logOrderDelete("purchase", order);
     }
     await purchaseApi.remove(id);
     toast.success("已删除");
@@ -226,15 +227,17 @@ export default function Purchases() {
 
   const applyBulkStatus = async () => {
     if (!bulkStatus || selectedIds.length === 0) return;
+    const op = current.name;
     for (const id of selectedIds) {
       const order = data.list.find((o) => o.id === id);
       if (!order || order.status === bulkStatus) continue;
       if (order.status === "received" && bulkStatus !== "received") {
-        revertPurchaseReceive(order, "批量操作", "批量改状态回滚入库");
+        revertPurchaseReceive(order, op, "批量改状态回滚入库");
       }
       if (bulkStatus === "received" && order.status !== "received") {
-        applyPurchaseReceive(order, "批量操作");
+        applyPurchaseReceive(order, op);
       }
+      logOrderUpdate("purchase", order, { status: bulkStatus });
       await purchaseApi.update(id, { status: bulkStatus });
     }
     toast.success(`已将 ${selectedIds.length} 单更新为「${bulkStatus}」`);
