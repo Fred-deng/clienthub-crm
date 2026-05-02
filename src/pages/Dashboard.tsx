@@ -33,6 +33,7 @@ export default function Dashboard() {
       biz === "software" ? sw : biz === "hardware" ? hw : total;
     return {
       monthRevenue: pick(data.biz.revenue.software, data.biz.revenue.hardware, data.monthRevenue),
+      monthGrossProfit: pick(data.biz.grossProfit.software, data.biz.grossProfit.hardware, data.monthGrossProfit),
       receivable: pick(data.biz.receivable.software, data.biz.receivable.hardware, data.receivable),
       payable: pick(data.biz.payable.software, data.biz.payable.hardware, data.payable),
       trend: data.trend.map((t) => ({
@@ -68,7 +69,7 @@ export default function Dashboard() {
       />
 
       {/* KPI grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-5 mb-8">
         <KpiCard
           index={1}
           label={biz === "all" ? "本月销售总额" : biz === "software" ? "本月软件销售" : "本月硬件销售"}
@@ -81,6 +82,16 @@ export default function Dashboard() {
         />
         <KpiCard
           index={2}
+          label={biz === "all" ? "本月毛利" : biz === "software" ? "本月软件毛利" : "本月硬件毛利"}
+          value={<Money n={view.monthGrossProfit} />}
+          tone="accent"
+          icon={<TrendingUp className="h-3.5 w-3.5" />}
+          hint={biz === "all"
+            ? <BizSplitChip software={data.biz.grossProfit.software} hardware={data.biz.grossProfit.hardware} formatter={fmtMoneyShort} />
+            : <span className="inline-flex items-center gap-1.5">● <span className="opacity-80 font-normal">毛利率 {view.monthRevenue > 0 ? ((view.monthGrossProfit / view.monthRevenue) * 100).toFixed(1) : "0.0"}%</span></span>}
+        />
+        <KpiCard
+          index={3}
           label="应收账款"
           value={<Money n={view.receivable} />}
           tone="warning"
@@ -90,7 +101,7 @@ export default function Dashboard() {
             : <span className="inline-flex items-center gap-1.5">● <span className="opacity-80 font-normal">需重点跟进</span></span>}
         />
         <KpiCard
-          index={3}
+          index={4}
           label="应付账款"
           value={<Money n={view.payable} />}
           tone="destructive"
@@ -100,7 +111,7 @@ export default function Dashboard() {
             : <span className="inline-flex items-center gap-1.5">● <span className="opacity-80 font-normal">供应商结款</span></span>}
         />
         <KpiCard
-          index={4}
+          index={5}
           label="生效中合同"
           value={<span className="inline-flex items-baseline gap-1">{data.activeContracts}<span className="text-xl font-bold opacity-70">份</span></span>}
           tone="accent"

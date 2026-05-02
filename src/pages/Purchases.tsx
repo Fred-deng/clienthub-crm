@@ -25,8 +25,10 @@ import { syncPurchaseStock, applyPurchaseReceive, revertPurchaseReceive, findOrC
 import { logOrderUpdate, logOrderDelete } from "@/services/orderLog";
 import { useCurrentUser } from "@/context/CurrentUserContext";
 import { OrderLogDialog } from "@/components/common/OrderLogDialog";
+import { CancelOrderDialog } from "@/components/common/CancelOrderDialog";
 import { usePagedList } from "@/hooks/usePagedList";
-import { fmtMoney } from "@/lib/format";
+import { fmtMoney, statusLabels } from "@/lib/format";
+import { exportCsv } from "@/lib/csv";
 import { splitPurchase, bizLabel, bizTone, type BizFilter } from "@/lib/biz";
 import { BizTabs } from "@/components/common/BizTabs";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -111,6 +113,8 @@ export default function Purchases() {
   const [logOpen, setLogOpen] = useState(false);
   const [logRefId, setLogRefId] = useState<string | undefined>(undefined);
   const [logRefCode, setLogRefCode] = useState<string | undefined>(undefined);
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState<string>("");
   const { current } = useCurrentUser();
 
   useEffect(() => {
@@ -189,16 +193,18 @@ export default function Purchases() {
 
     // 2) 库存联动：状态切换涉及 received 时加减
     const op = current.name;
+    const reasonRemark = (editing && editing.status !== "cancelled" && payload.status === "cancelled" && cancelReason)
+      ? `订单取消原因：${cancelReason}` : undefined;
     if (editing) {
       const merged = { ...editing, ...payload } as PurchaseOrder;
       syncPurchaseStock(editing, merged, op);
-      // 写订单操作日志（仅修改）
-      logOrderUpdate("purchase", editing, payload);
+      logOrderUpdate("purchase", editing, payload, reasonRemark);
       await purchaseApi.update(editing.id, payload);
     } else {
       const created = await purchaseApi.create(payload);
       syncPurchaseStock(null, created, op);
     }
+    setCancelReason("");
     toast.success("已保存");
     setOpen(false);
     reload();
@@ -250,6 +256,18 @@ export default function Purchases() {
         subtitle="采购合同与订单一体化管理：申请 → 签约 → 执行 → 入库。"
         actions={<>
           <BizTabs value={biz} onChange={setBiz} />
+          <Button size="sm" variant="outline" onClick={async () => {
+            const all = await purchaseApi.all();
+            exportCsv("purchase-orders", all, [
+              { header: "单号", value: (o) => o.code },
+              { header: "供应商", value: (o) => o.supplierName },
+              { header: "状态", value: (o) => statusLabels[o.status] || o.status },
+              { header: "明细合计", value: (o) => o.totalAmount },
+              { header: "已付", value: (o) => o.paid },
+              { header: "未付", value: (o) => Math.max(o.totalAmount - o.paid, 0) },
+              { header: "申请日期", value: (o) => o.appliedAt },
+            ]);
+          }}><FileText className="h-4 w-4 mr-1.5" />导出</Button>
           <Button size="sm" variant="outline" onClick={() => { setLogRefId(undefined); setLogRefCode(undefined); setLogOpen(true); }}>
             <History className="h-4 w-4 mr-1.5" />全部日志
           </Button>
@@ -483,7 +501,13 @@ export default function Purchases() {
               </Select>
             </Field>
             <Field label="订单状态">
-              <Select value={watch("status")} onValueChange={(v: any) => setValue("status", v)}>
+              <Select value={watch("status")} onValueChange={(v: any) => {
+                if (v === "cancelled" && watch("status") !== "cancelled" && editing) {
+                  setCancelOpen(true);
+                  return;
+                }
+                setValue("status", v);
+              }}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="draft">草稿</SelectItem>
@@ -492,6 +516,9 @@ export default function Purchases() {
                   <SelectItem value="cancelled">已取消</SelectItem>
                 </SelectContent>
               </Select>
+              {watch("status") === "cancelled" && cancelReason && (
+                <div className="text-[11px] text-tomato mt-1">取消原因：{cancelReason}</div>
+              )}
             </Field>
             <Field label="预计入库"><Input type="date" {...register("expectedAt")} /></Field>
             <Field label="下单日期"><Input type="date" {...register("createdAt")} /></Field>
@@ -592,6 +619,12 @@ export default function Purchases() {
         module="purchase"
         refId={logRefId}
         refCode={logRefCode}
+      />
+      <CancelOrderDialog
+        open={cancelOpen}
+        onOpenChange={setCancelOpen}
+        refCode={editing?.code}
+        onConfirm={(reason) => { setCancelReason(reason); setValue("status", "cancelled"); }}
       />
     </>
   );

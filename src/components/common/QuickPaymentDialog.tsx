@@ -51,6 +51,13 @@ export function QuickPaymentDialog({
   const submit = async () => {
     if (!refId) return toast.error("缺少关联单据");
     if (!amount || amount <= 0) return toast.error("请输入金额");
+    if (typeof remaining === "number" && remaining >= 0 && amount > remaining + 0.001) {
+      const verb = direction === "in" ? "未收" : "未付";
+      const ok = window.confirm(
+        `本次金额 ${fmtMoney(amount)} 超过${verb}余额 ${fmtMoney(Math.max(remaining, 0))}，将出现负余额。是否仍要继续？`
+      );
+      if (!ok) return;
+    }
     setSaving(true);
     try {
       await createPaymentAndSync({

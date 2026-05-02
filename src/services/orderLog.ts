@@ -148,9 +148,10 @@ export function logOrderUpdate(
   module: OrderLogModule,
   before: PurchaseOrder | SalesOrder,
   after: Record<string, any>,
+  remark?: string,
 ) {
   const changes = diffOrder(module, before as any, { ...before, ...after });
-  if (changes.length === 0) return;
+  if (changes.length === 0 && !remark) return;
   orderLogs.unshift({
     id: makeId(),
     module,
@@ -160,6 +161,7 @@ export function logOrderUpdate(
     operator: readCurrentOperator(),
     changes,
     createdAt: ts(),
+    remark,
   });
 }
 

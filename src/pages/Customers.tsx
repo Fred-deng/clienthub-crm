@@ -20,6 +20,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { customerApi, contactApi, followUpApi, employeeApi, salesApi, productApi } from "@/services/api";
+import { exportCsv } from "@/lib/csv";
 import { usePagedList } from "@/hooks/usePagedList";
 import { fmtMoney, customerStageLabel, customerStatusLabel, customerStatusTone, deriveCustomerStage } from "@/lib/format";
 import type { Customer, Contact, FollowUp, Employee, SalesOrder, Product } from "@/types";
@@ -38,7 +39,6 @@ const emptyCustomer: Omit<Customer, "id"> = {
   category: "潜在客户", source: "电话开发", seaStatus: "私海",
   lastVisitAt: "", nextVisitAt: "",
   invoiceInfo: "", introducer: "",
-  totalAmount: 0, receivable: 0,
   createdAt: new Date().toISOString().slice(0, 10), remark: "",
 };
 
@@ -177,6 +177,12 @@ export default function Customers() {
 
   const onDelete = async () => {
     if (!deletingId) return;
+    const linked = allSales.filter((o) => o.customerId === deletingId).length;
+    if (linked > 0) {
+      toast.error(`该客户存在 ${linked} 笔销售订单，无法删除。请先处理或将订单划转给其他客户。`);
+      setDeletingId(null);
+      return;
+    }
     await customerApi.remove(deletingId);
     toast.success("客户已删除");
     setDeletingId(null);
@@ -247,7 +253,21 @@ export default function Customers() {
                 <ArrowLeft className="h-4 w-4 mr-1.5" />返回联系人
               </Button>
             )}
-            <Button variant="outline" size="sm"><Download className="h-4 w-4 mr-1.5" />导出</Button>
+            <Button variant="outline" size="sm" onClick={async () => {
+              const all = await customerApi.all();
+              exportCsv("customers", all, [
+                { header: "编号", value: (c) => c.code },
+                { header: "客户名称", value: (c) => c.name },
+                { header: "状态", value: (c) => customerStatusLabel[c.status || "potential"] || "—" },
+                { header: "类别", value: (c) => c.category || "" },
+                { header: "区域", value: (c) => c.region || "" },
+                { header: "负责人", value: (c) => ownerName(c.ownerId) },
+                { header: "联系人", value: (c) => c.contact },
+                { header: "电话", value: (c) => c.phone },
+                { header: "应收", value: (c) => receivableOf(c.id) },
+                { header: "创建日期", value: (c) => c.createdAt },
+              ]);
+            }}><Download className="h-4 w-4 mr-1.5" />导出</Button>
             <Button size="sm" onClick={openCreate}><Plus className="h-4 w-4 mr-1.5" />新增客户</Button>
           </>
         }

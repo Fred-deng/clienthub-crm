@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Plus, Trash2, Search, ArrowDownLeft, ArrowUpRight } from "lucide-react";
+import { Plus, Trash2, Search, ArrowDownLeft, ArrowUpRight, Download } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { DataPanel } from "@/components/common/DataPanel";
@@ -17,6 +17,7 @@ import { paymentApi, salesApi, purchaseApi, productApi } from "@/services/api";
 import { createPaymentAndSync, removePaymentAndSync } from "@/services/payments";
 import { usePagedList } from "@/hooks/usePagedList";
 import { fmtMoney } from "@/lib/format";
+import { exportCsv } from "@/lib/csv";
 import { splitPayment, pickByFilter, matchFilter, bizLabel, bizTone, type BizFilter } from "@/lib/biz";
 import { cn } from "@/lib/utils";
 import type { Payment, SalesOrder, PurchaseOrder, Product } from "@/types";
@@ -72,14 +73,23 @@ export default function Payments() {
 
   const onSubmit = handleSubmit(async (v) => {
     const list = v.direction === "in" ? salesList : purList;
-    const ref = list.find((x) => x.id === v.refId);
+    const ref: any = list.find((x) => x.id === v.refId);
     if (!ref) return toast.error("请选择关联单据");
+    const amount = Number(v.amount);
+    if (!amount || amount <= 0) return toast.error("金额必须大于 0");
+    const total = (ref.contractAmount ?? ref.totalAmount) || 0;
+    const paidNow = v.direction === "in" ? (ref.received || 0) : (ref.paid || 0);
+    const remain = Math.max(total - paidNow, 0);
+    if (amount > remain + 0.001) {
+      const verb = v.direction === "in" ? "未收" : "未付";
+      if (!window.confirm(`本次金额 ${fmtMoney(amount)} 超过${verb}余额 ${fmtMoney(remain)}，将出现负余额，是否继续？`)) return;
+    }
     const payload: any = {
       ...v,
       refType: v.direction === "in" ? "sales" : "purchase",
       refCode: ref.code,
-      partyName: (ref as any).customerName ?? (ref as any).supplierName,
-      amount: Number(v.amount),
+      partyName: ref.customerName ?? ref.supplierName,
+      amount,
       code: `${v.direction === "in" ? "RC" : "PY"}-${Date.now().toString().slice(-6)}`,
     };
     await createPaymentAndSync(payload);
@@ -92,7 +102,22 @@ export default function Payments() {
         title="财务收支"
         meta="CASHFLOW LEDGER"
         subtitle="登记客户回款与供应商付款流水，便于月度对账。"
-        actions={<Button size="sm" onClick={openCreate}><Plus className="h-4 w-4 mr-1.5" />新增收支</Button>}
+        actions={<>
+          <Button size="sm" variant="outline" onClick={async () => {
+            const all = await paymentApi.all();
+            exportCsv("payments", all, [
+              { header: "流水号", value: (p) => p.code },
+              { header: "方向", value: (p) => p.direction === "in" ? "回款" : "付款" },
+              { header: "关联单据", value: (p) => p.refCode },
+              { header: "对手方", value: (p) => p.partyName },
+              { header: "金额", value: (p) => p.amount },
+              { header: "方式", value: (p) => p.method },
+              { header: "日期", value: (p) => p.paidAt },
+              { header: "备注", value: (p) => p.remark || "" },
+            ]);
+          }}><Download className="h-4 w-4 mr-1.5" />导出</Button>
+          <Button size="sm" onClick={openCreate}><Plus className="h-4 w-4 mr-1.5" />新增收支</Button>
+        </>}
       />
 
       <div className="mb-4 flex items-center justify-between">

@@ -72,8 +72,6 @@ export interface Customer {
   // —— 业务字段（保留） ——
   stage: CustomerStage;
   level: CustomerLevel;
-  totalAmount: number;
-  receivable: number;
   createdAt: string;
   remark?: string;
 }

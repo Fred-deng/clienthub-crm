@@ -7,7 +7,7 @@ import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter,
 } from "@/components/ui/sidebar";
-import { salesApi, purchaseApi } from "@/services/api";
+import { salesApi, purchaseApi, productApi } from "@/services/api";
 
 const groups = [
   {
@@ -60,11 +60,13 @@ export function AppSidebar() {
   const { pathname } = useLocation();
   const isActive = (url: string) => (url === "/" ? pathname === "/" : pathname.startsWith(url));
   const [pending, setPending] = useState(0);
+  const [lowStockCount, setLowStockCount] = useState(0);
   useEffect(() => {
-    Promise.all([salesApi.all(), purchaseApi.all()]).then(([sales, purs]) => {
+    Promise.all([salesApi.all(), purchaseApi.all(), productApi.all()]).then(([sales, purs, prods]) => {
       const a = sales.filter((o) => o.status !== "cancelled" && (o.contractAmount ?? o.totalAmount) - (o.received || 0) > 0).length;
       const b = purs.filter((o) => o.status !== "cancelled" && o.status !== "draft" && (o.contractAmount || o.totalAmount) - (o.paid || 0) > 0).length;
       setPending(a + b);
+      setLowStockCount(prods.filter((p) => p.category !== "software" && p.stock <= p.safetyStock).length);
     });
   }, [pathname]);
 
@@ -121,7 +123,12 @@ export function AppSidebar() {
                             }
                           />
                           <span className="text-[13px] tracking-tight">{item.title}</span>
-                          {active && (
+                          {item.url === "/products" && lowStockCount > 0 && (
+                            <span className="ml-auto inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-tomato text-[hsl(var(--paper))] text-[10px] font-bold leading-none">
+                              {lowStockCount}
+                            </span>
+                          )}
+                          {active && item.url !== "/products" && (
                             <span className="ml-auto font-mono text-[9px] text-foreground/40">
                               ●
                             </span>

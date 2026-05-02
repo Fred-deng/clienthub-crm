@@ -25,8 +25,10 @@ import { logOrderUpdate, logOrderDelete } from "@/services/orderLog";
 import { syncSalesStock, revertSalesDeliver } from "@/services/inventory";
 import { readCurrentOperator } from "@/context/CurrentUserContext";
 import { OrderLogDialog } from "@/components/common/OrderLogDialog";
+import { CancelOrderDialog } from "@/components/common/CancelOrderDialog";
 import { usePagedList } from "@/hooks/usePagedList";
-import { fmtMoney } from "@/lib/format";
+import { fmtMoney, statusLabels } from "@/lib/format";
+import { exportCsv } from "@/lib/csv";
 import { splitSales, bizLabel, bizTone, type BizFilter } from "@/lib/biz";
 import { BizTabs } from "@/components/common/BizTabs";
 import type { SalesOrder, Customer, Product, Employee } from "@/types";
@@ -115,6 +117,8 @@ export default function Sales() {
   const [biz, setBiz] = useState<BizFilter>("all");
   const [quickPay, setQuickPay] = useState<SalesOrder | null>(null);
   const [quickInv, setQuickInv] = useState<SalesOrder | null>(null);
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState<string>("");
 
   useEffect(() => {
     customerApi.all().then((cs) => setCustomers(cs.filter((c) => c.stage === "formal")));
@@ -186,15 +190,18 @@ export default function Sales() {
       productStdCost: Number(v.productStdCost) || 0,
     };
     const op = readCurrentOperator();
+    const reasonRemark = (editing && editing.status !== "cancelled" && payload.status === "cancelled" && cancelReason)
+      ? `订单取消原因：${cancelReason}` : undefined;
     if (editing) {
       const merged = { ...editing, ...payload } as SalesOrder;
       syncSalesStock(editing, merged, op);
-      logOrderUpdate("sales", editing, payload);
+      logOrderUpdate("sales", editing, payload, reasonRemark);
       await salesApi.update(editing.id, payload);
     } else {
       const created = await salesApi.create(payload);
       syncSalesStock(null, created, op);
     }
+    setCancelReason("");
     toast.success("已保存"); setOpen(false); reload();
   });
 
@@ -212,6 +219,19 @@ export default function Sales() {
         subtitle="销售合同 / 订单：从签约、申请、结算到交付的全流程档案。"
         actions={<>
           <BizTabs value={biz} onChange={setBiz} />
+          <Button size="sm" variant="outline" onClick={async () => {
+            const all = await salesApi.all();
+            exportCsv("sales-orders", all, [
+              { header: "合同编号", value: (o) => o.code },
+              { header: "合同名称", value: (o) => o.contractTitle || "" },
+              { header: "客户", value: (o) => o.customerName },
+              { header: "状态", value: (o) => statusLabels[o.status] || o.status },
+              { header: "合同金额", value: (o) => o.totalAmount },
+              { header: "已回款", value: (o) => o.received },
+              { header: "未回款", value: (o) => Math.max((o.contractAmount ?? o.totalAmount) - o.received, 0) },
+              { header: "签订日", value: (o) => o.signedAt || o.createdAt },
+            ]);
+          }}><FileText className="h-4 w-4 mr-1.5" />导出</Button>
           <Button size="sm" variant="outline" onClick={() => { setLogRefId(undefined); setLogRefCode(undefined); setLogOpen(true); }}>
             <History className="h-4 w-4 mr-1.5" />全部日志
           </Button>
@@ -444,7 +464,13 @@ export default function Sales() {
 
             <GroupTitle>订单执行</GroupTitle>
             <Field label="订单状态" span={3}>
-              <Select value={watch("status")} onValueChange={(v) => setValue("status", v)}>
+              <Select value={watch("status")} onValueChange={(v) => {
+                if (v === "cancelled" && watch("status") !== "cancelled" && editing) {
+                  setCancelOpen(true);
+                  return;
+                }
+                setValue("status", v);
+              }}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="pending">待发货</SelectItem>
@@ -453,6 +479,9 @@ export default function Sales() {
                   <SelectItem value="cancelled">已取消</SelectItem>
                 </SelectContent>
               </Select>
+              {watch("status") === "cancelled" && cancelReason && (
+                <div className="text-[11px] text-tomato mt-1">取消原因：{cancelReason}</div>
+              )}
             </Field>
             <Field label="下单日" span={3}><Input type="date" {...register("createdAt")} /></Field>
             <Field label="已回款" span={3}><Input type="number" step="0.01" className="bg-muted/40" readOnly value={editing?.received ?? 0} title="由回款记录自动累计，无法直接修改" /></Field>
@@ -528,6 +557,12 @@ export default function Sales() {
         module="sales"
         refId={logRefId}
         refCode={logRefCode}
+      />
+      <CancelOrderDialog
+        open={cancelOpen}
+        onOpenChange={setCancelOpen}
+        refCode={editing?.code}
+        onConfirm={(reason) => { setCancelReason(reason); setValue("status", "cancelled"); }}
       />
     </>
   );

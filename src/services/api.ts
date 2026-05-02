@@ -190,9 +190,16 @@ export const statsApi = {
 
     // 销售按软硬件拆分（本月口径用于 KPI；趋势/排行用全量）
     let revSw = 0, revHw = 0, recvSw = 0, recvHw = 0;
+    let gpSw = 0, gpHw = 0; // 本月毛利（按销售明细 - 成本）
     monthSales.forEach((o) => {
       const s = splitSales(o, products);
       revSw += s.software; revHw += s.hardware;
+      o.items.forEach((it) => {
+        const prod = products.find((pp) => pp.id === it.productId);
+        const cost = (prod?.cost ?? 0) * it.qty;
+        const profit = it.qty * it.price - cost;
+        if (prod?.category === "software") gpSw += profit; else gpHw += profit;
+      });
     });
     activeSales.forEach((o) => {
       const r = splitSalesReceived(o, products);
@@ -271,6 +278,7 @@ export const statsApi = {
 
     return {
       monthRevenue,
+      monthGrossProfit: gpSw + gpHw,
       receivable,
       payable,
       activeContracts,
@@ -284,6 +292,7 @@ export const statsApi = {
       // 软硬件拆分
       biz: {
         revenue: { software: revSw, hardware: revHw },
+        grossProfit: { software: gpSw, hardware: gpHw },
         received: { software: recvSw, hardware: recvHw },
         receivable: { software: recvAbleSw, hardware: recvAbleHw },
         payable: { software: payableSw, hardware: payableHw },
