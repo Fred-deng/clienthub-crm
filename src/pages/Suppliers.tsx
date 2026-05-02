@@ -380,3 +380,69 @@ export default function Suppliers() {
     </>
   );
 }
+
+// —— 供应商详情内：快速新增联系人对话框 ——
+function MiniSupplierContactDialog({
+  open, onOpenChange, supplier, onCreated,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  supplier: Supplier;
+  onCreated: () => void;
+}) {
+  const { register, handleSubmit, reset, setValue, watch } = useForm<Omit<SupplierContact, "id">>({
+    defaultValues: {
+      code: "", supplierId: supplier.id, supplierName: supplier.name,
+      name: "", phone: "", position: "", email: "", wechat: "",
+      isPrimary: false, remark: "",
+      createdAt: new Date().toISOString().slice(0, 10),
+    },
+  });
+
+  useEffect(() => {
+    if (open) {
+      reset({
+        code: `GLXR-${Date.now().toString().slice(-6)}`,
+        supplierId: supplier.id, supplierName: supplier.name,
+        name: "", phone: "", position: "", email: "", wechat: "",
+        isPrimary: false, remark: "",
+        createdAt: new Date().toISOString().slice(0, 10),
+      });
+    }
+  }, [open, supplier.id, supplier.name, reset]);
+
+  const submit = handleSubmit(async (values) => {
+    await supplierContactApi.create({ ...values, supplierId: supplier.id, supplierName: supplier.name });
+    toast.success("联系人已新增");
+    onOpenChange(false);
+    onCreated();
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>新增联系人 · {supplier.name}</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={submit} className="grid grid-cols-12 gap-x-4 gap-y-3 text-sm">
+          <Field label="姓名" required><Input {...register("name", { required: true })} /></Field>
+          <Field label="电话" required><Input {...register("phone", { required: true })} /></Field>
+          <Field label="职务"><Input placeholder="如：销售经理" {...register("position")} /></Field>
+          <Field label="邮箱"><Input {...register("email")} /></Field>
+          <Field label="微信"><Input {...register("wechat")} /></Field>
+          <Field label="主联系人">
+            <div className="h-10 flex items-center">
+              <Switch checked={watch("isPrimary")} onCheckedChange={(v) => setValue("isPrimary", v)} />
+              <span className="ml-2 text-xs text-foreground/60">设为该供应商主联系人</span>
+            </div>
+          </Field>
+          <Field label="备注" span={12}><Textarea rows={2} {...register("remark")} /></Field>
+          <DialogFooter className="col-span-12 mt-2">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>取消</Button>
+            <Button type="submit">创建联系人</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
