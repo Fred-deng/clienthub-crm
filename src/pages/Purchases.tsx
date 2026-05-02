@@ -231,6 +231,7 @@ export default function Purchases() {
                       <div className="text-[11px] text-foreground/45">签约：{o.signingParty || "—"}</div>
                     </td>
                     <td className="text-foreground/75">{o.supplierName}</td>
+                    <td><span className={"cell-chip " + bizTone[split.category]}>{bizLabel[split.category]}</span></td>
                     <td><StatusBadge status={o.status} /></td>
                     <td className="num mono">{fmtMoney(o.contractAmount || 0)}</td>
                     <td className="num mono">{fmtMoney(o.totalAmount)}</td>
