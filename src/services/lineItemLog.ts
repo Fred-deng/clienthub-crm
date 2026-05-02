@@ -54,7 +54,7 @@ const fieldLabel: Record<keyof LineItem, string> = {
 };
 
 function fmt(field: keyof LineItem, val: any): any {
-  if (field === "category") return productCategoryLabel[val as string] ?? val;
+  if (field === "category") return val && val in productCategoryLabel ? productCategoryLabel[val as keyof typeof productCategoryLabel] : val;
   return val;
 }
 
