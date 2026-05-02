@@ -289,12 +289,26 @@ export default function Contacts() {
           <form onSubmit={onSubmit} className="grid grid-cols-12 gap-x-4 gap-y-3 text-sm">
             <GroupTitle>基础信息</GroupTitle>
             <Field label="客户" required>
-              <Select value={watch("customerId")} onValueChange={(v) => setValue("customerId", v)}>
-                <SelectTrigger><SelectValue placeholder="选择客户" /></SelectTrigger>
-                <SelectContent>
-                  {customers.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 min-w-0">
+                  <Select value={watch("customerId")} onValueChange={(v) => setValue("customerId", v)}>
+                    <SelectTrigger><SelectValue placeholder="选择客户" /></SelectTrigger>
+                    <SelectContent>
+                      {customers.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="shrink-0 h-10"
+                  onClick={goCreateCustomer}
+                  title="找不到客户？去新增"
+                >
+                  <UserPlus className="h-3.5 w-3.5 mr-1" />新增客户
+                </Button>
+              </div>
             </Field>
             <Field label="联系人姓名" required><Input {...register("name", { required: true })} /></Field>
             <Field label="手机号" required><Input {...register("phone", { required: true })} /></Field>
