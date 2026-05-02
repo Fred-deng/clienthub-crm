@@ -150,6 +150,15 @@ export default function Customers() {
     const list = await contactApi.list({ customerId: editing.id, pageSize: 100 });
     setCustomerContacts(list.list);
   };
+  const reloadCustomerFollowUps = async () => {
+    if (!editing) return;
+    const list = await followUpApi.list({ customerId: editing.id, pageSize: 100 });
+    setCustomerFollowUps(list.list);
+  };
+
+  const wayIcon: Record<string, any> = {
+    "电话": Phone, "拜访": MapPin, "微信": MessageCircle, "邮件": Mail, "短信": MessageSquare, "其他": MoreHorizontal,
+  };
 
   return (
     <>
