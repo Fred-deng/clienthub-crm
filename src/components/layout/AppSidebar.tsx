@@ -145,22 +145,24 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="p-4 group-data-[collapsible=icon]:p-2">
-        <div className="relative rounded-2xl p-5 bg-cobalt text-secondary-foreground flex flex-col gap-3 overflow-hidden group-data-[collapsible=icon]:hidden">
-          <div className="absolute -right-10 -top-10 size-32 rounded-full bg-mustard/15 blur-2xl" />
-          <div className="absolute -left-6 -bottom-6 size-20 rounded-full bg-tomato/20 blur-2xl" />
-          <div className="flex items-center gap-2 text-[9px] opacity-80 font-bold tracking-[0.28em] uppercase relative">
-            <span className="size-1 rounded-full bg-mint" />
-            账款核对
+        <NavLink to="/reconciliation" className="block group-data-[collapsible=icon]:hidden">
+          <div className="relative rounded-2xl p-5 bg-cobalt text-secondary-foreground flex flex-col gap-3 overflow-hidden">
+            <div className="absolute -right-10 -top-10 size-32 rounded-full bg-mustard/15 blur-2xl" />
+            <div className="absolute -left-6 -bottom-6 size-20 rounded-full bg-tomato/20 blur-2xl" />
+            <div className="flex items-center gap-2 text-[9px] opacity-80 font-bold tracking-[0.28em] uppercase relative">
+              <span className="size-1 rounded-full bg-mint" />
+              账款核对
+            </div>
+            <div className="font-display italic text-[14px] leading-snug relative opacity-95">
+              还有 <span className="text-mustard not-italic font-bold">{pending}</span> 笔账款待结清
+            </div>
+            <span className="block text-center py-2 rounded-full bg-[hsl(var(--paper))] text-foreground font-bold text-[11px] hover:bg-mustard transition-colors relative tracking-wide">
+              前往核对 →
+            </span>
           </div>
-          <div className="font-display italic text-[14px] leading-snug relative opacity-95">
-            还有 <span className="text-mustard not-italic font-bold">{pending}</span> 笔账款待结清
-          </div>
-          <button className="py-2 rounded-full bg-[hsl(var(--paper))] text-foreground font-bold text-[11px] hover:bg-mustard transition-colors relative tracking-wide">
-            前往核对 →
-          </button>
-        </div>
-        <div className="hidden group-data-[collapsible=icon]:flex items-center justify-center">
-          <div className="relative size-9 rounded-xl bg-cobalt flex items-center justify-center" title={`${pending} 笔账款待结清`}>
+        </NavLink>
+        <NavLink to="/reconciliation" className="hidden group-data-[collapsible=icon]:flex items-center justify-center" title={`${pending} 笔账款待结清`}>
+          <div className="relative size-9 rounded-xl bg-cobalt flex items-center justify-center hover:bg-cobalt/90 transition-colors">
             <Wallet className="size-4 text-[hsl(var(--paper))]" />
             {pending > 0 && (
               <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-1 rounded-full bg-tomato text-[hsl(var(--paper))] text-[9px] font-bold leading-none flex items-center justify-center">
@@ -168,7 +170,7 @@ export function AppSidebar() {
               </span>
             )}
           </div>
-        </div>
+        </NavLink>
       </SidebarFooter>
     </Sidebar>
   );
