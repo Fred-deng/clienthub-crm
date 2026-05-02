@@ -18,6 +18,31 @@ export const fmtInt = (n: number) => (n ?? 0).toLocaleString("zh-CN");
 
 export const customerStageLabel = (s: string) => (s === "lead" ? "潜在客户" : "正式客户");
 
+// —— 整合后的客户状态：单一字段覆盖生命周期 ——
+export const customerStatusLabel: Record<string, string> = {
+  potential: "潜在",
+  intent: "意向中",
+  active: "合作中",
+  paused: "已暂停",
+  inactive: "沉默",
+  lost: "流失",
+};
+
+// 用于 Badge 配色的 tone（对应 index.css 中的语义色）
+export const customerStatusTone: Record<string, string> = {
+  potential: "muted",
+  intent: "mustard",
+  active: "leaf",
+  paused: "mustard",
+  inactive: "muted",
+  lost: "tomato",
+};
+
+// 由统一状态推导阶段（潜在/意向 -> lead，其他 -> formal），
+// 用于销售订单等地方对「正式客户」的过滤
+export const deriveCustomerStage = (status?: string): "lead" | "formal" =>
+  status === "potential" || status === "intent" ? "lead" : "formal";
+
 export const statusLabels: Record<string, string> = {
   draft: "草稿",
   ordered: "已下单",
