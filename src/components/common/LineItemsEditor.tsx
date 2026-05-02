@@ -40,9 +40,10 @@ export function LineItemsEditor({
   logModule, logScope, title,
 }: Props) {
   const total = items.reduce((s, it) => s + it.qty * it.price, 0);
-  const cats = (Object.keys(productCategoryLabel) as ProductCategory[]).filter(
-    (c) => !excludeCategories.includes(c),
-  );
+  const allCategories = useCategories();
+  const cats = allCategories
+    .map((c) => c.id as ProductCategory)
+    .filter((c) => !excludeCategories.includes(c));
   const datalistId = "li-product-names";
   const [logTick, setLogTick] = useState(0);
   const canLog = !!(logModule && logScope);
