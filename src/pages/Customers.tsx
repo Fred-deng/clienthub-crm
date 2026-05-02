@@ -577,6 +577,17 @@ export default function Customers() {
         />
       )}
 
+      {editing && (
+        <MiniFollowUpDialog
+          open={miniFollowUpOpen}
+          onOpenChange={setMiniFollowUpOpen}
+          customer={editing}
+          contacts={customerContacts}
+          employees={employees}
+          onCreated={reloadCustomerFollowUps}
+        />
+      )}
+
       <ConfirmDialog
         open={!!deletingId}
         onOpenChange={(v) => !v && setDeletingId(null)}
