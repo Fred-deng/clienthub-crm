@@ -105,16 +105,35 @@ export const products: Product[] = productSeed.map((p, i) => ({
 }));
 
 // ---------- Suppliers ----------
-export const suppliers: Supplier[] = Array.from({ length: 8 }).map((_, i) => ({
-  id: `s${i + 1}`,
-  code: `SUP-${pad(3001 + i)}`,
-  name: Random.pick(["深圳华研电子", "东莞精工科技", "广州智控", "苏州博远工控", "上海联讯"]) + " #" + (i + 1),
-  contact: Random.cname(),
-  phone: Mock.mock(/^1[3-9]\d{9}$/),
-  category: Random.pick(["工控机", "外设", "线缆", "电源", "综合"]),
-  payable: Random.integer(0, 150000),
-  createdAt: Random.date("yyyy-MM-dd"),
-}));
+export const suppliers: Supplier[] = Array.from({ length: 8 }).map((_, i) => {
+  const name = Random.pick(["深圳华研电子", "东莞精工科技", "广州智控", "苏州博远工控", "上海联讯"]) + " #" + (i + 1);
+  const buyerPool = ["u3", "u4", "u5"];
+  const buyerId = Random.pick(buyerPool);
+  const assistants = Random.shuffle(buyerPool.filter((b) => b !== buyerId)).slice(0, Random.integer(0, 2));
+  return {
+    id: `s${i + 1}`,
+    code: `SUP-${pad(3001 + i)}`,
+    name,
+    taxNo: "91" + Mock.mock(/[0-9A-Z]{16}/),
+    contact: Random.cname(),
+    phone: Mock.mock(/^1[3-9]\d{9}$/),
+    contactPosition: Random.pick(["销售经理", "客户经理", "商务经理", "总经理", "项目经理"]),
+    secondaryContact: Random.pick(["", Random.cname(), Random.cname()]),
+    secondaryContactPhone: Mock.mock(/^1[3-9]\d{9}$/),
+    address: Random.county(true),
+    addressDetail: Random.pick(["科技园 A 座 808", "高新大厦 12F", "工业园 3 号厂房", "创新大厦 9 楼"]),
+    buyerId,
+    assistantIds: assistants,
+    bankAccountName: name,
+    bankName: Random.pick(["工商银行", "建设银行", "招商银行", "中国银行", "交通银行"]) + Random.pick(["深圳分行", "上海分行", "北京分行"]),
+    bankAccountNo: Mock.mock(/[0-9]{16,19}/),
+    remark: "",
+    attachment: "",
+    category: Random.pick(["工控机", "外设", "线缆", "电源", "综合"]),
+    payable: Random.integer(0, 150000),
+    createdAt: Random.date("yyyy-MM-dd"),
+  };
+});
 
 // ---------- Purchase orders ----------
 export const purchases: PurchaseOrder[] = Array.from({ length: 22 }).map((_, i) => {
