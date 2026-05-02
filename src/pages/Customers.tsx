@@ -265,10 +265,11 @@ export default function Customers() {
                       {(() => {
                         const tone = customerStatusTone[c.status || "potential"] || "muted";
                         const toneCls: Record<string, string> = {
-                          leaf: "bg-leaf/15 text-leaf ring-leaf/25",
+                          mint: "bg-mint/25 text-foreground ring-mint/40",
                           mustard: "bg-mustard/25 text-foreground ring-mustard/40",
-                          tomato: "bg-tomato/15 text-tomato ring-tomato/25",
-                          muted: "bg-foreground/5 text-foreground/70 ring-foreground/15",
+                          tomato: "bg-tomato/15 text-tomato ring-tomato/30",
+                          cobalt: "bg-cobalt/12 text-cobalt ring-cobalt/25",
+                          muted: "bg-foreground/5 text-foreground/65 ring-foreground/15",
                         };
                         return (
                           <span className={`cell-chip ring-1 ${toneCls[tone]}`}>
