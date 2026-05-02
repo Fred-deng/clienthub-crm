@@ -134,6 +134,8 @@ export function diffOrder(
       } else if (key === "invoices" && Array.isArray(a) && Array.isArray(b)) {
         if (a.length !== b.length) out.push({ field: labels[key], before: `${a.length} 张`, after: `${b.length} 张` });
         else continue;
+      } else if (key === "status") {
+        out.push({ field: labels[key], before: statusLabels[a as string] || fmtVal(a), after: statusLabels[b as string] || fmtVal(b) });
       } else {
         out.push({ field: labels[key], before: fmtVal(a), after: fmtVal(b) });
       }
