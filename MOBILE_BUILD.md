@@ -27,7 +27,22 @@ npx cap add ios       # 仅 macOS + Xcode 可执行
 npx cap add android   # 需安装 Android Studio
 ```
 
-### 4. 构建并同步
+### 4. 生成图标与启动页（一次性）
+
+项目根目录的 `assets/` 已经放好了源文件：
+- `assets/icon.png` (1024×1024) — App 图标
+- `assets/splash.png` (2732×2732) — 浅色启动页
+- `assets/splash-dark.png` (2732×2732) — 深色启动页
+
+执行下面这一条命令，**自动生成全部 iOS/Android 所有尺寸的图标和启动页**：
+
+```bash
+npx capacitor-assets generate
+```
+
+> 如要更换品牌图标 / 启动页，只需替换 `assets/` 中三张 PNG（保持正方形与文件名），再次运行上面命令即可。
+
+### 5. 构建并同步
 ```bash
 npm run build
 npx cap sync
