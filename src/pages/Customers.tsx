@@ -243,7 +243,7 @@ export default function Customers() {
               <tr>
                 <th>编号</th>
                 <th>客户</th>
-                <th>类型</th>
+                <th>业务覆盖</th>
                 <th>类别</th>
                 <th>区域</th>
                 <th>负责人</th>
