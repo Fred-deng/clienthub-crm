@@ -194,12 +194,12 @@ export const statsApi = {
       const s = splitSales(o, products);
       revSw += s.software; revHw += s.hardware;
     });
-    salesOrders.forEach((o) => {
+    activeSales.forEach((o) => {
       const r = splitSalesReceived(o, products);
       recvSw += r.software; recvHw += r.hardware;
     });
     let payableSw = 0, payableHw = 0;
-    purchases.forEach((p) => {
+    activePurs.forEach((p) => {
       const s = splitPurchase(p, products);
       payableSw += s.software; payableHw += s.hardware;
       const paid = splitPurchasePaid(p, products);
