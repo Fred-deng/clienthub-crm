@@ -342,15 +342,6 @@ export default function Customers() {
             <Field label="客户全称" required><Input placeholder="请输入客户全称" {...register("name", { required: true })} /></Field>
             <Field label="客户编号"><Input placeholder="请输入客户编号" {...register("code", { required: true })} /></Field>
             <Field label="税号"><Input placeholder="请输入税号" {...register("taxNo")} /></Field>
-            <Field label="客户类型">
-              <Select value={watch("type")} onValueChange={(v: any) => setValue("type", v)}>
-                <SelectTrigger><SelectValue placeholder="请选择" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="software">软件客户</SelectItem>
-                  <SelectItem value="hardware">硬件客户</SelectItem>
-                </SelectContent>
-              </Select>
-            </Field>
             <Field label="客户状态">
               <Select value={watch("status") || ""} onValueChange={(v: any) => setValue("status", v)}>
                 <SelectTrigger><SelectValue placeholder="请选择" /></SelectTrigger>
