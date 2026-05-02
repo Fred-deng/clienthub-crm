@@ -82,8 +82,9 @@ export default function Reconciliation() {
     return true;
   }).sort((a, b) => b.outstanding - a.outstanding);
 
-  // KPI（基于当前 tab 全量有效订单，与 Dashboard 应收/应付口径一致，不受筛选影响）
-  const totals = all.reduce(
+  // KPI（基于当前 tab + 日期段，不受搜索/未结清筛选影响）
+  const kpiSource = all.filter((r) => inRange(r.createdAt, range));
+  const totals = kpiSource.reduce(
     (s, r) => ({
       contract: s.contract + r.contract,
       paid: s.paid + r.paid,
