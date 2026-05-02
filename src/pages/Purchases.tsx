@@ -190,16 +190,18 @@ export default function Purchases() {
 
     // 2) 库存联动：状态切换涉及 received 时加减
     const op = current.name;
+    const reasonRemark = (editing && editing.status !== "cancelled" && payload.status === "cancelled" && cancelReason)
+      ? `订单取消原因：${cancelReason}` : undefined;
     if (editing) {
       const merged = { ...editing, ...payload } as PurchaseOrder;
       syncPurchaseStock(editing, merged, op);
-      // 写订单操作日志（仅修改）
-      logOrderUpdate("purchase", editing, payload);
+      logOrderUpdate("purchase", editing, payload, reasonRemark);
       await purchaseApi.update(editing.id, payload);
     } else {
       const created = await purchaseApi.create(payload);
       syncPurchaseStock(null, created, op);
     }
+    setCancelReason("");
     toast.success("已保存");
     setOpen(false);
     reload();
@@ -484,7 +486,13 @@ export default function Purchases() {
               </Select>
             </Field>
             <Field label="订单状态">
-              <Select value={watch("status")} onValueChange={(v: any) => setValue("status", v)}>
+              <Select value={watch("status")} onValueChange={(v: any) => {
+                if (v === "cancelled" && watch("status") !== "cancelled" && editing) {
+                  setCancelOpen(true);
+                  return;
+                }
+                setValue("status", v);
+              }}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="draft">草稿</SelectItem>
@@ -493,6 +501,9 @@ export default function Purchases() {
                   <SelectItem value="cancelled">已取消</SelectItem>
                 </SelectContent>
               </Select>
+              {watch("status") === "cancelled" && cancelReason && (
+                <div className="text-[11px] text-tomato mt-1">取消原因：{cancelReason}</div>
+              )}
             </Field>
             <Field label="预计入库"><Input type="date" {...register("expectedAt")} /></Field>
             <Field label="下单日期"><Input type="date" {...register("createdAt")} /></Field>
