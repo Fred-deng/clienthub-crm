@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Plus, Pencil, Trash2, Search, Download, Users as UsersIcon, Star, ArrowLeft } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Download, Users as UsersIcon, Star, ArrowLeft, ClipboardList, Phone, MapPin, MessageCircle, Mail, MessageSquare, MoreHorizontal } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -18,10 +18,10 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { customerApi, contactApi, employeeApi } from "@/services/api";
+import { customerApi, contactApi, followUpApi, employeeApi } from "@/services/api";
 import { usePagedList } from "@/hooks/usePagedList";
 import { fmtMoney, customerStageLabel, customerTypeLabel } from "@/lib/format";
-import type { Customer, Contact, Employee } from "@/types";
+import type { Customer, Contact, FollowUp, Employee } from "@/types";
 import { useEffect, ReactNode } from "react";
 
 const emptyCustomer: Omit<Customer, "id"> = {
@@ -77,7 +77,9 @@ export default function Customers() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [customerContacts, setCustomerContacts] = useState<Contact[]>([]);
+  const [customerFollowUps, setCustomerFollowUps] = useState<FollowUp[]>([]);
   const [miniContactOpen, setMiniContactOpen] = useState(false);
+  const [miniFollowUpOpen, setMiniFollowUpOpen] = useState(false);
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -89,14 +91,19 @@ export default function Customers() {
     reset({ ...emptyCustomer, code: `CUS-${Date.now().toString().slice(-6)}` });
     setEditing(null);
     setCustomerContacts([]);
+    setCustomerFollowUps([]);
     setOpen(true);
   };
   const openEdit = async (c: Customer) => {
     reset({ ...emptyCustomer, ...c });
     setEditing(c);
     setOpen(true);
-    const list = await contactApi.list({ customerId: c.id, pageSize: 100 });
-    setCustomerContacts(list.list);
+    const [cl, fl] = await Promise.all([
+      contactApi.list({ customerId: c.id, pageSize: 100 }),
+      followUpApi.list({ customerId: c.id, pageSize: 100 }),
+    ]);
+    setCustomerContacts(cl.list);
+    setCustomerFollowUps(fl.list);
   };
 
   // —— 跨页流程：从「联系人」过来新增客户 ——
