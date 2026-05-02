@@ -130,37 +130,53 @@ export interface Product {
 export interface Supplier {
   id: string;
   // —— 企业档案 ——
-  code: string;            // 供应商编号
-  name: string;            // 供应商名称
-  taxNo?: string;          // 税号
+  code: string;
+  name: string;
+  taxNo?: string;
 
-  // —— 联系人信息 ——
-  contact: string;         // 联系人姓名
-  phone: string;           // 联系电话
-  contactPosition?: string;// 联系人职务
-  secondaryContact?: string;     // 次联系人
-  secondaryContactPhone?: string;// 次联系人电话
+  // —— 联系人信息（默认主联系人） ——
+  contact: string;
+  phone: string;
+  contactPosition?: string;
+  secondaryContact?: string;
+  secondaryContactPhone?: string;
 
   // —— 地址信息 ——
-  address?: string;        // 地址（区域）
-  addressDetail?: string;  // 详细地址
+  address?: string;
+  addressDetail?: string;
 
   // —— 采购归属 ——
-  buyerId?: string;            // 采购负责人
-  assistantIds?: string[];     // 采购助理（多选）
+  buyerId?: string;
+  assistantIds?: string[];
 
   // —— 银行账户 ——
-  bankAccountName?: string;    // 开户名称
-  bankName?: string;           // 开户银行
-  bankAccountNo?: string;      // 银行账号
+  bankAccountName?: string;
+  bankName?: string;
+  bankAccountNo?: string;
 
   // —— 备注与附件 ——
   remark?: string;
   attachment?: string;
 
-  // —— 业务字段（保留） ——
-  category: string;        // 分类
+  // —— 业务字段 ——
+  category: string;
   payable: number;
+  createdAt: string;
+}
+
+// —— 供应商联系人（子表） ——
+export interface SupplierContact {
+  id: string;
+  code: string;
+  supplierId: string;
+  supplierName: string;
+  name: string;          // 姓名
+  phone: string;         // 电话
+  position?: string;     // 职务
+  email?: string;
+  wechat?: string;
+  isPrimary: boolean;    // 主联系人
+  remark?: string;
   createdAt: string;
 }
 
