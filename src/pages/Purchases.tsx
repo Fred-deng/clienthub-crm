@@ -105,7 +105,7 @@ export default function Purchases() {
 
   useEffect(() => {
     supplierApi.all().then(setSuppliers);
-    productApi.all().then((p) => setProducts(p.filter((x) => x.category !== "software")));
+    productApi.all().then(setProducts);
     employeeApi.all().then(setEmployees);
     contractApi.all().then(setSalesContracts);
   }, []);
