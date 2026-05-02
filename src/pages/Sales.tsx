@@ -293,8 +293,6 @@ export default function Sales() {
             </Field>
             <Field label="合同名称" required span={4}><Input {...register("contractTitle")} placeholder="请输入合同名称" /></Field>
             <Field label="合同编号" span={4}><Input {...register("code")} /></Field>
-            <Field label="合同到期日期" span={3}><Input type="date" {...register("contractExpireDate")} /></Field>
-            <Field label="合同金额" required span={3}><Input type="number" step="0.01" {...register("contractAmount", { valueAsNumber: true })} /></Field>
             <Field label="销售方式" required span={3}>
               <Select value={watch("salesMode")} onValueChange={(v) => setValue("salesMode", v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
