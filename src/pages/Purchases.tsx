@@ -107,6 +107,10 @@ export default function Purchases() {
   const [quickInv, setQuickInv] = useState<PurchaseOrder | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [bulkStatus, setBulkStatus] = useState<PurchaseOrder["status"] | "">("");
+  const [logOpen, setLogOpen] = useState(false);
+  const [logRefId, setLogRefId] = useState<string | undefined>(undefined);
+  const [logRefCode, setLogRefCode] = useState<string | undefined>(undefined);
+  const { current } = useCurrentUser();
 
   useEffect(() => {
     supplierApi.all().then(setSuppliers);
