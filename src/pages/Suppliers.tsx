@@ -238,14 +238,6 @@ export default function Suppliers() {
               </Select>
             </Field>
 
-            {/* 联系人信息 */}
-            <GroupTitle>联系人信息</GroupTitle>
-            <Field label="联系人姓名"><Input {...register("contact")} /></Field>
-            <Field label="联系电话"><Input {...register("phone")} /></Field>
-            <Field label="联系人职务"><Input placeholder="如：销售经理" {...register("contactPosition")} /></Field>
-            <Field label="次联系人"><Input {...register("secondaryContact")} /></Field>
-            <Field label="次联系人电话"><Input {...register("secondaryContactPhone")} /></Field>
-
             {/* 地址信息 */}
             <GroupTitle>地址信息</GroupTitle>
             <Field label="地址" span={6}><Input placeholder="省/市/区" {...register("address")} /></Field>
