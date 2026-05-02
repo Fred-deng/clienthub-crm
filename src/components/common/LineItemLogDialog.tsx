@@ -5,7 +5,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { listLineItemLogs, type LineItemLog, type LineItemLogModule } from "@/services/lineItemLog";
-import { fmtMoney } from "@/lib/format";
+import { fmtMoney, productCategoryLabel } from "@/lib/format";
 
 interface Props {
   module: LineItemLogModule;
@@ -94,7 +94,7 @@ export function LineItemLogButton({ module, scope, buttonClassName, refreshKey }
 
                     {(l.action === "add" || l.action === "delete") && l.snapshot && (
                       <div className="grid grid-cols-4 gap-2 text-[12px] pl-1 text-foreground/75">
-                        <div>分类：<span className="font-semibold text-foreground">{l.snapshot.category}</span></div>
+                        <div>分类：<span className="font-semibold text-foreground">{productCategoryLabel[l.snapshot.category as string] ?? l.snapshot.category}</span></div>
                         <div>数量：<span className="font-semibold text-foreground">{l.snapshot.qty}</span></div>
                         <div>单价：<span className="font-semibold text-foreground">{fmtMoney(l.snapshot.price ?? 0)}</span></div>
                         <div>小计：<span className="font-semibold text-foreground">{fmtMoney((l.snapshot.qty ?? 0) * (l.snapshot.price ?? 0))}</span></div>
