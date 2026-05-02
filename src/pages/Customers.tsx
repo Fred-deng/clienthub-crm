@@ -95,6 +95,8 @@ export default function Customers() {
     setEditing(null);
     setCustomerContacts([]);
     setCustomerFollowUps([]);
+    setDraftContacts([]);
+    setDraftFollowUps([]);
     setOpen(true);
   };
   const openEdit = async (c: Customer) => {
