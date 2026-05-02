@@ -1,5 +1,6 @@
 import type { PurchaseOrder, SalesOrder } from "@/types";
 import { readCurrentOperator } from "@/context/CurrentUserContext";
+import { statusLabels } from "@/lib/format";
 
 export type OrderLogAction = "update" | "delete";
 export type OrderLogModule = "purchase" | "sales";
