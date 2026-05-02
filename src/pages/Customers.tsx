@@ -306,7 +306,7 @@ export default function Customers() {
             {data.list.length > 0 && (
               <tfoot>
                 <tr>
-                  <td colSpan={8} className="label">本页合计 · {data.list.length} 条 / 共 {data.total} 条</td>
+                  <td colSpan={9} className="label">本页合计 · {data.list.length} 条 / 共 {data.total} 条</td>
                   <td className="num">{fmtMoney(data.list.reduce((s, c) => s + (c.receivable || 0), 0))}</td>
                   <td />
                 </tr>
