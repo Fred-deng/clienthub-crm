@@ -455,6 +455,29 @@ export default function Sales() {
       <ConfirmDialog open={!!deletingId} onOpenChange={(v) => !v && setDeletingId(null)} title="删除合同" onConfirm={async () => {
         if (deletingId) { await salesApi.remove(deletingId); toast.success("已删除"); setDeletingId(null); reload(); }
       }} />
+
+      <QuickPaymentDialog
+        open={!!quickPay}
+        onOpenChange={(v) => !v && setQuickPay(null)}
+        direction="in"
+        refType="sales"
+        refId={quickPay?.id || ""}
+        refCode={quickPay?.code || ""}
+        partyName={quickPay?.customerName || ""}
+        remaining={quickPay ? Math.max((quickPay.contractAmount ?? quickPay.totalAmount) - quickPay.received, 0) : 0}
+        onSaved={() => { setQuickPay(null); reload(); }}
+      />
+
+      <QuickInvoiceDialog
+        open={!!quickInv}
+        onOpenChange={(v) => !v && setQuickInv(null)}
+        refType="sales"
+        refId={quickInv?.id || ""}
+        refCode={quickInv?.code || ""}
+        partyName={quickInv?.customerName || ""}
+        existing={quickInv?.invoices || []}
+        onSaved={() => { setQuickInv(null); reload(); }}
+      />
     </>
   );
 }
