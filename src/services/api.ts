@@ -2,7 +2,7 @@
 // 只需替换本文件中各方法的内部实现为 fetch/axios 调用即可。
 import type { Paged, ListQuery } from "@/types";
 import {
-  customers, products, suppliers, purchases, contracts, salesOrders, payments, employees, contacts, followUps,
+  customers, products, suppliers, supplierContacts, purchases, contracts, salesOrders, payments, employees, contacts, followUps,
 } from "@/mock/data";
 
 const delay = (ms = 200) => new Promise((r) => setTimeout(r, ms));
