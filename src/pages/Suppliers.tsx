@@ -61,6 +61,7 @@ function Field({ label, required, span = 4, children }: { label: string; require
 }
 
 export default function Suppliers() {
+  const categories = useCategories();
   const { query, data, loading, reload, setFilter, setPage } = usePagedList(supplierApi.list);
   const [editing, setEditing] = useState<Supplier | null>(null);
   const [open, setOpen] = useState(false);
