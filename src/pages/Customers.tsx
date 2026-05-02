@@ -611,27 +611,33 @@ export default function Customers() {
         </DialogContent>
       </Dialog>
 
-      {/* 在客户编辑窗口内快速新增联系人 */}
-      {editing && (
-        <MiniContactDialog
-          open={miniContactOpen}
-          onOpenChange={setMiniContactOpen}
-          customer={editing}
-          employees={employees}
-          onCreated={reloadCustomerContacts}
-        />
-      )}
+      {/* 在客户编辑窗口内快速新增联系人（新增模式则加入草稿） */}
+      <MiniContactDialog
+        open={miniContactOpen}
+        onOpenChange={setMiniContactOpen}
+        customer={editing ?? {
+          id: "", name: watch("name") || "（未保存客户）",
+          ownerId: watch("ownerId") || "u3",
+        } as Customer}
+        employees={employees}
+        onCreated={editing ? reloadCustomerContacts : undefined}
+        onDraft={editing ? undefined : (draft) => setDraftContacts((arr) => [...arr, draft])}
+      />
 
-      {editing && (
-        <MiniFollowUpDialog
-          open={miniFollowUpOpen}
-          onOpenChange={setMiniFollowUpOpen}
-          customer={editing}
-          contacts={customerContacts}
-          employees={employees}
-          onCreated={reloadCustomerFollowUps}
-        />
-      )}
+      <MiniFollowUpDialog
+        open={miniFollowUpOpen}
+        onOpenChange={setMiniFollowUpOpen}
+        customer={editing ?? {
+          id: "", name: watch("name") || "（未保存客户）",
+          status: watch("status") || "potential",
+          ownerId: watch("ownerId") || "u3",
+        } as Customer}
+        contacts={editing ? customerContacts : (draftContacts as unknown as Contact[])}
+        employees={employees}
+        onCreated={editing ? reloadCustomerFollowUps : undefined}
+        onDraft={editing ? undefined : (draft) => setDraftFollowUps((arr) => [...arr, draft])}
+      />
+
 
       <ConfirmDialog
         open={!!deletingId}
