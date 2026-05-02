@@ -1,10 +1,39 @@
 import { Outlet } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { Search, Bell, Command, ChevronDown } from "lucide-react";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { Search, Bell, Command, ChevronDown, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useCurrentUser } from "@/context/CurrentUserContext";
 import { AppSidebar } from "./AppSidebar";
+
+function SidebarToggle() {
+  const { state, toggleSidebar, isMobile } = useSidebar();
+  const collapsed = state === "collapsed";
+  const Icon = collapsed ? PanelLeftOpen : PanelLeftClose;
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          onClick={toggleSidebar}
+          className="relative h-9 w-9 flex items-center justify-center rounded-lg text-foreground/55 hover:text-foreground hover:bg-card border border-transparent hover:border-foreground/10 transition-all"
+          aria-label={collapsed ? "展开侧边栏" : "收起侧边栏"}
+        >
+          <Icon className="h-4 w-4" />
+          <span className={"absolute -top-0.5 -right-0.5 size-1.5 rounded-full transition-colors " + (collapsed ? "bg-mustard" : "bg-mint")} />
+        </button>
+      </TooltipTrigger>
+      <TooltipContent side="bottom" align="start">
+        <span className="flex items-center gap-2">
+          {collapsed ? "展开侧边栏" : "收起侧边栏"}
+          {!isMobile && (
+            <kbd className="font-mono text-[9px] bg-[hsl(var(--paper))]/15 px-1 py-0.5 rounded">⌘B</kbd>
+          )}
+        </span>
+      </TooltipContent>
+    </Tooltip>
+  );
+}
 
 export default function AppLayout() {
   const [now, setNow] = useState(() => new Date());
@@ -28,7 +57,7 @@ export default function AppLayout() {
         <div className="flex-1 flex flex-col min-w-0 relative z-10">
           <header className="h-16 flex items-center justify-between px-8 lg:px-10 shrink-0 border-b border-foreground/[0.06]">
             <div className="flex items-center gap-3">
-              <SidebarTrigger className="text-foreground/55 hover:text-foreground rounded-lg" />
+              <SidebarToggle />
               <div className="hidden md:flex items-center gap-2.5 rounded-full bg-card/70 backdrop-blur border border-foreground/10 px-4 h-10 w-72 lg:w-[380px] focus-within:border-foreground/30 focus-within:bg-card transition-all">
                 <Search className="h-3.5 w-3.5 text-foreground/40 shrink-0" />
                 <input
