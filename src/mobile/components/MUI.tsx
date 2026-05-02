@@ -1,10 +1,11 @@
 // 移动端通用 UI 组件库
 import { ReactNode, useState, useEffect } from "react";
-import { ArrowLeft, Plus, Search, X, ChevronRight } from "lucide-react";
+import { ArrowLeft, Plus, Search, X, ChevronRight, Check, Download, Inbox } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import type { BizFilter } from "@/lib/biz";
 
 // ---------- 页面顶部 ----------
 export function MPageHeader({
@@ -68,9 +69,19 @@ export function MCard({ children, onClick, className }: { children: ReactNode; o
 }
 
 // ---------- 列表容器 ----------
-export function MList({ children, empty, loading }: { children: ReactNode; empty?: boolean; loading?: boolean }) {
-  if (loading) return <div className="px-4 py-12 text-center text-sm text-foreground/45">加载中…</div>;
-  if (empty) return <div className="px-4 py-16 text-center text-sm text-foreground/40">暂无数据</div>;
+export function MList({ children, empty, loading, emptyText = "暂无数据" }: { children: ReactNode; empty?: boolean; loading?: boolean; emptyText?: string }) {
+  if (loading) return (
+    <div className="px-4 py-12 flex flex-col items-center gap-2 text-sm text-foreground/45">
+      <div className="size-6 rounded-full border-2 border-foreground/15 border-t-tomato animate-spin" />
+      加载中…
+    </div>
+  );
+  if (empty) return (
+    <div className="px-4 py-20 flex flex-col items-center gap-2 text-foreground/40">
+      <Inbox className="h-10 w-10" strokeWidth={1.2} />
+      <span className="text-sm">{emptyText}</span>
+    </div>
+  );
   return <div className="px-4 space-y-2.5 pb-4">{children}</div>;
 }
 
@@ -274,6 +285,68 @@ export function MChipFilter<T extends string>({ value, onChange, options }: { va
           {o.label}
         </button>
       ))}
+    </div>
+  );
+}
+
+// ---------- 业务类别 tab（全/软/硬） ----------
+export function MBizTabs({ value, onChange }: { value: BizFilter; onChange: (v: BizFilter) => void }) {
+  const items: { v: BizFilter; label: string; cls: string }[] = [
+    { v: "all", label: "全部", cls: "bg-foreground text-[hsl(var(--paper))]" },
+    { v: "software", label: "软件", cls: "bg-cobalt text-[hsl(var(--paper))]" },
+    { v: "hardware", label: "硬件", cls: "bg-mint text-foreground" },
+  ];
+  return (
+    <div className="px-4 pb-3">
+      <div className="inline-flex p-1 rounded-full bg-foreground/[0.05] border border-foreground/10">
+        {items.map((it) => (
+          <button key={it.v} onClick={() => onChange(it.v)}
+            className={cn("px-4 h-7 rounded-full text-xs font-semibold transition-all",
+              value === it.v ? it.cls + " shadow-sm" : "text-foreground/55")}>
+            {it.label}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ---------- 复选框 ----------
+export function MCheckbox({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label?: ReactNode }) {
+  return (
+    <button type="button" onClick={() => onChange(!checked)} className="inline-flex items-center gap-2">
+      <span className={cn("size-5 rounded-md border flex items-center justify-center transition-colors",
+        checked ? "bg-tomato border-tomato" : "border-foreground/25 bg-card")}>
+        {checked && <Check className="h-3.5 w-3.5 text-[hsl(var(--paper))]" strokeWidth={3} />}
+      </span>
+      {label && <span className="text-xs">{label}</span>}
+    </button>
+  );
+}
+
+// ---------- 头部图标按钮 ----------
+export function MIconBtn({ icon: Icon, onClick, title, active }: { icon: any; onClick: () => void; title?: string; active?: boolean }) {
+  return (
+    <button onClick={onClick} title={title} className={cn(
+      "size-9 rounded-full flex items-center justify-center transition-colors",
+      active ? "bg-tomato/12 text-tomato" : "text-foreground/65 hover:bg-foreground/5"
+    )}>
+      <Icon className="h-4 w-4" />
+    </button>
+  );
+}
+
+export { Download as MDownloadIcon };
+
+// ---------- 批量操作工具条 ----------
+export function MBulkBar({ count, onCancel, children }: { count: number; onCancel: () => void; children: ReactNode }) {
+  if (count === 0) return null;
+  return (
+    <div className="px-4 py-2.5 bg-mustard/15 border-y border-mustard/30 flex items-center gap-2">
+      <span className="text-xs font-semibold">已选 <span className="text-tomato">{count}</span></span>
+      <div className="flex-1" />
+      <div className="flex gap-1.5">{children}</div>
+      <button onClick={onCancel} className="text-[11px] text-foreground/55 px-1">取消</button>
     </div>
   );
 }

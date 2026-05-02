@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { followUpApi, customerApi } from "@/services/api";
-import { usePagedList } from "@/hooks/usePagedList";
+import { useInfiniteList } from "../hooks/useInfiniteList";
 import { useToast } from "@/hooks/use-toast";
 import { useCurrentUser } from "@/context/CurrentUserContext";
 import type { FollowUp, Customer } from "@/types";
 import { CalendarDays, Phone } from "lucide-react";
-import { MPageHeader, MSearchBar, MList, MCard, MTag, MFab, MSheet, MField, MInput, MTextarea, MSelect, MButton, MChipFilter, MConfirm, MRow } from "../components/MUI";
+import { MPageHeader, MSearchBar, MList, MLoadMore, MCard, MTag, MFab, MSheet, MField, MInput, MTextarea, MSelect, MButton, MChipFilter, MConfirm, MRow } from "../components/MUI";
 
 const WAYS = ["电话", "拜访", "微信", "邮件", "短信", "其他"] as const;
 const OPP = ["意向初探", "需求确认", "方案沟通", "报价中", "商务谈判", "已签约", "已流失"] as const;
@@ -14,7 +14,7 @@ const WAY_OPTS = [{ value: "all", label: "全部" }, ...WAYS.map(w => ({ value: 
 export default function MFollowUps() {
   const { current } = useCurrentUser();
   const { toast } = useToast();
-  const { data, loading, setFilter, reload } = usePagedList<FollowUp>(followUpApi.list, { pageSize: 20 });
+  const { items, total, loading, hasMore, setFilter, loadMore, reload } = useInfiniteList<FollowUp>(followUpApi.list, { pageSize: 15 });
   const [keyword, setKeyword] = useState(""); const [way, setWay] = useState("all");
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [editOpen, setEditOpen] = useState(false);
@@ -36,11 +36,11 @@ export default function MFollowUps() {
 
   return (
     <div>
-      <MPageHeader title="跟进记录" subtitle={`共 ${data.total} 条`} />
+      <MPageHeader title="跟进记录" subtitle={`共 ${total} 条`} />
       <MSearchBar value={keyword} onChange={(v) => { setKeyword(v); setFilter({ keyword: v }); }} placeholder="搜索客户/主题/内容" />
       <MChipFilter value={way} onChange={(v) => { setWay(v); setFilter({ contactWay: v }); }} options={WAY_OPTS} />
-      <MList loading={loading && !data.list.length} empty={!loading && !data.list.length}>
-        {data.list.map((f) => (
+      <MList loading={loading && !items.length} empty={!loading && !items.length}>
+        {items.map((f) => (
           <MCard key={f.id} onClick={() => setView(f)}>
             <div className="flex items-center gap-2 mb-1.5">
               <MTag variant="cobalt">{f.contactWay}</MTag>
@@ -52,6 +52,7 @@ export default function MFollowUps() {
             <div className="text-[12px] text-foreground/70 mt-1.5 line-clamp-2">{f.content}</div>
           </MCard>
         ))}
+        {items.length > 0 && <MLoadMore hasMore={hasMore} loading={loading} onLoad={loadMore} />}
       </MList>
       <MFab onClick={openCreate} />
 

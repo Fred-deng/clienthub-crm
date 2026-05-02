@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { supplierApi } from "@/services/api";
-import { usePagedList } from "@/hooks/usePagedList";
+import { useInfiniteList } from "../hooks/useInfiniteList";
 import { useToast } from "@/hooks/use-toast";
 import type { Supplier } from "@/types";
 import { Truck, Phone } from "lucide-react";
-import { MPageHeader, MSearchBar, MList, MCard, MFab, MSheet, MField, MInput, MTextarea, MButton, MConfirm, MRow } from "../components/MUI";
+import { MPageHeader, MSearchBar, MList, MLoadMore, MCard, MFab, MSheet, MField, MInput, MTextarea, MButton, MConfirm, MRow } from "../components/MUI";
 
 export default function MSuppliers() {
   const { toast } = useToast();
-  const { data, loading, setFilter, reload } = usePagedList<Supplier>(supplierApi.list, { pageSize: 20 });
+  const { items, total, loading, hasMore, setFilter, loadMore, reload } = useInfiniteList<Supplier>(supplierApi.list, { pageSize: 15 });
   const [keyword, setKeyword] = useState("");
   const [editOpen, setEditOpen] = useState(false);
   const [editing, setEditing] = useState<Partial<Supplier> | null>(null);
@@ -26,10 +26,10 @@ export default function MSuppliers() {
 
   return (
     <div>
-      <MPageHeader title="供应商" subtitle={`共 ${data.total} 家`} />
+      <MPageHeader title="供应商" subtitle={`共 ${total} 家`} />
       <MSearchBar value={keyword} onChange={(v) => { setKeyword(v); setFilter({ keyword: v }); }} placeholder="搜索供应商" />
-      <MList loading={loading && !data.list.length} empty={!loading && !data.list.length}>
-        {data.list.map((s) => (
+      <MList loading={loading && !items.length} empty={!loading && !items.length}>
+        {items.map((s) => (
           <MCard key={s.id} onClick={() => setView(s)}>
             <div className="flex items-start gap-3">
               <div className="size-10 rounded-xl bg-cobalt/15 flex items-center justify-center"><Truck className="h-5 w-5 text-cobalt" /></div>
@@ -45,6 +45,7 @@ export default function MSuppliers() {
             </div>
           </MCard>
         ))}
+        {items.length > 0 && <MLoadMore hasMore={hasMore} loading={loading} onLoad={loadMore} />}
       </MList>
       <MFab onClick={openCreate} />
 
