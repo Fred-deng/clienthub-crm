@@ -8,6 +8,7 @@ import { PaginationBar } from "@/components/common/PaginationBar";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { StatusBadge } from "@/components/common/StatusBadge";
 import { LineItemsEditor, LineItem } from "@/components/common/LineItemsEditor";
+import { InvoiceList, InvoiceRecord } from "@/components/common/InvoiceList";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -111,6 +112,7 @@ type FormValues = {
   licenseAttachments: string[];
   invoiceAttachments: string[];
   otherAttachments: string[];
+  invoices: InvoiceRecord[];
   status: string;
   ownerId: string;
   createdAt: string;
@@ -148,7 +150,7 @@ export default function Sales() {
       signedAt: "", contractExpireAt: "", accountManagerId: "", assistantIds: [],
       isSettled: false, isPartyA: false,
       serviceFee: 0, outsourceFee: 0, salesFee: 0, productStdCost: 0,
-      contractAttachments: [], stampedContractAttachments: [], licenseAttachments: [], invoiceAttachments: [], otherAttachments: [],
+      contractAttachments: [], stampedContractAttachments: [], licenseAttachments: [], invoiceAttachments: [], otherAttachments: [], invoices: [],
       status: "pending", ownerId: "u3", createdAt: new Date().toISOString().slice(0, 10), received: 0, remark: "",
     },
   });
@@ -161,7 +163,7 @@ export default function Sales() {
       signedAt: "", contractExpireAt: "", accountManagerId: "u3", assistantIds: [],
       isSettled: false, isPartyA: false,
       serviceFee: 0, outsourceFee: 0, salesFee: 0, productStdCost: 0,
-      contractAttachments: [], stampedContractAttachments: [], licenseAttachments: [], invoiceAttachments: [], otherAttachments: [],
+      contractAttachments: [], stampedContractAttachments: [], licenseAttachments: [], invoiceAttachments: [], otherAttachments: [], invoices: [],
       status: "pending", ownerId: "u3", createdAt: new Date().toISOString().slice(0, 10), received: 0, remark: "",
     });
     setItems([]); setEditing(null); setOpen(true);
@@ -177,7 +179,7 @@ export default function Sales() {
       isSettled: !!o.isSettled, isPartyA: !!o.isPartyA,
       serviceFee: o.serviceFee ?? 0, outsourceFee: o.outsourceFee ?? 0, salesFee: o.salesFee ?? 0, productStdCost: o.productStdCost ?? 0,
       contractAttachments: o.contractAttachments ?? [], stampedContractAttachments: o.stampedContractAttachments ?? [],
-      licenseAttachments: o.licenseAttachments ?? [], invoiceAttachments: o.invoiceAttachments ?? [], otherAttachments: o.otherAttachments ?? [],
+      licenseAttachments: o.licenseAttachments ?? [], invoiceAttachments: o.invoiceAttachments ?? [], otherAttachments: o.otherAttachments ?? [], invoices: o.invoices ?? [],
       status: o.status, ownerId: o.ownerId, createdAt: o.createdAt, received: o.received, remark: o.remark ?? "",
     });
     setItems(o.items); setEditing(o); setOpen(true);
