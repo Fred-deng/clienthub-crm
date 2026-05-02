@@ -72,8 +72,6 @@ export const customers: Customer[] = Array.from({ length: 48 }).map((_, i) => {
     nextVisitAt: Random.date("yyyy-MM-dd"),
     invoiceInfo: name + " / " + Mock.mock(/[0-9]{16}/) + " / 工商银行",
     introducer: Random.pick(["", "", Random.cname()]),
-    totalAmount: Random.integer(0, 800000),
-    receivable: stage === "formal" ? Random.integer(0, 200000) : 0,
     createdAt: Random.date("yyyy-MM-dd"),
     remark: Random.csentence(8, 20),
   };

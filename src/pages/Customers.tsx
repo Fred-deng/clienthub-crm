@@ -38,7 +38,6 @@ const emptyCustomer: Omit<Customer, "id"> = {
   category: "潜在客户", source: "电话开发", seaStatus: "私海",
   lastVisitAt: "", nextVisitAt: "",
   invoiceInfo: "", introducer: "",
-  totalAmount: 0, receivable: 0,
   createdAt: new Date().toISOString().slice(0, 10), remark: "",
 };
 
