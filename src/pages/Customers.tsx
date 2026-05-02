@@ -18,10 +18,10 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { customerApi, contactApi, followUpApi, employeeApi } from "@/services/api";
+import { customerApi, contactApi, followUpApi, employeeApi, salesApi, productApi } from "@/services/api";
 import { usePagedList } from "@/hooks/usePagedList";
 import { fmtMoney, customerStageLabel } from "@/lib/format";
-import type { Customer, Contact, FollowUp, Employee } from "@/types";
+import type { Customer, Contact, FollowUp, Employee, SalesOrder, Product } from "@/types";
 import { useEffect, ReactNode } from "react";
 
 const emptyCustomer: Omit<Customer, "id"> = {
