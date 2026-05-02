@@ -253,6 +253,22 @@ export default function Purchases() {
         accent="mustard"
         actions={
           <div className="flex items-center gap-2">
+            {selectedIds.length > 0 && (
+              <div className="flex items-center gap-1.5 px-2.5 h-9 rounded-full bg-warning/10 text-[12px]">
+                <span className="text-warning font-semibold">已选 {selectedIds.length}</span>
+                <Select value={bulkStatus} onValueChange={(v: any) => setBulkStatus(v)}>
+                  <SelectTrigger className="h-7 w-24 text-xs"><SelectValue placeholder="改状态" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="draft">草稿</SelectItem>
+                    <SelectItem value="ordered">已下单</SelectItem>
+                    <SelectItem value="received">已入库</SelectItem>
+                    <SelectItem value="cancelled">已取消</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button size="sm" className="h-7 text-xs" disabled={!bulkStatus} onClick={applyBulkStatus}>应用</Button>
+                <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setSelectedIds([])}>清空</Button>
+              </div>
+            )}
             <div className="relative">
               <Search className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-foreground/40" />
               <Input
