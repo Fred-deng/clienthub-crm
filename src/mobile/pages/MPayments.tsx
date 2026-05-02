@@ -1,31 +1,27 @@
 import { useState, useEffect } from "react";
-import { paymentApi, salesApi, purchaseApi, productApi } from "@/services/api";
-import { useInfiniteList } from "../hooks/useInfiniteList";
+import { paymentApi, salesApi, purchaseApi } from "@/services/api";
+import { usePagedList } from "@/hooks/usePagedList";
 import { useToast } from "@/hooks/use-toast";
-import type { Payment, SalesOrder, PurchaseOrder, Product } from "@/types";
-import { ArrowDownToLine, ArrowUpFromLine, Download } from "lucide-react";
-import { exportCsv } from "@/lib/csv";
-import { splitPayment, pickByFilter, matchFilter, bizLabel, bizTone, type BizFilter } from "@/lib/biz";
-import { MPageHeader, MSearchBar, MList, MCard, MTag, MFab, MSheet, MField, MInput, MTextarea, MSelect, MButton, MChipFilter, MConfirm, MRow, MDateRange, MBizTabs, MIconBtn, MLoadMore } from "../components/MUI";
+import type { Payment, SalesOrder, PurchaseOrder } from "@/types";
+import { ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
+import { MPageHeader, MSearchBar, MList, MCard, MTag, MFab, MSheet, MField, MInput, MTextarea, MSelect, MButton, MChipFilter, MConfirm, MRow, MDateRange } from "../components/MUI";
 
 const DIR_OPTS = [{ value: "all", label: "全部" }, { value: "in", label: "回款" }, { value: "out", label: "付款" }];
 const METHODS = ["对公转账", "现金", "支票", "支付宝", "微信"] as const;
 
 export default function MPayments() {
   const { toast } = useToast();
-  const { items, total, loading, hasMore, setFilter, loadMore, reload } = useInfiniteList<Payment>(paymentApi.list, { pageSize: 15 });
+  const { data, loading, setFilter, reload } = usePagedList<Payment>(paymentApi.list, { pageSize: 20 });
   const [keyword, setKeyword] = useState(""); const [dir, setDir] = useState("all");
-  const [biz, setBiz] = useState<BizFilter>("all");
   const [date, setDate] = useState({ from: "", to: "" });
   const [sales, setSales] = useState<SalesOrder[]>([]);
   const [purs, setPurs] = useState<PurchaseOrder[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
   const [editOpen, setEditOpen] = useState(false);
   const [editing, setEditing] = useState<Partial<Payment> | null>(null);
   const [view, setView] = useState<Payment | null>(null);
   const [delId, setDelId] = useState<string | null>(null);
 
-  useEffect(() => { salesApi.all().then(setSales); purchaseApi.all().then(setPurs); productApi.all().then(setProducts); }, []);
+  useEffect(() => { salesApi.all().then(setSales); purchaseApi.all().then(setPurs); }, []);
 
   const openCreate = () => { setEditing({ direction: "in", refType: "sales", refId: "", refCode: "", partyName: "", amount: 0, method: "对公转账", paidAt: new Date().toISOString().slice(0, 10), code: "" }); setEditOpen(true); };
   const save = async () => {
@@ -37,35 +33,20 @@ export default function MPayments() {
   const doDelete = async () => { if (!delId) return; await paymentApi.remove(delId); setDelId(null); setView(null); toast({ title: "已删除" }); reload(); };
   const applyDate = (v: { from: string; to: string }) => { setDate(v); setFilter({ dateFrom: v.from, dateTo: v.to }); };
 
-  const doExport = async () => {
-    const all = await paymentApi.all();
-    exportCsv("payments", all, [
-      { header: "流水号", value: (p) => p.code }, { header: "方向", value: (p) => p.direction === "in" ? "回款" : "付款" },
-      { header: "关联单据", value: (p) => p.refCode }, { header: "对手方", value: (p) => p.partyName },
-      { header: "金额", value: (p) => p.amount }, { header: "方式", value: (p) => p.method },
-      { header: "日期", value: (p) => p.paidAt }, { header: "备注", value: (p) => p.remark || "" },
-    ]);
-    toast({ title: "已导出 CSV" });
-  };
-
   const refOptions = editing?.refType === "sales"
     ? sales.map(s => ({ value: s.id, label: `${s.code} · ${s.customerName}`, party: s.customerName, code: s.code }))
     : purs.map(p => ({ value: p.id, label: `${p.code} · ${p.supplierName}`, party: p.supplierName, code: p.code }));
 
-  const enriched = items.map((p) => ({ p, split: splitPayment(p, { sales, purchases: purs }, products) })).filter(({ split }) => matchFilter(split, biz));
-
   return (
     <div>
-      <MPageHeader title="账务收支" subtitle={`共 ${total} 笔`} action={<MIconBtn icon={Download} onClick={doExport} title="导出" />} />
-      <MBizTabs value={biz} onChange={setBiz} />
+      <MPageHeader title="账务收支" subtitle={`共 ${data.total} 笔`} />
       <MSearchBar value={keyword} onChange={(v) => { setKeyword(v); setFilter({ keyword: v }); }} placeholder="单号 / 客户 / 供应商" />
       <MChipFilter value={dir} onChange={(v) => { setDir(v); setFilter({ direction: v }); }} options={DIR_OPTS} />
       <MDateRange value={date} onChange={applyDate} />
 
-      <MList loading={loading && !enriched.length} empty={!loading && !enriched.length}>
-        {enriched.map(({ p, split }) => {
+      <MList loading={loading && !data.list.length} empty={!loading && !data.list.length}>
+        {data.list.map((p) => {
           const isIn = p.direction === "in";
-          const amt = pickByFilter(split, biz);
           return (
             <MCard key={p.id} onClick={() => setView(p)}>
               <div className="flex items-start gap-3">
@@ -73,22 +54,18 @@ export default function MPayments() {
                   {isIn ? <ArrowDownToLine className="h-5 w-5" /> : <ArrowUpFromLine className="h-5 w-5" />}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <div className="font-semibold text-sm truncate flex-1">{p.partyName}</div>
-                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold ${bizTone[split.category]}`}>{bizLabel[split.category]}</span>
-                  </div>
+                  <div className="font-semibold text-sm truncate">{p.partyName}</div>
                   <div className="text-[11px] font-mono text-foreground/45 mt-0.5">{p.code} · {p.refCode}</div>
                   <div className="flex items-center gap-2 mt-1">
                     <MTag variant="muted">{p.method}</MTag>
                     <span className="text-[11px] text-foreground/55">{p.paidAt}</span>
                   </div>
                 </div>
-                <div className={`font-mono font-bold tabular-nums text-sm ${isIn ? "text-mint" : "text-tomato"}`}>{isIn ? "+" : "-"}¥{amt.toLocaleString()}</div>
+                <div className={`font-mono font-bold tabular-nums text-sm ${isIn ? "text-mint" : "text-tomato"}`}>{isIn ? "+" : "-"}¥{p.amount.toLocaleString()}</div>
               </div>
             </MCard>
           );
         })}
-        {items.length > 0 && <MLoadMore hasMore={hasMore} loading={loading} onLoad={loadMore} />}
       </MList>
 
       <MFab onClick={openCreate} label="登记" />

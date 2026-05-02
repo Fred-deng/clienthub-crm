@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { productApi } from "@/services/api";
-import { useInfiniteList } from "../hooks/useInfiniteList";
+import { usePagedList } from "@/hooks/usePagedList";
 import { useToast } from "@/hooks/use-toast";
 import type { Product, ProductCategory } from "@/types";
 import { Package, AlertTriangle } from "lucide-react";
-import { MPageHeader, MSearchBar, MList, MLoadMore, MCard, MTag, MFab, MSheet, MField, MInput, MSelect, MButton, MChipFilter, MConfirm, MRow } from "../components/MUI";
+import { MPageHeader, MSearchBar, MList, MCard, MTag, MFab, MSheet, MField, MInput, MSelect, MButton, MChipFilter, MConfirm, MRow } from "../components/MUI";
 
 const CATS: { value: ProductCategory | "all"; label: string }[] = [
   { value: "all", label: "全部" }, { value: "software", label: "软件" }, { value: "ipc", label: "工控机" }, { value: "pda", label: "PDA" }, { value: "mouse", label: "鼠标" }, { value: "cable", label: "线材" }, { value: "power", label: "电源" }, { value: "other", label: "其他" },
@@ -12,7 +12,7 @@ const CATS: { value: ProductCategory | "all"; label: string }[] = [
 
 export default function MProducts() {
   const { toast } = useToast();
-  const { items, total, loading, hasMore, setFilter, loadMore, reload } = useInfiniteList<Product>(productApi.list, { pageSize: 15 });
+  const { data, loading, setFilter, reload } = usePagedList<Product>(productApi.list, { pageSize: 20 });
   const [keyword, setKeyword] = useState(""); const [cat, setCat] = useState("all");
   const [editOpen, setEditOpen] = useState(false);
   const [editing, setEditing] = useState<Partial<Product> | null>(null);
@@ -30,11 +30,11 @@ export default function MProducts() {
 
   return (
     <div>
-      <MPageHeader title="产品库" subtitle={`共 ${total} 个 SKU`} />
+      <MPageHeader title="产品库" subtitle={`共 ${data.total} 个 SKU`} />
       <MSearchBar value={keyword} onChange={(v) => { setKeyword(v); setFilter({ keyword: v }); }} placeholder="名称 / 编号 / 规格" />
       <MChipFilter value={cat} onChange={(v) => { setCat(v); setFilter({ category: v }); }} options={CATS} />
-      <MList loading={loading && !items.length} empty={!loading && !items.length}>
-        {items.map((p) => {
+      <MList loading={loading && !data.list.length} empty={!loading && !data.list.length}>
+        {data.list.map((p) => {
           const low = p.stock <= p.safetyStock && p.category !== "software";
           return (
             <MCard key={p.id} onClick={() => setView(p)}>
@@ -55,7 +55,6 @@ export default function MProducts() {
             </MCard>
           );
         })}
-        {items.length > 0 && <MLoadMore hasMore={hasMore} loading={loading} onLoad={loadMore} />}
       </MList>
       <MFab onClick={openCreate} />
 

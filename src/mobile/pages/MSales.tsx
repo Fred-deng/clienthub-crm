@@ -1,13 +1,11 @@
 import { useState, useEffect } from "react";
 import { salesApi, customerApi, productApi } from "@/services/api";
-import { useInfiniteList } from "../hooks/useInfiniteList";
+import { usePagedList } from "@/hooks/usePagedList";
 import { useToast } from "@/hooks/use-toast";
 import { useCurrentUser } from "@/context/CurrentUserContext";
 import type { SalesOrder, Customer, Product, SalesStatus } from "@/types";
-import { Trash2, Plus, Download } from "lucide-react";
-import { exportCsv } from "@/lib/csv";
-import { splitSales, bizLabel, bizTone, type BizFilter } from "@/lib/biz";
-import { MPageHeader, MSearchBar, MList, MCard, MTag, MFab, MSheet, MField, MInput, MTextarea, MSelect, MButton, MChipFilter, MConfirm, MRow, MDateRange, MBizTabs, MIconBtn, MLoadMore } from "../components/MUI";
+import { Trash2, Plus } from "lucide-react";
+import { MPageHeader, MSearchBar, MList, MCard, MTag, MFab, MSheet, MField, MInput, MTextarea, MSelect, MButton, MChipFilter, MConfirm, MRow, MDateRange } from "../components/MUI";
 
 const STATUS_OPTS = [
   { value: "all", label: "全部" }, { value: "pending", label: "待发货" }, { value: "shipped", label: "已发货" }, { value: "delivered", label: "已交付" }, { value: "cancelled", label: "已取消" },
@@ -18,9 +16,8 @@ const STATUS_VARIANT: Record<string, "mustard" | "cobalt" | "mint" | "muted"> = 
 export default function MSales() {
   const { current } = useCurrentUser();
   const { toast } = useToast();
-  const { items, total, loading, hasMore, setFilter, loadMore, reload } = useInfiniteList<SalesOrder>(salesApi.list, { pageSize: 15 });
+  const { data, loading, setFilter, reload } = usePagedList<SalesOrder>(salesApi.list, { pageSize: 20 });
   const [keyword, setKeyword] = useState(""); const [status, setStatus] = useState("all");
-  const [biz, setBiz] = useState<BizFilter>("all");
   const [date, setDate] = useState({ from: "", to: "" });
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -32,10 +29,13 @@ export default function MSales() {
   useEffect(() => { customerApi.all().then(setCustomers); productApi.all().then(setProducts); }, []);
 
   const openCreate = () => { setEditing({ status: "pending", items: [], totalAmount: 0, received: 0, ownerId: current.id, createdAt: new Date().toISOString().slice(0, 10), code: "" }); setEditOpen(true); };
-  const recalc = (its: any[]) => its.reduce((s, it) => s + (it.qty || 0) * (it.price || 0), 0);
-  const updateItem = (i: number, patch: any) => { const its = [...(editing?.items ?? [])]; its[i] = { ...its[i], ...patch }; setEditing({ ...editing!, items: its, totalAmount: recalc(its) }); };
-  const addItem = () => { const p = products[0]; if (!p) return; const its = [...(editing?.items ?? []), { productId: p.id, productName: p.name, category: p.category, qty: 1, price: p.price }]; setEditing({ ...editing!, items: its, totalAmount: recalc(its) }); };
-  const removeItem = (i: number) => { const its = [...(editing?.items ?? [])]; its.splice(i, 1); setEditing({ ...editing!, items: its, totalAmount: recalc(its) }); };
+  const recalc = (items: any[]) => items.reduce((s, it) => s + (it.qty || 0) * (it.price || 0), 0);
+  const updateItem = (i: number, patch: any) => {
+    const items = [...(editing?.items ?? [])]; items[i] = { ...items[i], ...patch };
+    setEditing({ ...editing!, items, totalAmount: recalc(items) });
+  };
+  const addItem = () => { const p = products[0]; if (!p) return; const items = [...(editing?.items ?? []), { productId: p.id, productName: p.name, category: p.category, qty: 1, price: p.price }]; setEditing({ ...editing!, items, totalAmount: recalc(items) }); };
+  const removeItem = (i: number) => { const items = [...(editing?.items ?? [])]; items.splice(i, 1); setEditing({ ...editing!, items, totalAmount: recalc(items) }); };
 
   const save = async () => {
     if (!editing?.customerId) return toast({ title: "请选择客户" });
@@ -49,37 +49,17 @@ export default function MSales() {
   const doDelete = async () => { if (!delId) return; await salesApi.remove(delId); setDelId(null); setView(null); toast({ title: "已删除" }); reload(); };
   const applyDate = (v: { from: string; to: string }) => { setDate(v); setFilter({ dateFrom: v.from, dateTo: v.to }); };
 
-  const doExport = async () => {
-    const all = await salesApi.all();
-    exportCsv("sales-orders", all, [
-      { header: "合同编号", value: (o) => o.code }, { header: "合同名称", value: (o) => o.contractTitle || "" },
-      { header: "客户", value: (o) => o.customerName }, { header: "状态", value: (o) => STATUS_LABEL[o.status] || o.status },
-      { header: "合同金额", value: (o) => o.contractAmount ?? o.totalAmount }, { header: "已回款", value: (o) => o.received },
-      { header: "未回款", value: (o) => Math.max((o.contractAmount ?? o.totalAmount) - o.received, 0) },
-      { header: "签订日", value: (o) => o.signedAt || o.createdAt },
-    ]);
-    toast({ title: "已导出 CSV" });
-  };
-
-  const filtered = items.filter((o) => {
-    if (biz === "all") return true;
-    const s = splitSales(o, products);
-    return biz === "software" ? s.software > 0 : s.hardware > 0;
-  });
-
   return (
     <div>
-      <MPageHeader title="销售订单" subtitle={`共 ${total} 单`} action={<MIconBtn icon={Download} onClick={doExport} title="导出" />} />
-      <MBizTabs value={biz} onChange={setBiz} />
+      <MPageHeader title="销售订单" subtitle={`共 ${data.total} 单`} />
       <MSearchBar value={keyword} onChange={(v) => { setKeyword(v); setFilter({ keyword: v }); }} placeholder="订单号 / 客户" />
       <MChipFilter value={status} onChange={(v) => { setStatus(v); setFilter({ status: v }); }} options={STATUS_OPTS} />
       <MDateRange value={date} onChange={applyDate} />
 
-      <MList loading={loading && !filtered.length} empty={!loading && !filtered.length}>
-        {filtered.map((o) => {
+      <MList loading={loading && !data.list.length} empty={!loading && !data.list.length}>
+        {data.list.map((o) => {
           const amt = o.contractAmount ?? o.totalAmount;
           const out = Math.max(amt - o.received, 0);
-          const split = splitSales(o, products);
           return (
             <MCard key={o.id} onClick={() => setView(o)}>
               <div className="flex items-start justify-between gap-2">
@@ -87,10 +67,7 @@ export default function MSales() {
                   <div className="font-semibold text-sm truncate">{o.customerName}</div>
                   <div className="text-[11px] font-mono text-foreground/45 mt-0.5">{o.code} · {o.createdAt}</div>
                 </div>
-                <div className="flex flex-col items-end gap-1">
-                  <MTag variant={STATUS_VARIANT[o.status]}>{STATUS_LABEL[o.status]}</MTag>
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${bizTone[split.category]}`}>{bizLabel[split.category]}</span>
-                </div>
+                <MTag variant={STATUS_VARIANT[o.status]}>{STATUS_LABEL[o.status]}</MTag>
               </div>
               <div className="flex justify-between items-end mt-2.5">
                 <span className="text-[11px] text-foreground/55">{o.items.length} 项 · 未收 ¥{out.toLocaleString()}</span>
@@ -99,7 +76,6 @@ export default function MSales() {
             </MCard>
           );
         })}
-        {items.length > 0 && <MLoadMore hasMore={hasMore} loading={loading} onLoad={loadMore} />}
       </MList>
 
       <MFab onClick={openCreate} />
@@ -109,11 +85,9 @@ export default function MSales() {
       >
         {view && <div>
           <MRow label="订单号" value={view.code} mono />
-          <MRow label="合同名称" value={view.contractTitle} />
           <MRow label="客户" value={view.customerName} />
           <MRow label="状态" value={<MTag variant={STATUS_VARIANT[view.status]}>{STATUS_LABEL[view.status]}</MTag>} />
           <MRow label="下单日" value={view.createdAt} />
-          <MRow label="签订日" value={view.signedAt} />
           <MRow label="交付日" value={view.deliveredAt} />
           <MRow label="合同金额" value={view.contractAmount ? `¥${view.contractAmount.toLocaleString()}` : "—"} mono />
           <MRow label="明细金额" value={`¥${view.totalAmount.toLocaleString()}`} mono />
@@ -135,10 +109,8 @@ export default function MSales() {
       >
         {editing && <div>
           <MField label="客户" required><MSelect value={editing.customerId ?? ""} onChange={(v) => setEditing({ ...editing, customerId: v })} options={[{ value: "", label: "请选择" }, ...customers.map(c => ({ value: c.id, label: c.name }))]} /></MField>
-          <MField label="合同名称"><MInput value={editing.contractTitle ?? ""} onChange={(e) => setEditing({ ...editing, contractTitle: e.target.value })} /></MField>
           <MField label="状态"><MSelect value={editing.status ?? "pending"} onChange={(v) => setEditing({ ...editing, status: v as SalesStatus })} options={STATUS_OPTS.filter(s => s.value !== "all")} /></MField>
           <MField label="下单日"><MInput type="date" value={editing.createdAt ?? ""} onChange={(e) => setEditing({ ...editing, createdAt: e.target.value })} /></MField>
-          <MField label="签订日"><MInput type="date" value={editing.signedAt ?? ""} onChange={(e) => setEditing({ ...editing, signedAt: e.target.value })} /></MField>
           <MField label="合同金额"><MInput type="number" value={editing.contractAmount ?? ""} onChange={(e) => setEditing({ ...editing, contractAmount: Number(e.target.value) })} /></MField>
           <MField label="已收款"><MInput type="number" value={editing.received ?? 0} onChange={(e) => setEditing({ ...editing, received: Number(e.target.value) })} /></MField>
 

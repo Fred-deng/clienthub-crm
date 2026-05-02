@@ -1,13 +1,11 @@
 import { useState, useEffect } from "react";
 import { purchaseApi, supplierApi, productApi } from "@/services/api";
-import { useInfiniteList } from "../hooks/useInfiniteList";
+import { usePagedList } from "@/hooks/usePagedList";
 import { useToast } from "@/hooks/use-toast";
 import { useCurrentUser } from "@/context/CurrentUserContext";
 import type { PurchaseOrder, Supplier, Product, PurchaseStatus } from "@/types";
-import { Trash2, Plus, Download } from "lucide-react";
-import { exportCsv } from "@/lib/csv";
-import { splitPurchase, bizLabel, bizTone, type BizFilter } from "@/lib/biz";
-import { MPageHeader, MSearchBar, MList, MCard, MTag, MFab, MSheet, MField, MInput, MTextarea, MSelect, MButton, MChipFilter, MConfirm, MRow, MDateRange, MBizTabs, MIconBtn, MLoadMore } from "../components/MUI";
+import { Trash2, Plus } from "lucide-react";
+import { MPageHeader, MSearchBar, MList, MCard, MTag, MFab, MSheet, MField, MInput, MTextarea, MSelect, MButton, MChipFilter, MConfirm, MRow, MDateRange } from "../components/MUI";
 
 const STATUS_OPTS = [
   { value: "all", label: "全部" }, { value: "draft", label: "草稿" }, { value: "ordered", label: "已下单" }, { value: "received", label: "已到货" }, { value: "cancelled", label: "已取消" },
@@ -18,9 +16,8 @@ const STATUS_VARIANT: Record<string, "muted" | "mustard" | "mint" | "tomato"> = 
 export default function MPurchases() {
   const { current } = useCurrentUser();
   const { toast } = useToast();
-  const { items, total, loading, hasMore, setFilter, loadMore, reload } = useInfiniteList<PurchaseOrder>(purchaseApi.list, { pageSize: 15 });
+  const { data, loading, setFilter, reload } = usePagedList<PurchaseOrder>(purchaseApi.list, { pageSize: 20 });
   const [keyword, setKeyword] = useState(""); const [status, setStatus] = useState("all");
-  const [biz, setBiz] = useState<BizFilter>("all");
   const [date, setDate] = useState({ from: "", to: "" });
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -32,11 +29,21 @@ export default function MPurchases() {
   useEffect(() => { supplierApi.all().then(setSuppliers); productApi.all().then(setProducts); }, []);
 
   const openCreate = () => { setEditing({ status: "draft", items: [], totalAmount: 0, paid: 0, applicantId: current.id, appliedAt: new Date().toISOString().slice(0, 10), createdAt: new Date().toISOString().slice(0, 10), expectedAt: "", code: "" }); setEditOpen(true); };
-  const recalc = (its: any[]) => its.reduce((s, it) => s + (it.qty || 0) * (it.price || 0), 0);
-  const updateItem = (i: number, patch: any) => { const its = [...(editing?.items ?? [])]; its[i] = { ...its[i], ...patch }; setEditing({ ...editing!, items: its, totalAmount: recalc(its) }); };
-  const addItem = () => { const p = products[0]; if (!p) return; const its = [...(editing?.items ?? []), { productId: p.id, productName: p.name, category: p.category, qty: 1, price: p.cost || p.price }]; setEditing({ ...editing!, items: its, totalAmount: recalc(its) }); };
-  const removeItem = (i: number) => { const its = [...(editing?.items ?? [])]; its.splice(i, 1); setEditing({ ...editing!, items: its, totalAmount: recalc(its) }); };
-
+  const recalc = (items: any[]) => items.reduce((s, it) => s + (it.qty || 0) * (it.price || 0), 0);
+  const updateItem = (i: number, patch: any) => {
+    const items = [...(editing?.items ?? [])];
+    items[i] = { ...items[i], ...patch };
+    setEditing({ ...editing!, items, totalAmount: recalc(items) });
+  };
+  const addItem = () => {
+    const p = products[0]; if (!p) return;
+    const items = [...(editing?.items ?? []), { productId: p.id, productName: p.name, category: p.category, qty: 1, price: p.cost || p.price }];
+    setEditing({ ...editing!, items, totalAmount: recalc(items) });
+  };
+  const removeItem = (i: number) => {
+    const items = [...(editing?.items ?? [])]; items.splice(i, 1);
+    setEditing({ ...editing!, items, totalAmount: recalc(items) });
+  };
   const save = async () => {
     if (!editing?.supplierId) return toast({ title: "请选择供应商" });
     if (!editing.items?.length) return toast({ title: "至少添加一项明细" });
@@ -47,57 +54,32 @@ export default function MPurchases() {
     toast({ title: "已保存" }); setEditOpen(false); reload();
   };
   const doDelete = async () => { if (!delId) return; await purchaseApi.remove(delId); setDelId(null); setView(null); toast({ title: "已删除" }); reload(); };
+
   const applyDate = (v: { from: string; to: string }) => { setDate(v); setFilter({ dateFrom: v.from, dateTo: v.to }); };
-
-  const doExport = async () => {
-    const all = await purchaseApi.all();
-    exportCsv("purchase-orders", all, [
-      { header: "单号", value: (o) => o.code }, { header: "供应商", value: (o) => o.supplierName },
-      { header: "状态", value: (o) => STATUS_LABEL[o.status] || o.status },
-      { header: "合同金额", value: (o) => o.contractAmount || o.totalAmount }, { header: "已付", value: (o) => o.paid },
-      { header: "未付", value: (o) => Math.max((o.contractAmount || o.totalAmount) - o.paid, 0) },
-      { header: "申请日期", value: (o) => o.appliedAt },
-    ]);
-    toast({ title: "已导出 CSV" });
-  };
-
-  const filtered = items.filter((o) => {
-    if (biz === "all") return true;
-    const s = splitPurchase(o, products);
-    return biz === "software" ? s.software > 0 : s.hardware > 0;
-  });
 
   return (
     <div>
-      <MPageHeader title="采购订单" subtitle={`共 ${total} 单`} action={<MIconBtn icon={Download} onClick={doExport} title="导出" />} />
-      <MBizTabs value={biz} onChange={setBiz} />
+      <MPageHeader title="采购订单" subtitle={`共 ${data.total} 单`} />
       <MSearchBar value={keyword} onChange={(v) => { setKeyword(v); setFilter({ keyword: v }); }} placeholder="订单号 / 供应商" />
       <MChipFilter value={status} onChange={(v) => { setStatus(v); setFilter({ status: v }); }} options={STATUS_OPTS} />
       <MDateRange value={date} onChange={applyDate} />
 
-      <MList loading={loading && !filtered.length} empty={!loading && !filtered.length}>
-        {filtered.map((o) => {
-          const split = splitPurchase(o, products);
-          return (
-            <MCard key={o.id} onClick={() => setView(o)}>
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0 flex-1">
-                  <div className="font-semibold text-sm truncate">{o.supplierName}</div>
-                  <div className="text-[11px] font-mono text-foreground/45 mt-0.5">{o.code} · {o.createdAt}</div>
-                </div>
-                <div className="flex flex-col items-end gap-1">
-                  <MTag variant={STATUS_VARIANT[o.status]}>{STATUS_LABEL[o.status]}</MTag>
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${bizTone[split.category]}`}>{bizLabel[split.category]}</span>
-                </div>
+      <MList loading={loading && !data.list.length} empty={!loading && !data.list.length}>
+        {data.list.map((o) => (
+          <MCard key={o.id} onClick={() => setView(o)}>
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <div className="font-semibold text-sm truncate">{o.supplierName}</div>
+                <div className="text-[11px] font-mono text-foreground/45 mt-0.5">{o.code} · {o.createdAt}</div>
               </div>
-              <div className="flex justify-between items-end mt-2.5">
-                <span className="text-[11px] text-foreground/55">{o.items.length} 项 · 已付 ¥{o.paid.toLocaleString()}</span>
-                <span className="font-mono font-bold tabular-nums">¥{(o.contractAmount || o.totalAmount).toLocaleString()}</span>
-              </div>
-            </MCard>
-          );
-        })}
-        {items.length > 0 && <MLoadMore hasMore={hasMore} loading={loading} onLoad={loadMore} />}
+              <MTag variant={STATUS_VARIANT[o.status]}>{STATUS_LABEL[o.status]}</MTag>
+            </div>
+            <div className="flex justify-between items-end mt-2.5">
+              <span className="text-[11px] text-foreground/55">{o.items.length} 项 · 已付 ¥{o.paid.toLocaleString()}</span>
+              <span className="font-mono font-bold tabular-nums">¥{(o.contractAmount || o.totalAmount).toLocaleString()}</span>
+            </div>
+          </MCard>
+        ))}
       </MList>
 
       <MFab onClick={openCreate} />
