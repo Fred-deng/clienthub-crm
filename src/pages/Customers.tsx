@@ -170,6 +170,40 @@ export default function Customers() {
     reload();
   };
 
+  // —— 批量更新公海/私海 ——
+  const applyBulkSea = async () => {
+    if (!selectedIds.length) return;
+    await Promise.all(selectedIds.map((id) => customerApi.update(id, { seaStatus: bulkSeaValue } as any)));
+    toast.success(`已将 ${selectedIds.length} 位客户标记为「${bulkSeaValue}」`);
+    setBulkSeaOpen(false);
+    setSelectedIds([]);
+    reload();
+  };
+  // —— 批量更新客户状态 ——
+  const applyBulkStatus = async () => {
+    if (!selectedIds.length) return;
+    await Promise.all(selectedIds.map((id) => customerApi.update(id, {
+      status: bulkStatusValue as any,
+      stage: deriveCustomerStage(bulkStatusValue),
+    } as any)));
+    toast.success(`已将 ${selectedIds.length} 位客户状态改为「${customerStatusLabel[bulkStatusValue] || bulkStatusValue}」`);
+    setBulkStatusOpen(false);
+    setSelectedIds([]);
+    reload();
+  };
+
+  const pageIds = data.list.map((c) => c.id);
+  const allOnPageSelected = pageIds.length > 0 && pageIds.every((id) => selectedIds.includes(id));
+  const someOnPageSelected = pageIds.some((id) => selectedIds.includes(id));
+  const togglePage = (checked: boolean) => {
+    setSelectedIds((prev) =>
+      checked ? Array.from(new Set([...prev, ...pageIds])) : prev.filter((id) => !pageIds.includes(id))
+    );
+  };
+  const toggleOne = (id: string, checked: boolean) => {
+    setSelectedIds((prev) => (checked ? [...prev, id] : prev.filter((x) => x !== id)));
+  };
+
   const ownerName = (id: string) => employees.find(e => e.id === id)?.name ?? "—";
 
   const reloadCustomerContacts = async () => {
