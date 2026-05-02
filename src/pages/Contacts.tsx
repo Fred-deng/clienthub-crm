@@ -320,16 +320,6 @@ export default function Contacts() {
                 </Button>
               </div>
             </Field>
-            <Field label="联系人姓名" required><Input {...register("name", { required: true })} /></Field>
-            <Field label="手机号" required><Input {...register("phone", { required: true })} /></Field>
-            <Field label="职位"><Input {...register("position")} /></Field>
-
-            <GroupTitle>联系信息</GroupTitle>
-            <Field label="邮箱"><Input {...register("email")} /></Field>
-            <Field label="地址"><Input {...register("address")} /></Field>
-            <Field label="生日"><Input type="date" {...register("birthday")} /></Field>
-
-            <GroupTitle>业务信息</GroupTitle>
             <Field label="销售负责人">
               <Select value={watch("ownerId")} onValueChange={(v) => setValue("ownerId", v)}>
                 <SelectTrigger><SelectValue placeholder="选择销售负责人" /></SelectTrigger>
@@ -338,7 +328,15 @@ export default function Contacts() {
                 </SelectContent>
               </Select>
             </Field>
-            <Field label="首要联系人">
+
+            <GroupTitle>联系信息</GroupTitle>
+            <Field label="联系人姓名" required><Input {...register("name", { required: true })} /></Field>
+            <Field label="手机号" required><Input {...register("phone", { required: true })} /></Field>
+            <Field label="职位"><Input {...register("position")} /></Field>
+            <Field label="邮箱"><Input {...register("email")} /></Field>
+            <Field label="地址"><Input {...register("address")} /></Field>
+            <Field label="生日"><Input type="date" {...register("birthday")} /></Field>
+            <Field label="首要联系人" span={12}>
               <div className="h-10 flex items-center">
                 <Switch checked={watch("isPrimary")} onCheckedChange={(v) => setValue("isPrimary", v)} />
                 <span className="ml-2 text-xs text-foreground/60">设为该客户的首要联系人</span>
