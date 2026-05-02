@@ -95,7 +95,7 @@ export default function Products() {
               {data.list.map((p) => {
                 const low = p.stock <= p.safetyStock && p.category !== "software";
                 return (
-                  <tr key={p.id}>
+                  <tr key={p.id} className="clickable" onDoubleClick={() => openEdit(p)} title="双击查看详情">
                     <td className="font-mono text-xs">{p.code}</td>
                     <td className="font-medium">{p.name}</td>
                     <td className="text-xs text-muted-foreground">{productCategoryLabel[p.category]}</td>
@@ -105,7 +105,7 @@ export default function Products() {
                     <td className="font-mono text-xs text-muted-foreground">{fmtMoney(p.cost)}</td>
                     <td className={"px-5 py-3 font-mono text-xs " + (low ? "text-warning font-bold" : "")}>{p.stock}</td>
                     <td className="font-mono text-xs text-muted-foreground">{p.safetyStock}</td>
-                    <td className="px-5 py-3">
+                    <td className="px-5 py-3" onDoubleClick={(e) => e.stopPropagation()}>
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(p)}><Pencil className="h-3.5 w-3.5" /></Button>
                       <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeletingId(p.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
                     </td>
@@ -113,6 +113,21 @@ export default function Products() {
                 );
               })}
             </tbody>
+            {data.list.length > 0 && (() => {
+              const stockTotal = data.list.reduce((s, p) => s + p.stock, 0);
+              const valueTotal = data.list.reduce((s, p) => s + p.stock * p.cost, 0);
+              const lowCount = data.list.filter((p) => p.stock <= p.safetyStock && p.category !== "software").length;
+              return (
+                <tfoot>
+                  <tr>
+                    <td colSpan={5} className="label">本页 {data.list.length} 个 / 共 {data.total} 个 · 库存价值 <span className="mono font-bold text-foreground ml-1">{fmtMoney(valueTotal)}</span></td>
+                    <td colSpan={2} />
+                    <td className="num">{stockTotal}</td>
+                    <td colSpan={2} className="text-[11px] text-warning">低库存 {lowCount} 个</td>
+                  </tr>
+                </tfoot>
+              );
+            })()}
           </table>
         </div>
         <PaginationBar page={query.page!} pageSize={query.pageSize!} total={data.total} onPageChange={setPage} />

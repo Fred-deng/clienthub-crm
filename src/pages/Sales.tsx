@@ -262,7 +262,7 @@ export default function Sales() {
               {data.list.map((o) => {
                 const owner = employees.find((e) => e.id === (o.accountManagerId || o.ownerId));
                 return (
-                  <tr key={o.id}>
+                  <tr key={o.id} className="clickable" onDoubleClick={() => openEdit(o)} title="双击查看详情">
                     <td className="mono">{o.code}</td>
                     <td className="bold"><span className="block max-w-[200px] truncate">{o.contractTitle ?? "—"}</span></td>
                     <td><span className="block max-w-[180px] truncate">{o.customerName}</span></td>
@@ -273,7 +273,7 @@ export default function Sales() {
                     <td className="num text-xs"><span className="mono">{(o.invoices?.length ?? 0)}</span> 张<div className="text-[10px] text-foreground/55 mono">{fmtMoney((o.invoices || []).reduce((s, r) => s + (r.amount || 0), 0))}</div></td>
                     <td className="text-xs">{owner?.name ?? "—"}</td>
                     <td className="mono">{o.signedAt ?? o.createdAt}</td>
-                    <td className="num">
+                    <td className="num" onDoubleClick={(e) => e.stopPropagation()}>
                       <div className="inline-flex gap-1">
                         <button className="size-8 rounded-full hover:bg-foreground/5 text-foreground/55 hover:text-foreground inline-flex items-center justify-center transition-colors" onClick={() => openEdit(o)}><Pencil className="h-3.5 w-3.5" /></button>
                         <button className="size-8 rounded-full hover:bg-tomato/10 text-foreground/55 hover:text-tomato inline-flex items-center justify-center transition-colors" onClick={() => setDeletingId(o.id)}><Trash2 className="h-3.5 w-3.5" /></button>
@@ -283,6 +283,22 @@ export default function Sales() {
                 );
               })}
             </tbody>
+            {data.list.length > 0 && (() => {
+              const sumContract = data.list.reduce((s, o) => s + (o.contractAmount ?? o.totalAmount), 0);
+              const sumReceived = data.list.reduce((s, o) => s + o.received, 0);
+              const sumInvoice = data.list.reduce((s, o) => s + (o.invoices || []).reduce((a, r) => a + (r.amount || 0), 0), 0);
+              return (
+                <tfoot>
+                  <tr>
+                    <td colSpan={5} className="label">本页 {data.list.length} 单 / 共 {data.total} 单 · 合计</td>
+                    <td className="num">{fmtMoney(sumContract)}</td>
+                    <td className="num text-mint">{fmtMoney(sumReceived)}</td>
+                    <td className="num text-cobalt">{fmtMoney(sumInvoice)}</td>
+                    <td colSpan={3} />
+                  </tr>
+                </tfoot>
+              );
+            })()}
           </table>
         </div>
         <PaginationBar page={query.page!} pageSize={query.pageSize!} total={data.total} onPageChange={setPage} />

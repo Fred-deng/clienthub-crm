@@ -211,6 +211,26 @@
   .data-table tbody td.empty {
     @apply py-16 text-center text-xs text-foreground/40;
   }
+  /* clickable row (double-click to open detail) */
+  .data-table tbody tr.clickable {
+    cursor: pointer;
+  }
+  .data-table tbody tr.clickable:hover {
+    @apply bg-mustard/[0.08];
+  }
+  /* footer summary row */
+  .data-table tfoot tr {
+    @apply border-t-2 border-foreground/15 bg-foreground/[0.03];
+  }
+  .data-table tfoot td {
+    @apply px-5 py-3 text-[12px] font-bold text-foreground;
+  }
+  .data-table tfoot td.num {
+    @apply text-right font-mono tabular-nums;
+  }
+  .data-table tfoot td.label {
+    @apply text-[10px] uppercase tracking-[0.2em] text-foreground/55 font-mono;
+  }
 
   /* Mini chip used inline within cells */
   .cell-chip {

@@ -236,7 +236,7 @@ export default function Customers() {
               {data.list.map((c) => {
                 const avatarTone = c.type === "software" ? "bg-cobalt text-white" : "bg-mint text-foreground";
                 return (
-                  <tr key={c.id}>
+                  <tr key={c.id} className="clickable" onDoubleClick={() => openEdit(c)} title="双击查看详情">
                     <td className="mono">{c.code}</td>
                     <td>
                       <div className="flex items-center gap-2.5">
@@ -260,7 +260,7 @@ export default function Customers() {
                     <td>{c.contact}</td>
                     <td className="mono">{c.phone}</td>
                     <td className="num">{fmtMoney(c.receivable)}</td>
-                    <td className="num">
+                    <td className="num" onDoubleClick={(e) => e.stopPropagation()}>
                       <div className="inline-flex gap-1">
                         <Link to={`/contacts?customerId=${c.id}`} title="查看联系人" className="size-8 rounded-full hover:bg-cobalt/10 text-foreground/55 hover:text-cobalt inline-flex items-center justify-center transition-colors">
                           <UsersIcon className="h-3.5 w-3.5" />
@@ -280,6 +280,15 @@ export default function Customers() {
                 );
               })}
             </tbody>
+            {data.list.length > 0 && (
+              <tfoot>
+                <tr>
+                  <td colSpan={8} className="label">本页合计 · {data.list.length} 条 / 共 {data.total} 条</td>
+                  <td className="num">{fmtMoney(data.list.reduce((s, c) => s + (c.receivable || 0), 0))}</td>
+                  <td />
+                </tr>
+              </tfoot>
+            )}
           </table>
         </div>
         <PaginationBar

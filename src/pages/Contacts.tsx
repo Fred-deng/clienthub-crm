@@ -238,7 +238,7 @@ export default function Contacts() {
                 <tr className="empty"><td colSpan={8} className="empty">暂无联系人</td></tr>
               )}
               {data.list.map((c) => (
-                <tr key={c.id}>
+                <tr key={c.id} className="clickable" onDoubleClick={() => openEdit(c)} title="双击查看详情">
                   <td className="mono">{c.code}</td>
                   <td>
                     <div className="flex items-center gap-2">
@@ -260,7 +260,7 @@ export default function Contacts() {
                   <td className="mono">{c.phone}</td>
                   <td className="text-foreground/65 text-[12px]">{c.email || "—"}</td>
                   <td className="text-foreground/70">{ownerName(c.ownerId)}</td>
-                  <td className="num">
+                  <td className="num" onDoubleClick={(e) => e.stopPropagation()}>
                     <div className="inline-flex gap-1">
                       <button className="size-8 rounded-full hover:bg-foreground/5 text-foreground/55 hover:text-foreground inline-flex items-center justify-center transition-colors" onClick={() => openEdit(c)}>
                         <Pencil className="h-3.5 w-3.5" />
@@ -273,6 +273,15 @@ export default function Contacts() {
                 </tr>
               ))}
             </tbody>
+            {data.list.length > 0 && (
+              <tfoot>
+                <tr>
+                  <td colSpan={8} className="label">
+                    本页 {data.list.length} 位 · 共 {data.total} 位 · 首要联系人 {data.list.filter((c) => c.isPrimary).length}
+                  </td>
+                </tr>
+              </tfoot>
+            )}
           </table>
         </div>
         <PaginationBar

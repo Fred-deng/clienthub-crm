@@ -161,7 +161,7 @@ export default function Suppliers() {
                 <tr className="empty"><td colSpan={9} className="empty">暂无供应商</td></tr>
               )}
               {data.list.map((s) => (
-                <tr key={s.id}>
+                <tr key={s.id} className="clickable" onDoubleClick={() => openEdit(s)} title="双击查看详情">
                   <td className="mono">{s.code}</td>
                   <td>
                     <div className="flex items-center gap-2.5">
@@ -185,7 +185,7 @@ export default function Suppliers() {
                   <td className="text-foreground/70">{empName(s.buyerId)}</td>
                   <td className="text-[12px] text-foreground/65 truncate max-w-[180px]">{s.bankName || "—"}</td>
                   <td className="num text-tomato font-semibold">{fmtMoney(s.payable)}</td>
-                  <td className="num">
+                  <td className="num" onDoubleClick={(e) => e.stopPropagation()}>
                     <div className="inline-flex gap-1">
                       <button className="size-8 rounded-full hover:bg-foreground/5 text-foreground/55 hover:text-foreground inline-flex items-center justify-center transition-colors" onClick={() => openEdit(s)}>
                         <Pencil className="h-3.5 w-3.5" />
@@ -198,6 +198,15 @@ export default function Suppliers() {
                 </tr>
               ))}
             </tbody>
+            {data.list.length > 0 && (
+              <tfoot>
+                <tr>
+                  <td colSpan={7} className="label">本页 {data.list.length} 家 · 共 {data.total} 家 · 应付合计</td>
+                  <td className="num text-tomato">{fmtMoney(data.list.reduce((s, x) => s + (x.payable || 0), 0))}</td>
+                  <td />
+                </tr>
+              </tfoot>
+            )}
           </table>
         </div>
         <PaginationBar page={query.page!} pageSize={query.pageSize!} total={data.total} onPageChange={setPage} />
