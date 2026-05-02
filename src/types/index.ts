@@ -241,6 +241,8 @@ export interface Contract {
 }
 
 export type SalesStatus = "pending" | "shipped" | "delivered" | "cancelled";
+export type SalesContractProperty = "新签" | "续签" | "升级" | "补充" | "其他";
+export type SalesMode = "普通销售" | "渠道销售" | "项目销售" | "服务销售";
 export interface SalesItem {
   productId: string;
   productName: string;
@@ -249,16 +251,51 @@ export interface SalesItem {
 }
 export interface SalesOrder {
   id: string;
-  code: string;
+  // —— 基础信息 ——
+  code: string;                       // 合同编号
   customerId: string;
   customerName: string;
+  contractTitle?: string;             // 合同名称
+  contractExpireDate?: string;        // 合同到期日期(基础区)
+  contractAmount?: number;            // 合同金额
+  salesMode?: SalesMode;              // 销售方式
+  contractProperty?: SalesContractProperty; // 合同属性
+  taxNo?: string;                     // 统一社会信用代码
+
+  // —— 申请与组织 ——
+  applicantId?: string;               // 申请人
+  department?: string;                // 所属部门
+  appliedAt?: string;                 // 申请日期
+
+  // —— 签约与结算 ——
+  signedAt?: string;                  // 合同签订日
+  contractExpireAt?: string;          // 合同到期日
+  accountManagerId?: string;          // 客户经理
+  assistantIds?: string[];            // 协助人
+  isSettled?: boolean;                // 是否结算
+  isPartyA?: boolean;                 // 是否甲方
+
+  // —— 费用信息 ——
+  serviceFee?: number;                // 约定服务费
+  outsourceFee?: number;              // 外包费用
+  salesFee?: number;                  // 销售费用
+  productStdCost?: number;            // 产品标准成本
+
+  // —— 附件与备注 ——
+  contractAttachments?: string[];     // 合同附件
+  stampedContractAttachments?: string[]; // 双方盖章合同扫描件
+  licenseAttachments?: string[];      // 营业执照
+  invoiceAttachments?: string[];      // 开票资料
+  otherAttachments?: string[];        // 其他附件
+
+  // —— 业务字段（保留） ——
   contractId?: string;
   status: SalesStatus;
   items: SalesItem[];
-  totalAmount: number;
-  received: number; // 已回款
+  totalAmount: number;                // 明细合计
+  received: number;                   // 已回款
   ownerId: string;
-  createdAt: string;
+  createdAt: string;                  // 下单日 / 创建日
   deliveredAt?: string;
   remark?: string;
 }
