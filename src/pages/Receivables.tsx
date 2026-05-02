@@ -217,7 +217,7 @@ export default function Receivables() {
                 <tr>
                   <td colSpan={3} className="label">合计 {filtered.length} 客户</td>
                   <td className="num">{fmtMoney(totals.contract)}</td>
-                  <td className="num text-cobalt">{fmtMoney(totals.invoiced)}</td>
+                  {biz === "all" && <td className="num text-cobalt">{fmtMoney(totals.invoiced)}</td>}
                   <td className="num text-mint">{fmtMoney(totals.received)}</td>
                   <td className="num text-tomato">{fmtMoney(totals.outstanding)}</td>
                   <td colSpan={2} />
