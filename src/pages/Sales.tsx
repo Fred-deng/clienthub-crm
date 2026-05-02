@@ -382,9 +382,14 @@ export default function Sales() {
             <Field label="销售费用" span={3}><Input type="number" step="0.01" {...register("salesFee", { valueAsNumber: true })} /></Field>
             <Field label="产品标准成本" span={3}><Input type="number" step="0.01" {...register("productStdCost", { valueAsNumber: true })} /></Field>
 
-            <GroupTitle>采购明细</GroupTitle>
+            <GroupTitle>销售明细</GroupTitle>
             <div className="col-span-12">
               <LineItemsEditor items={items} products={products} onChange={setItems} />
+            </div>
+
+            <GroupTitle>回款记录</GroupTitle>
+            <div className="col-span-12">
+              <PaymentSubList orderId={editing?.id} reloadKey={open} />
             </div>
 
             <GroupTitle>订单执行</GroupTitle>
