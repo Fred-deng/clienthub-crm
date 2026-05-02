@@ -99,6 +99,51 @@ export default function Contacts() {
     setOpen(true);
   };
 
+  // 跨页流程：从客户页新增完客户后回跳 / 编辑指定联系人 / 恢复未提交草稿
+  useEffect(() => {
+    if (customers.length === 0) return;
+
+    const editId = searchParams.get("editId");
+    const newCustomerId = searchParams.get("newCustomerId");
+    const draftRaw = sessionStorage.getItem(DRAFT_KEY);
+
+    if (draftRaw) {
+      try {
+        const draft = JSON.parse(draftRaw) as Omit<Contact, "id">;
+        const cid = newCustomerId || draft.customerId;
+        const cust = customers.find((x) => x.id === cid);
+        reset({ ...empty, ...draft, customerId: cid || "", customerName: cust?.name ?? draft.customerName });
+        setEditing(null);
+        setOpen(true);
+      } catch { /* ignore */ }
+      sessionStorage.removeItem(DRAFT_KEY);
+      // 清掉 newCustomerId 参数，保留 customerId
+      const next = new URLSearchParams(searchParams);
+      next.delete("newCustomerId");
+      setSearchParams(next, { replace: true });
+      return;
+    }
+
+    if (editId) {
+      contactApi.get(editId).then((it) => {
+        if (it) { reset({ ...empty, ...it }); setEditing(it); setOpen(true); }
+      });
+      const next = new URLSearchParams(searchParams);
+      next.delete("editId");
+      setSearchParams(next, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [customers]);
+
+  const goCreateCustomer = () => {
+    // 把当前正在编辑/新增的联系人草稿存起来
+    const draft = { ...empty, ...(editing ?? {}), ...(watch() as any) };
+    sessionStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+    setOpen(false);
+    const returnTo = `/contacts${customerIdParam !== "all" ? `?customerId=${customerIdParam}` : ""}`;
+    navigate(`/customers?createNew=1&returnTo=${encodeURIComponent(returnTo)}`);
+  };
+
   const onSubmit = handleSubmit(async (values) => {
     const c = customers.find((x) => x.id === values.customerId);
     const payload = { ...values, customerName: c?.name ?? values.customerName };
