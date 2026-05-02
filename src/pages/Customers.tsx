@@ -32,7 +32,7 @@ const emptyCustomer: Omit<Customer, "id"> = {
   legalPerson: "", companyNature: "民营", industry: "",
   registeredAt: "", registeredCapital: 0, paidInCapital: 0,
   scale: "", insuredCount: 0,
-  firstCooperationAt: "", cooperationStatus: "未合作", cooperationProducts: "",
+  firstCooperationAt: "", cooperationProducts: "",
   ownerId: "u3",
   category: "潜在客户", source: "电话开发", seaStatus: "私海",
   lastVisitAt: "", nextVisitAt: "",
