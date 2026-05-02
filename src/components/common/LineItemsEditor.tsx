@@ -3,7 +3,8 @@ import { Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { fmtMoney, productCategoryLabel } from "@/lib/format";
+import { fmtMoney } from "@/lib/format";
+import { useCategories } from "@/services/categories";
 import type { Product, ProductCategory } from "@/types";
 import { LineItemLogButton } from "./LineItemLogDialog";
 import {
@@ -39,9 +40,10 @@ export function LineItemsEditor({
   logModule, logScope, title,
 }: Props) {
   const total = items.reduce((s, it) => s + it.qty * it.price, 0);
-  const cats = (Object.keys(productCategoryLabel) as ProductCategory[]).filter(
-    (c) => !excludeCategories.includes(c),
-  );
+  const allCategories = useCategories();
+  const cats = allCategories
+    .map((c) => c.id as ProductCategory)
+    .filter((c) => !excludeCategories.includes(c));
   const datalistId = "li-product-names";
   const [logTick, setLogTick] = useState(0);
   const canLog = !!(logModule && logScope);
@@ -172,7 +174,7 @@ export function LineItemsEditor({
                 <Select value={it.category} onValueChange={(v: ProductCategory) => updateAndLog(i, { category: v })}>
                   <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {cats.map((c) => <SelectItem key={c} value={c}>{productCategoryLabel[c]}</SelectItem>)}
+                    {cats.map((c) => <SelectItem key={c} value={c}>{allCategories.find((x) => x.id === c)?.label ?? c}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>

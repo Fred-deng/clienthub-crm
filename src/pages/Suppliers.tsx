@@ -17,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supplierApi, supplierContactApi, employeeApi } from "@/services/api";
 import { usePagedList } from "@/hooks/usePagedList";
 import { fmtMoney } from "@/lib/format";
+import { useCategories, categoryStore } from "@/services/categories";
 import type { Supplier, SupplierContact, Employee } from "@/types";
 
 const empty: Omit<Supplier, "id"> = {
@@ -27,7 +28,7 @@ const empty: Omit<Supplier, "id"> = {
   buyerId: "", assistantIds: [],
   bankAccountName: "", bankName: "", bankAccountNo: "",
   remark: "", attachment: "",
-  category: "工控机", payable: 0,
+  category: "ipc", payable: 0,
   createdAt: new Date().toISOString().slice(0, 10),
 };
 
@@ -60,6 +61,7 @@ function Field({ label, required, span = 4, children }: { label: string; require
 }
 
 export default function Suppliers() {
+  const categories = useCategories();
   const { query, data, loading, reload, setFilter, setPage } = usePagedList(supplierApi.list);
   const [editing, setEditing] = useState<Supplier | null>(null);
   const [open, setOpen] = useState(false);
@@ -183,7 +185,7 @@ export default function Suppliers() {
                     </div>
                   </td>
                   <td>
-                    <span className="cell-chip bg-foreground/5 text-foreground/75 ring-1 ring-foreground/10">{s.category}</span>
+                    <span className="cell-chip bg-foreground/5 text-foreground/75 ring-1 ring-foreground/10">{categoryStore.labelOf(s.category)}</span>
                   </td>
                   <td>
                     <div className="font-medium">{s.contact}</div>
@@ -230,10 +232,10 @@ export default function Suppliers() {
             <Field label="税号"><Input placeholder="请输入税号" {...register("taxNo")} /></Field>
             <Field label="供应商编号" required><Input placeholder="请输入编号" {...register("code", { required: true })} /></Field>
             <Field label="分类">
-              <Select value={watch("category")} onValueChange={(v) => setValue("category", v)}>
+              <Select value={categoryStore.normalize(watch("category"))} onValueChange={(v) => setValue("category", v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {["工控机", "外设", "线缆", "电源", "综合", "软件", "服务"].map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  {categories.map((c) => <SelectItem key={c.id} value={c.id}>{c.label}</SelectItem>)}
                 </SelectContent>
               </Select>
             </Field>
