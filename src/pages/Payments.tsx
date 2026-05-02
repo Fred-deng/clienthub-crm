@@ -105,14 +105,14 @@ export default function Payments() {
           value={fmtMoney(totals.in)}
           tone="accent"
           icon={<ArrowDownLeft className="h-4 w-4" />}
-          extra={biz === "all" ? <BizSplitChip software={totals.inSw} hardware={totals.inHw} formatter={fmtMoney} /> : undefined}
+          hint={biz === "all" ? <BizSplitChip software={totals.inSw} hardware={totals.inHw} formatter={fmtMoney} /> : undefined}
         />
         <KpiCard
           label="当前页 · 付款合计"
           value={fmtMoney(totals.out)}
           tone="warning"
           icon={<ArrowUpRight className="h-4 w-4" />}
-          extra={biz === "all" ? <BizSplitChip software={totals.outSw} hardware={totals.outHw} formatter={fmtMoney} /> : undefined}
+          hint={biz === "all" ? <BizSplitChip software={totals.outSw} hardware={totals.outHw} formatter={fmtMoney} /> : undefined}
         />
         <KpiCard label="净流水" value={fmtMoney(totals.in - totals.out)} tone="primary" />
       </div>
