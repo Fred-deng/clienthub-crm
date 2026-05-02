@@ -186,24 +186,14 @@ export default function Sales() {
       productStdCost: Number(v.productStdCost) || 0,
     };
     const op = readCurrentOperator();
-    const nextStatus = payload.status as SalesOrder["status"];
     if (editing) {
-      const prevStatus = editing.status;
-      if (prevStatus === "delivered" && nextStatus !== "delivered") {
-        revertSalesDeliver(editing, op, "状态变更撤销出库");
-      }
-      if (nextStatus === "delivered" && prevStatus !== "delivered") {
-        applySalesDeliver({ ...editing, ...payload }, op);
-      }
-      if (prevStatus === "delivered" && nextStatus === "delivered") {
-        revertSalesDeliver(editing, op, "明细变更回滚");
-        applySalesDeliver({ ...editing, ...payload }, op);
-      }
+      const merged = { ...editing, ...payload } as SalesOrder;
+      syncSalesStock(editing, merged, op);
       logOrderUpdate("sales", editing, payload);
       await salesApi.update(editing.id, payload);
     } else {
       const created = await salesApi.create(payload);
-      if (nextStatus === "delivered") applySalesDeliver(created, op);
+      syncSalesStock(null, created, op);
     }
     toast.success("已保存"); setOpen(false); reload();
   });
