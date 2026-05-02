@@ -129,6 +129,8 @@ export const purchaseApi = buildCrud(purchases, {
   searchFields: ["code", "supplierName"],
   filter: (it, q) => {
     if (q.status && q.status !== "all" && it.status !== q.status) return false;
+    if (q.dateFrom && (it.createdAt || "") < q.dateFrom) return false;
+    if (q.dateTo && (it.createdAt || "") > q.dateTo) return false;
     return true;
   },
 });
