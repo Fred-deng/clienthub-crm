@@ -126,6 +126,7 @@ export default function Purchases() {
     reset({ ...emptyForm });
     setItems([]);
     setEditing(null);
+    setDraftScope(`draft-pur-${Date.now().toString(36)}`);
     setOpen(true);
   };
   const openEdit = (o: PurchaseOrder) => {
