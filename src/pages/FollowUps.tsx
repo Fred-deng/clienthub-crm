@@ -376,7 +376,7 @@ export default function FollowUps() {
               </div>
             </Field>
             <Field label="客户状态">
-              <Input value={watch("customerStatus") || ""} disabled placeholder="跟随客户自动带出" />
+              <Input value={customerStatusLabel[watch("customerStatus") || ""] || watch("customerStatus") || ""} disabled placeholder="跟随客户自动带出" />
             </Field>
             <Field label="联系人姓名">
               <Select value={watch("contactId") || ""} onValueChange={(v) => setValue("contactId", v)}>
