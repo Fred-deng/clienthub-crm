@@ -28,14 +28,22 @@ export const employees: Employee[] = [
 
 // ---------- Customers ----------
 export const customers: Customer[] = Array.from({ length: 48 }).map((_, i) => {
-  const stage = Random.pick(["lead", "lead", "formal", "formal", "formal"]) as Customer["stage"];
+  const status = Random.pick([
+    "active", "active", "active",
+    "intent", "intent",
+    "potential",
+    "paused",
+    "inactive",
+    "lost",
+  ]) as Customer["status"];
+  const stage: Customer["stage"] = (status === "potential" || status === "intent") ? "lead" : "formal";
   const name = (Random as any).cnCompany();
   return {
     id: `c${i + 1}`,
     code: `CUS-${pad(1001 + i)}`,
     name,
     taxNo: "91" + Mock.mock(/[0-9A-Z]{16}/),
-    status: Random.pick(["active", "active", "potential", "inactive", "lost"]) as Customer["status"],
+    status,
     region: Random.pick(["华东", "华南", "华北", "华中", "西南", "西北", "东北"]),
     stage,
     level: Random.pick(["A", "B", "C"]) as Customer["level"],
