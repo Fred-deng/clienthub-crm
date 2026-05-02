@@ -1,7 +1,9 @@
 import { Outlet } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { Search, Bell, Command } from "lucide-react";
+import { Search, Bell, Command, ChevronDown } from "lucide-react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useCurrentUser } from "@/context/CurrentUserContext";
 import { AppSidebar } from "./AppSidebar";
 
 export default function AppLayout() {
@@ -14,6 +16,8 @@ export default function AppLayout() {
   const date = now.toLocaleDateString("zh-CN", { month: "long", day: "numeric", weekday: "long" });
   const hour = now.getHours();
   const greet = hour < 6 ? "夜深了" : hour < 12 ? "早安" : hour < 18 ? "下午好" : "晚上好";
+  const { current, setCurrent, all } = useCurrentUser();
+  const initial = current.name.slice(0, 1);
 
   return (
     <SidebarProvider>
@@ -47,15 +51,31 @@ export default function AppLayout() {
                 <Bell className="h-4 w-4" />
                 <span className="absolute top-2 right-2 size-1.5 rounded-full bg-tomato" />
               </button>
-              <div className="flex items-center gap-2.5 pl-1">
-                <div className="hidden xl:flex flex-col items-end leading-tight">
-                  <span className="text-[10px] text-foreground/45">{greet}</span>
-                  <span className="text-xs font-bold">陈雨晴</span>
-                </div>
-                <div className="size-9 rounded-full bg-gradient-to-br from-mustard to-[hsl(32_72%_50%)] flex items-center justify-center font-display font-black text-foreground text-sm ring-2 ring-card shadow-sm">
-                  陈
-                </div>
-              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-2.5 pl-1 pr-2 h-10 rounded-full hover:bg-card border border-transparent hover:border-foreground/10 transition-all">
+                    <div className="hidden xl:flex flex-col items-end leading-tight">
+                      <span className="text-[10px] text-foreground/45">{greet}</span>
+                      <span className="text-xs font-bold">{current.name}</span>
+                    </div>
+                    <div className="size-9 rounded-full bg-gradient-to-br from-mustard to-[hsl(32_72%_50%)] flex items-center justify-center font-display font-black text-foreground text-sm ring-2 ring-card shadow-sm">
+                      {initial}
+                    </div>
+                    <ChevronDown className="h-3.5 w-3.5 text-foreground/45" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel className="text-[11px] text-foreground/55">切换当前操作人（Mock）</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {all.map((e) => (
+                    <DropdownMenuItem key={e.id} onClick={() => setCurrent(e.id)} className={e.id === current.id ? "bg-foreground/5 font-semibold" : ""}>
+                      <span className="size-6 rounded-full bg-foreground/10 flex items-center justify-center text-[11px] mr-2 font-bold">{e.name.slice(0, 1)}</span>
+                      <span className="flex-1">{e.name}</span>
+                      <span className="text-[10px] text-foreground/45">{e.role}</span>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </header>
           <main className="flex-1 overflow-y-auto">
