@@ -79,12 +79,12 @@ export default function Reconciliation() {
     return true;
   }).sort((a, b) => b.outstanding - a.outstanding);
 
-  // KPI（基于当前 tab）
-  const totals = filtered.reduce(
+  // KPI（基于当前 tab 全量有效订单，与 Dashboard 应收/应付口径一致，不受筛选影响）
+  const totals = all.reduce(
     (s, r) => ({
       contract: s.contract + r.contract,
       paid: s.paid + r.paid,
-      outstanding: s.outstanding + r.outstanding,
+      outstanding: s.outstanding + Math.max(r.outstanding, 0),
       settled: s.settled + (r.outstanding <= 0 ? 1 : 0),
     }),
     { contract: 0, paid: 0, outstanding: 0, settled: 0 },
