@@ -207,6 +207,7 @@ export default function Products() {
       </Dialog>
 
       <ConfirmDialog open={!!deletingId} onOpenChange={(v) => !v && setDeletingId(null)} title="删除产品" onConfirm={onDelete} />
+      <StockLogDialog open={logOpen} onOpenChange={setLogOpen} productId={logProduct?.id} productName={logProduct?.name} />
     </>
   );
 }
