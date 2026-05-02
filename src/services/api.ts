@@ -177,10 +177,13 @@ export const statsApi = {
   async dashboard() {
     await delay(150);
     const month = new Date().toISOString().slice(0, 7);
-    const monthSales = salesOrders.filter((o) => (o.createdAt || "").startsWith(month));
+    // 有效销售订单：排除已取消（统计销售额时用全部已生效订单）
+    const activeSales = salesOrders.filter((o) => o.status !== "cancelled");
+    const activePurs = purchases.filter((p) => p.status !== "cancelled" && p.status !== "draft");
+    const monthSales = activeSales.filter((o) => (o.createdAt || "").startsWith(month));
     const monthRevenue = monthSales.reduce((s, o) => s + (o.contractAmount ?? o.totalAmount), 0);
-    const receivable = salesOrders.reduce((s, o) => s + Math.max((o.contractAmount ?? o.totalAmount) - o.received, 0), 0);
-    const payable = purchases.reduce((s, p) => s + Math.max((p.contractAmount || p.totalAmount) - p.paid, 0), 0);
+    const receivable = activeSales.reduce((s, o) => s + Math.max((o.contractAmount ?? o.totalAmount) - o.received, 0), 0);
+    const payable = activePurs.reduce((s, p) => s + Math.max((p.contractAmount || p.totalAmount) - p.paid, 0), 0);
     const activeContracts = contracts.filter((c) => c.status === "active").length;
     const formalCustomers = customers.filter((c) => c.stage === "formal").length;
     const leadCustomers = customers.filter((c) => c.stage === "lead").length;
