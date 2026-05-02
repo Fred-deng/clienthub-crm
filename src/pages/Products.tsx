@@ -211,6 +211,69 @@ export default function Products() {
 
       <ConfirmDialog open={!!deletingId} onOpenChange={(v) => !v && setDeletingId(null)} title="删除产品" onConfirm={onDelete} />
       <StockLogDialog open={logOpen} onOpenChange={setLogOpen} productId={logProduct?.id} productName={logProduct?.name} />
+
+      <Dialog open={catOpen} onOpenChange={setCatOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>管理产品分类</DialogTitle></DialogHeader>
+          <p className="text-xs text-muted-foreground -mt-2">分类同步用于供应商、采购明细与销售明细。</p>
+          <div className="flex items-center gap-2">
+            <Input
+              placeholder="新分类名称"
+              value={newCatLabel}
+              onChange={(e) => setNewCatLabel(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  const r = categoryStore.add(newCatLabel);
+                  if (r) { setNewCatLabel(""); toast.success("已添加"); }
+                  else toast.error("名称为空或已存在");
+                }
+              }}
+            />
+            <Button
+              size="sm"
+              onClick={() => {
+                const r = categoryStore.add(newCatLabel);
+                if (r) { setNewCatLabel(""); toast.success("已添加"); }
+                else toast.error("名称为空或已存在");
+              }}
+            >
+              <Plus className="h-4 w-4 mr-1" />添加
+            </Button>
+          </div>
+          <div className="max-h-72 overflow-y-auto rounded-md border divide-y">
+            {categories.map((c) => {
+              const inUse = data.list.some((p) => p.category === c.id);
+              const protectedId = c.id === "software";
+              return (
+                <div key={c.id} className="flex items-center justify-between px-3 py-2 text-sm">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">{c.label}</span>
+                    <span className="text-[11px] text-muted-foreground font-mono">{c.id}</span>
+                    {protectedId && <span className="text-[10px] px-1.5 rounded bg-foreground/10 text-foreground/60">系统</span>}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-destructive disabled:opacity-30"
+                    disabled={protectedId || inUse}
+                    title={protectedId ? "系统分类不可删除" : inUse ? "本页存在使用此分类的产品，请先调整后再删除" : "删除"}
+                    onClick={() => {
+                      if (categoryStore.remove(c.id)) toast.success("已删除");
+                      else toast.error("删除失败");
+                    }}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCatOpen(false)}>关闭</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
