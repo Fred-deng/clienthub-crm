@@ -342,7 +342,7 @@ export { Download as MDownloadIcon };
 export function MBulkBar({ count, onCancel, children }: { count: number; onCancel: () => void; children: ReactNode }) {
   if (count === 0) return null;
   return (
-    <div className="px-4 py-2.5 bg-mustard/15 border-y border-mustard/30 flex items-center gap-2 sticky top-[calc(3rem+58px)] z-10">
+    <div className="px-4 py-2.5 bg-mustard/15 border-y border-mustard/30 flex items-center gap-2">
       <span className="text-xs font-semibold">已选 <span className="text-tomato">{count}</span></span>
       <div className="flex-1" />
       <div className="flex gap-1.5">{children}</div>
