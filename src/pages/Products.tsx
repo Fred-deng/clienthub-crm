@@ -87,7 +87,14 @@ export default function Products() {
         title="产品与库存"
         meta="INVENTORY · SKU"
         subtitle="软件产品授权与硬件 SKU 库存管理。"
-        actions={<Button size="sm" onClick={openCreate}><Plus className="h-4 w-4 mr-1.5" />新增产品</Button>}
+        actions={
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="outline" onClick={() => { setLogProduct(null); setLogOpen(true); }}>
+              <History className="h-4 w-4 mr-1.5" />库存日志
+            </Button>
+            <Button size="sm" onClick={openCreate}><Plus className="h-4 w-4 mr-1.5" />新增产品</Button>
+          </div>
+        }
       />
 
       <DataPanel
@@ -143,6 +150,7 @@ export default function Products() {
                     <td className="font-mono text-xs text-muted-foreground">{p.safetyStock}</td>
                     <td className="px-5 py-3" onDoubleClick={(e) => e.stopPropagation()}>
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(p)}><Pencil className="h-3.5 w-3.5" /></Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" title="库存日志" onClick={() => { setLogProduct(p); setLogOpen(true); }}><History className="h-3.5 w-3.5" /></Button>
                       <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeletingId(p.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
                     </td>
                   </tr>
