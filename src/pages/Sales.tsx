@@ -144,7 +144,7 @@ export default function Sales() {
       contractAttachments: [], stampedContractAttachments: [], licenseAttachments: [], invoiceAttachments: [], otherAttachments: [], invoices: [],
       status: "pending", ownerId: "u3", createdAt: new Date().toISOString().slice(0, 10), received: 0, remark: "",
     });
-    setItems([]); setEditing(null); setOpen(true);
+    setItems([]); setEditing(null); setDraftScope(`draft-sal-${Date.now().toString(36)}`); setOpen(true);
   };
   const openEdit = (o: SalesOrder) => {
     reset({
