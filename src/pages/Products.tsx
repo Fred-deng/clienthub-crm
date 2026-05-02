@@ -33,6 +33,9 @@ export default function Products() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [logOpen, setLogOpen] = useState(false);
   const [logProduct, setLogProduct] = useState<Product | null>(null);
+  const [catOpen, setCatOpen] = useState(false);
+  const [newCatLabel, setNewCatLabel] = useState("");
+  const categories = useCategories();
   const { register, handleSubmit, reset, setValue, watch } = useForm<Omit<Product, "id">>({ defaultValues: empty });
 
   const openCreate = () => { reset({ ...empty, code: `PRD-${Date.now().toString().slice(-6)}` }); setEditing(null); setOpen(true); };
