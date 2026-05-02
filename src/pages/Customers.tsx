@@ -261,6 +261,22 @@ export default function Customers() {
                         </div>
                       </div>
                     </td>
+                    <td>
+                      {(() => {
+                        const tone = customerStatusTone[c.status || "potential"] || "muted";
+                        const toneCls: Record<string, string> = {
+                          leaf: "bg-leaf/15 text-leaf ring-leaf/25",
+                          mustard: "bg-mustard/25 text-foreground ring-mustard/40",
+                          tomato: "bg-tomato/15 text-tomato ring-tomato/25",
+                          muted: "bg-foreground/5 text-foreground/70 ring-foreground/15",
+                        };
+                        return (
+                          <span className={`cell-chip ring-1 ${toneCls[tone]}`}>
+                            {customerStatusLabel[c.status || "potential"] || "—"}
+                          </span>
+                        );
+                      })()}
+                    </td>
                     <td className="text-foreground/70">{c.category || "—"}</td>
                     <td className="text-foreground/70">{c.region || "—"}</td>
                     <td className="text-foreground/70">{ownerName(c.ownerId)}</td>
