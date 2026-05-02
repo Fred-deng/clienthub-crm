@@ -363,9 +363,9 @@ export default function Purchases() {
                     <td className="text-foreground/75">{o.supplierName}</td>
                     <td><span className={"cell-chip " + bizTone[split.category]}>{bizLabel[split.category]}</span></td>
                     <td><StatusBadge status={o.status} /></td>
-                    <td className="num mono">{fmtMoney(o.contractAmount || 0)}</td>
                     <td className="num mono">{fmtMoney(o.totalAmount)}</td>
                     <td className={"num mono " + (unpaid > 0 ? "text-tomato" : "text-foreground/55")}>{fmtMoney(o.paid)}</td>
+                    <td className={"num mono " + (unpaid > 0 ? "text-warning" : "text-foreground/55")}>{fmtMoney(unpaid)}</td>
                     <td className="num mono text-[12px] text-foreground/70">{(o.invoices?.length ?? 0)} 张 / {fmtMoney((o.invoices || []).reduce((s, r) => s + (r.amount || 0), 0))}</td>
                     <td className="text-foreground/70">{empName(o.applicantId)}</td>
                     <td className="text-foreground/70">{empName(o.buyerId)}</td>
