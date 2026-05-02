@@ -11,7 +11,7 @@ import FollowUps from "./pages/FollowUps";
 import Products from "./pages/Products";
 import Suppliers from "./pages/Suppliers";
 import Purchases from "./pages/Purchases";
-import Contracts from "./pages/Contracts";
+
 import Sales from "./pages/Sales";
 import Payments from "./pages/Payments";
 import Reports from "./pages/Reports";
