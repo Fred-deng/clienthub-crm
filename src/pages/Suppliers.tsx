@@ -17,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supplierApi, supplierContactApi, employeeApi } from "@/services/api";
 import { usePagedList } from "@/hooks/usePagedList";
 import { fmtMoney } from "@/lib/format";
+import { useCategories, categoryStore } from "@/services/categories";
 import type { Supplier, SupplierContact, Employee } from "@/types";
 
 const empty: Omit<Supplier, "id"> = {
