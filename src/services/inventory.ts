@@ -1,5 +1,6 @@
 // 库存联动 + 日志服务（基于 mock 内存数据）
 import { products, stockLogs } from "@/mock/data";
+import { readCurrentOperator } from "@/context/CurrentUserContext";
 import type { Product, ProductCategory, PurchaseOrder, StockLog, StockLogAction } from "@/types";
 
 const todayStr = () => new Date().toISOString().slice(0, 19).replace("T", " ");
@@ -80,7 +81,7 @@ export function adjustStock(opts: {
     refType: opts.refType,
     refId: opts.refId,
     refCode: opts.refCode,
-    operator: opts.operator,
+    operator: opts.operator || readCurrentOperator(),
     remark: opts.remark,
   });
 }
