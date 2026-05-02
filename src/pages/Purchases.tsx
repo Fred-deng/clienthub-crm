@@ -1,6 +1,6 @@
 import { useEffect, useState, ReactNode } from "react";
 import { useForm } from "react-hook-form";
-import { Plus, Pencil, Trash2, Search, Paperclip, X, FileText } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Paperclip, X, FileText, ArrowUpRight, Receipt } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { DataPanel } from "@/components/common/DataPanel";
@@ -9,6 +9,9 @@ import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { StatusBadge } from "@/components/common/StatusBadge";
 import { LineItemsEditor, LineItem } from "@/components/common/LineItemsEditor";
 import { InvoiceList, InvoiceRecord } from "@/components/common/InvoiceList";
+import { PaymentSubList } from "@/components/common/PaymentSubList";
+import { QuickPaymentDialog } from "@/components/common/QuickPaymentDialog";
+import { QuickInvoiceDialog } from "@/components/common/QuickInvoiceDialog";
 import { AttachmentField } from "@/components/common/AttachmentField";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -95,6 +98,8 @@ export default function Purchases() {
   const [items, setItems] = useState<LineItem[]>([]);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [biz, setBiz] = useState<BizFilter>("all");
+  const [quickPay, setQuickPay] = useState<PurchaseOrder | null>(null);
+  const [quickInv, setQuickInv] = useState<PurchaseOrder | null>(null);
 
   useEffect(() => {
     supplierApi.all().then(setSuppliers);
