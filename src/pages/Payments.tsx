@@ -185,7 +185,9 @@ export default function Payments() {
             {enriched.length > 0 && (
               <tfoot>
                 <tr>
-                  <td colSpan={5} className="label">本页 {enriched.length} 笔 / 共 {data.total} 笔 · 合计</td>
+                  <td colSpan={5} className="label">
+                    本页 {enriched.length} 笔{biz !== "all" && data.list.length !== enriched.length && `（按业务过滤，本页共 ${data.list.length} 笔）`} / 全部 {data.total} 笔 · 合计
+                  </td>
                   <td className="num">
                     <span className="text-accent">+{fmtMoney(totals.in)}</span>
                     <span className="mx-1 text-foreground/30">/</span>
