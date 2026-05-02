@@ -738,6 +738,56 @@ export default function Customers() {
         description="删除后无法恢复，与该客户关联的合同/订单不会被自动清理。"
         onConfirm={onDelete}
       />
+
+      {/* 批量：转入公海/私海 */}
+      <Dialog open={bulkSeaOpen} onOpenChange={setBulkSeaOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>批量调整公海 / 私海</DialogTitle>
+          </DialogHeader>
+          <div className="text-sm text-foreground/80 space-y-3 py-2">
+            <div>已选 <span className="font-bold text-tomato">{selectedIds.length}</span> 位客户,将统一标记为:</div>
+            <Select value={bulkSeaValue} onValueChange={(v: any) => setBulkSeaValue(v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="公海">公海</SelectItem>
+                <SelectItem value="私海">私海</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkSeaOpen(false)}>取消</Button>
+            <Button onClick={applyBulkSea}>确认</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 批量：修改客户状态 */}
+      <Dialog open={bulkStatusOpen} onOpenChange={setBulkStatusOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>批量修改客户状态</DialogTitle>
+          </DialogHeader>
+          <div className="text-sm text-foreground/80 space-y-3 py-2">
+            <div>已选 <span className="font-bold text-tomato">{selectedIds.length}</span> 位客户,将统一改为:</div>
+            <Select value={bulkStatusValue} onValueChange={(v) => setBulkStatusValue(v)}>
+              <SelectTrigger><SelectValue placeholder="请选择状态" /></SelectTrigger>
+              <SelectContent>
+                {Object.entries(customerStatusLabel).map(([v, l]) => (
+                  <SelectItem key={v} value={v}>{l}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="text-[11px] text-foreground/50">
+              提示:潜在 / 意向中 会自动归为「潜在客户」,其余为「正式客户」。
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkStatusOpen(false)}>取消</Button>
+            <Button onClick={applyBulkStatus}>确认</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
