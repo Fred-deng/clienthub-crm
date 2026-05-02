@@ -385,12 +385,13 @@ export default function Suppliers() {
 
 // —— 供应商详情内：快速新增联系人对话框 ——
 function MiniSupplierContactDialog({
-  open, onOpenChange, supplier, onCreated,
+  open, onOpenChange, supplier, onCreated, onDraft,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   supplier: Supplier;
-  onCreated: () => void;
+  onCreated?: () => void;
+  onDraft?: (d: Omit<SupplierContact, "id">) => void;
 }) {
   const { register, handleSubmit, reset, setValue, watch } = useForm<Omit<SupplierContact, "id">>({
     defaultValues: {
@@ -414,10 +415,16 @@ function MiniSupplierContactDialog({
   }, [open, supplier.id, supplier.name, reset]);
 
   const submit = handleSubmit(async (values) => {
-    await supplierContactApi.create({ ...values, supplierId: supplier.id, supplierName: supplier.name });
-    toast.success("联系人已新增");
+    const payload = { ...values, supplierId: supplier.id, supplierName: supplier.name };
+    if (onDraft) {
+      onDraft(payload);
+      toast.success("已加入草稿，将在保存供应商时一起创建");
+    } else {
+      await supplierContactApi.create(payload);
+      toast.success("联系人已新增");
+      onCreated?.();
+    }
     onOpenChange(false);
-    onCreated();
   });
 
   return (
