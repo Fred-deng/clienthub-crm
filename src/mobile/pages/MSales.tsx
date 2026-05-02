@@ -239,13 +239,13 @@ export default function MSales() {
           </button>
         }
       />
-      <MChipFilter
+      <MChipFilter<BizFilter>
         value={biz}
         onChange={setBiz}
         options={[
-          { value: "all" as const, label: "全部业务" },
-          { value: "software" as const, label: "软件" },
-          { value: "hardware" as const, label: "硬件" },
+          { value: "all", label: "全部业务" },
+          { value: "software", label: "软件" },
+          { value: "hardware", label: "硬件" },
         ]}
       />
       <MChipFilter
