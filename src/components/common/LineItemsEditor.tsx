@@ -174,7 +174,7 @@ export function LineItemsEditor({
                 <Select value={it.category} onValueChange={(v: ProductCategory) => updateAndLog(i, { category: v })}>
                   <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {cats.map((c) => <SelectItem key={c} value={c}>{productCategoryLabel[c]}</SelectItem>)}
+                    {cats.map((c) => <SelectItem key={c} value={c}>{allCategories.find((x) => x.id === c)?.label ?? c}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
