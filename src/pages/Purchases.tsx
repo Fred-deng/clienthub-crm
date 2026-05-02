@@ -27,7 +27,8 @@ import { useCurrentUser } from "@/context/CurrentUserContext";
 import { OrderLogDialog } from "@/components/common/OrderLogDialog";
 import { CancelOrderDialog } from "@/components/common/CancelOrderDialog";
 import { usePagedList } from "@/hooks/usePagedList";
-import { fmtMoney } from "@/lib/format";
+import { fmtMoney, statusLabels } from "@/lib/format";
+import { exportCsv } from "@/lib/csv";
 import { splitPurchase, bizLabel, bizTone, type BizFilter } from "@/lib/biz";
 import { BizTabs } from "@/components/common/BizTabs";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -255,6 +256,18 @@ export default function Purchases() {
         subtitle="采购合同与订单一体化管理：申请 → 签约 → 执行 → 入库。"
         actions={<>
           <BizTabs value={biz} onChange={setBiz} />
+          <Button size="sm" variant="outline" onClick={async () => {
+            const all = await purchaseApi.all();
+            exportCsv("purchase-orders", all, [
+              { header: "单号", value: (o) => o.code },
+              { header: "供应商", value: (o) => o.supplierName },
+              { header: "状态", value: (o) => statusLabels[o.status] || o.status },
+              { header: "明细合计", value: (o) => o.totalAmount },
+              { header: "已付", value: (o) => o.paid },
+              { header: "未付", value: (o) => Math.max(o.totalAmount - o.paid, 0) },
+              { header: "申请日期", value: (o) => o.appliedAt },
+            ]);
+          }}><FileText className="h-4 w-4 mr-1.5" />导出</Button>
           <Button size="sm" variant="outline" onClick={() => { setLogRefId(undefined); setLogRefCode(undefined); setLogOpen(true); }}>
             <History className="h-4 w-4 mr-1.5" />全部日志
           </Button>

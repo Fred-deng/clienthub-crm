@@ -27,7 +27,8 @@ import { readCurrentOperator } from "@/context/CurrentUserContext";
 import { OrderLogDialog } from "@/components/common/OrderLogDialog";
 import { CancelOrderDialog } from "@/components/common/CancelOrderDialog";
 import { usePagedList } from "@/hooks/usePagedList";
-import { fmtMoney } from "@/lib/format";
+import { fmtMoney, statusLabels } from "@/lib/format";
+import { exportCsv } from "@/lib/csv";
 import { splitSales, bizLabel, bizTone, type BizFilter } from "@/lib/biz";
 import { BizTabs } from "@/components/common/BizTabs";
 import type { SalesOrder, Customer, Product, Employee } from "@/types";
@@ -218,6 +219,19 @@ export default function Sales() {
         subtitle="销售合同 / 订单：从签约、申请、结算到交付的全流程档案。"
         actions={<>
           <BizTabs value={biz} onChange={setBiz} />
+          <Button size="sm" variant="outline" onClick={async () => {
+            const all = await salesApi.all();
+            exportCsv("sales-orders", all, [
+              { header: "合同编号", value: (o) => o.code },
+              { header: "合同名称", value: (o) => o.contractTitle || "" },
+              { header: "客户", value: (o) => o.customerName },
+              { header: "状态", value: (o) => statusLabels[o.status] || o.status },
+              { header: "合同金额", value: (o) => o.totalAmount },
+              { header: "已回款", value: (o) => o.received },
+              { header: "未回款", value: (o) => Math.max((o.contractAmount ?? o.totalAmount) - o.received, 0) },
+              { header: "签订日", value: (o) => o.signedAt || o.createdAt },
+            ]);
+          }}><FileText className="h-4 w-4 mr-1.5" />导出</Button>
           <Button size="sm" variant="outline" onClick={() => { setLogRefId(undefined); setLogRefCode(undefined); setLogOpen(true); }}>
             <History className="h-4 w-4 mr-1.5" />全部日志
           </Button>
