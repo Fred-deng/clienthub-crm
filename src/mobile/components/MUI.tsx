@@ -1,10 +1,11 @@
 // 移动端通用 UI 组件库
 import { ReactNode, useState, useEffect } from "react";
-import { ArrowLeft, Plus, Search, X, ChevronRight } from "lucide-react";
+import { ArrowLeft, Plus, Search, X, ChevronRight, Check, Download, Inbox } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import type { BizFilter } from "@/lib/biz";
 
 // ---------- 页面顶部 ----------
 export function MPageHeader({
@@ -68,9 +69,19 @@ export function MCard({ children, onClick, className }: { children: ReactNode; o
 }
 
 // ---------- 列表容器 ----------
-export function MList({ children, empty, loading }: { children: ReactNode; empty?: boolean; loading?: boolean }) {
-  if (loading) return <div className="px-4 py-12 text-center text-sm text-foreground/45">加载中…</div>;
-  if (empty) return <div className="px-4 py-16 text-center text-sm text-foreground/40">暂无数据</div>;
+export function MList({ children, empty, loading, emptyText = "暂无数据" }: { children: ReactNode; empty?: boolean; loading?: boolean; emptyText?: string }) {
+  if (loading) return (
+    <div className="px-4 py-12 flex flex-col items-center gap-2 text-sm text-foreground/45">
+      <div className="size-6 rounded-full border-2 border-foreground/15 border-t-tomato animate-spin" />
+      加载中…
+    </div>
+  );
+  if (empty) return (
+    <div className="px-4 py-20 flex flex-col items-center gap-2 text-foreground/40">
+      <Inbox className="h-10 w-10" strokeWidth={1.2} />
+      <span className="text-sm">{emptyText}</span>
+    </div>
+  );
   return <div className="px-4 space-y-2.5 pb-4">{children}</div>;
 }
 
