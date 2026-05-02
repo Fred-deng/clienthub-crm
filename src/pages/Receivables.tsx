@@ -56,7 +56,7 @@ export default function Receivables() {
         invoiced: 0,
         received: 0,
         outstanding: 0,
-        oldest: o.signedAt ?? o.createdAt,
+        oldest: o.createdAt,
         swContract: 0, hwContract: 0,
         swReceived: 0, hwReceived: 0,
         swOutstanding: 0, hwOutstanding: 0,
@@ -70,7 +70,7 @@ export default function Receivables() {
       r.outstanding = r.contractAmount - r.received;
       r.swOutstanding = r.swContract - r.swReceived;
       r.hwOutstanding = r.hwContract - r.hwReceived;
-      const t = o.signedAt ?? o.createdAt;
+      const t = o.createdAt;
       if (t < r.oldest) r.oldest = t;
       map.set(o.customerId, r);
     });
