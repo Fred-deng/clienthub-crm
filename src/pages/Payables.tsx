@@ -80,7 +80,7 @@ export default function Payables() {
       if (r) r.category = s.category;
     });
     return Array.from(map.values()).sort((a, b) => b.outstanding - a.outstanding);
-  }, [orders, suppliers, products]);
+  }, [orders, suppliers, products, range]);
 
   const view = (r: Row) => {
     if (biz === "software") return { contract: r.swContract, paid: r.swPaid, outstanding: r.swOutstanding };
