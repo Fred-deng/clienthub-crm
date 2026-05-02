@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Plus, Trash2, FileText, Pencil, Check, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Plus, Trash2, Pencil, Check, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -28,10 +28,12 @@ export function InvoiceList({
   value,
   onChange,
   direction,
+  defaultParty,
 }: {
   value: InvoiceRecord[];
   onChange: (v: InvoiceRecord[]) => void;
   direction: InvoiceDirection; // in = 收到（采购）, out = 已开（销售）
+  defaultParty?: string;       // 自动关联的对手方名称：销售=客户，采购=供应商
 }) {
   const [draft, setDraft] = useState<InvoiceRecord | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -39,8 +41,22 @@ export function InvoiceList({
   const partyLabel = direction === "in" ? "销售方（供应商）" : "购买方（客户）";
   const statusOpts = direction === "in" ? ["已收到", "未收到", "红冲"] : ["已开具", "待开具", "红冲"];
 
+  const calcTax = (amount: number, taxRate: number) =>
+    Number(((amount * taxRate) / (100 + taxRate)).toFixed(2));
+
   const total = useMemo(() => (value || []).reduce((s, r) => s + (Number(r.amount) || 0), 0), [value]);
-  const totalTax = useMemo(() => (value || []).reduce((s, r) => s + (Number(r.taxAmount) || (Number(r.amount) || 0) * (Number(r.taxRate) || 0) / (100 + (Number(r.taxRate) || 0))), 0), [value]);
+  const totalTax = useMemo(
+    () => (value || []).reduce((s, r) => s + (Number(r.taxAmount) || calcTax(Number(r.amount) || 0, Number(r.taxRate) || 0)), 0),
+    [value]
+  );
+  // 合计 = 价税合计 + 税额（按用户口径）
+  const totalSum = useMemo(
+    () => (value || []).reduce((s, r) => {
+      const tax = Number(r.taxAmount) || calcTax(Number(r.amount) || 0, Number(r.taxRate) || 0);
+      return s + (Number(r.amount) || 0) + tax;
+    }, 0),
+    [value]
+  );
 
   const blank = (): InvoiceRecord => ({
     id: `inv-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
@@ -50,17 +66,25 @@ export function InvoiceList({
     amount: 0,
     taxRate: 13,
     taxAmount: 0,
-    buyerOrSeller: "",
+    buyerOrSeller: defaultParty || "",
     status: statusOpts[0],
     remark: "",
   });
+
+  // 当 defaultParty 变化时，回填到正在编辑/新增的草稿（仅当字段为空时）
+  useEffect(() => {
+    if (draft && !draft.buyerOrSeller && defaultParty) {
+      setDraft({ ...draft, buyerOrSeller: defaultParty });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [defaultParty]);
 
   const startAdd = () => { setDraft(blank()); setEditingId(null); };
   const startEdit = (r: InvoiceRecord) => { setDraft({ ...r }); setEditingId(r.id); };
   const cancel = () => { setDraft(null); setEditingId(null); };
   const save = () => {
     if (!draft) return;
-    const computedTax = (Number(draft.amount) || 0) * (Number(draft.taxRate) || 0) / (100 + (Number(draft.taxRate) || 0));
+    const computedTax = calcTax(Number(draft.amount) || 0, Number(draft.taxRate) || 0);
     const rec = { ...draft, taxAmount: Number(computedTax.toFixed(2)) };
     if (editingId) onChange((value || []).map((x) => (x.id === editingId ? rec : x)));
     else onChange([...(value || []), rec]);
@@ -74,7 +98,8 @@ export function InvoiceList({
         <div className="text-xs text-foreground/65">
           共 <span className="mono font-semibold text-foreground">{(value || []).length}</span> 张发票 · 价税合计{" "}
           <span className="mono font-semibold text-foreground">{fmtMoney(total)}</span> · 税额{" "}
-          <span className="mono text-foreground/70">{fmtMoney(totalTax)}</span>
+          <span className="mono text-foreground/70">{fmtMoney(totalTax)}</span> · 合计{" "}
+          <span className="mono font-semibold text-cobalt">{fmtMoney(totalSum)}</span>
         </div>
         {!draft && (
           <Button type="button" size="sm" variant="outline" onClick={startAdd}>
@@ -84,51 +109,71 @@ export function InvoiceList({
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full text-xs">
+        <table className="w-full text-xs table-fixed">
+          <colgroup>
+            <col className="w-10" />
+            <col className="w-32" />
+            <col className="w-32" />
+            <col />
+            <col className="w-28" />
+            <col className="w-16" />
+            <col className="w-28" />
+            <col className="w-24" />
+            <col className="w-28" />
+            <col className="w-20" />
+            <col className="w-16" />
+          </colgroup>
           <thead className="text-[11px] text-foreground/55 uppercase tracking-wider">
             <tr className="border-b border-foreground/10">
-              <th className="text-left py-2 px-2 font-medium w-10">#</th>
+              <th className="text-left py-2 px-2 font-medium">#</th>
               <th className="text-left py-2 px-2 font-medium">发票号码</th>
               <th className="text-left py-2 px-2 font-medium">发票类型</th>
               <th className="text-left py-2 px-2 font-medium">{partyLabel}</th>
-              <th className="text-left py-2 px-2 font-medium w-28">开票日期</th>
-              <th className="text-right py-2 px-2 font-medium w-24">税率</th>
-              <th className="text-right py-2 px-2 font-medium w-32">价税合计</th>
-              <th className="text-right py-2 px-2 font-medium w-28">税额</th>
-              <th className="text-left py-2 px-2 font-medium w-24">状态</th>
-              <th className="text-right py-2 px-2 font-medium w-20">操作</th>
+              <th className="text-left py-2 px-2 font-medium">开票日期</th>
+              <th className="text-right py-2 px-2 font-medium">税率</th>
+              <th className="text-right py-2 px-2 font-medium">价税合计</th>
+              <th className="text-right py-2 px-2 font-medium">税额</th>
+              <th className="text-right py-2 px-2 font-medium">合计</th>
+              <th className="text-left py-2 px-2 font-medium">状态</th>
+              <th className="text-right py-2 px-2 font-medium">操作</th>
             </tr>
           </thead>
           <tbody>
             {(value || []).length === 0 && !draft && (
-              <tr><td colSpan={10} className="text-center py-6 text-foreground/40">暂无发票记录</td></tr>
+              <tr><td colSpan={11} className="text-center py-6 text-foreground/40">暂无发票记录</td></tr>
             )}
-            {(value || []).map((r, idx) => (
-              <tr key={r.id} className="border-b border-foreground/5 hover:bg-foreground/[0.02]">
-                <td className="py-2 px-2 mono text-foreground/45">{idx + 1}</td>
-                <td className="py-2 px-2 mono">{r.invoiceNo || "—"}</td>
-                <td className="py-2 px-2"><span className="inline-flex items-center px-1.5 h-5 rounded bg-cobalt/10 text-cobalt text-[10px]">{r.invoiceType}</span></td>
-                <td className="py-2 px-2 truncate max-w-[180px]">{r.buyerOrSeller || "—"}</td>
-                <td className="py-2 px-2 mono text-foreground/70">{r.invoiceDate}</td>
-                <td className="py-2 px-2 num mono">{r.taxRate}%</td>
-                <td className="py-2 px-2 num mono font-semibold">{fmtMoney(r.amount)}</td>
-                <td className="py-2 px-2 num mono text-foreground/70">{fmtMoney(r.taxAmount || 0)}</td>
-                <td className="py-2 px-2"><span className="text-[10px] px-1.5 py-0.5 rounded bg-foreground/[0.06]">{r.status}</span></td>
-                <td className="py-2 px-2 num">
-                  <div className="inline-flex gap-1">
-                    <button type="button" className="size-6 rounded hover:bg-foreground/5 inline-flex items-center justify-center text-foreground/55 hover:text-foreground" onClick={() => startEdit(r)}><Pencil className="h-3 w-3" /></button>
-                    <button type="button" className="size-6 rounded hover:bg-tomato/10 inline-flex items-center justify-center text-foreground/55 hover:text-tomato" onClick={() => remove(r.id)}><Trash2 className="h-3 w-3" /></button>
-                  </div>
-                </td>
-              </tr>
-            ))}
+            {(value || []).map((r, idx) => {
+              const tax = Number(r.taxAmount) || calcTax(Number(r.amount) || 0, Number(r.taxRate) || 0);
+              const sum = (Number(r.amount) || 0) + tax;
+              return (
+                <tr key={r.id} className="border-b border-foreground/5 hover:bg-foreground/[0.02]">
+                  <td className="py-2 px-2 mono text-foreground/45">{idx + 1}</td>
+                  <td className="py-2 px-2 mono truncate">{r.invoiceNo || "—"}</td>
+                  <td className="py-2 px-2"><span className="inline-flex items-center px-1.5 h-5 rounded bg-cobalt/10 text-cobalt text-[10px] truncate max-w-full">{r.invoiceType}</span></td>
+                  <td className="py-2 px-2 truncate">{r.buyerOrSeller || "—"}</td>
+                  <td className="py-2 px-2 mono text-foreground/70">{r.invoiceDate}</td>
+                  <td className="py-2 px-2 text-right mono">{r.taxRate}%</td>
+                  <td className="py-2 px-2 text-right mono font-semibold">{fmtMoney(r.amount)}</td>
+                  <td className="py-2 px-2 text-right mono text-foreground/70">{fmtMoney(tax)}</td>
+                  <td className="py-2 px-2 text-right mono font-semibold text-cobalt">{fmtMoney(sum)}</td>
+                  <td className="py-2 px-2"><span className="text-[10px] px-1.5 py-0.5 rounded bg-foreground/[0.06]">{r.status}</span></td>
+                  <td className="py-2 px-2 text-right">
+                    <div className="inline-flex gap-1">
+                      <button type="button" className="size-6 rounded hover:bg-foreground/5 inline-flex items-center justify-center text-foreground/55 hover:text-foreground" onClick={() => startEdit(r)}><Pencil className="h-3 w-3" /></button>
+                      <button type="button" className="size-6 rounded hover:bg-tomato/10 inline-flex items-center justify-center text-foreground/55 hover:text-tomato" onClick={() => remove(r.id)}><Trash2 className="h-3 w-3" /></button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
           {(value || []).length > 0 && (
             <tfoot>
               <tr className="border-t-2 border-foreground/15 bg-foreground/[0.025]">
                 <td colSpan={6} className="py-2 px-2 text-right text-[11px] font-semibold text-foreground/65 uppercase tracking-wider">列合计</td>
-                <td className="py-2 px-2 num mono font-bold text-foreground">{fmtMoney(total)}</td>
-                <td className="py-2 px-2 num mono font-semibold text-foreground/80">{fmtMoney(totalTax)}</td>
+                <td className="py-2 px-2 text-right mono font-bold text-foreground">{fmtMoney(total)}</td>
+                <td className="py-2 px-2 text-right mono font-semibold text-foreground/80">{fmtMoney(totalTax)}</td>
+                <td className="py-2 px-2 text-right mono font-bold text-cobalt">{fmtMoney(totalSum)}</td>
                 <td colSpan={2}></td>
               </tr>
             </tfoot>
@@ -161,7 +206,7 @@ export function InvoiceList({
             </Select>
           </div>
           <div className="col-span-12 md:col-span-6">
-            <div className="text-[10px] text-foreground/55 mb-1">{partyLabel}</div>
+            <div className="text-[10px] text-foreground/55 mb-1">{partyLabel}{defaultParty && <span className="ml-1 text-foreground/40">（已自动关联）</span>}</div>
             <Input className="h-8 text-xs" value={draft.buyerOrSeller} onChange={(e) => setDraft({ ...draft, buyerOrSeller: e.target.value })} placeholder="单位名称" />
           </div>
           <div className="col-span-6 md:col-span-3">

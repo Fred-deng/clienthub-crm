@@ -1,6 +1,6 @@
 import { useEffect, useState, ReactNode } from "react";
 import { useForm } from "react-hook-form";
-import { Plus, Pencil, Trash2, Search, FileText, X } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, FileText, X, ArrowDownLeft, Receipt } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { DataPanel } from "@/components/common/DataPanel";
@@ -10,6 +10,8 @@ import { StatusBadge } from "@/components/common/StatusBadge";
 import { LineItemsEditor, LineItem } from "@/components/common/LineItemsEditor";
 import { InvoiceList, InvoiceRecord } from "@/components/common/InvoiceList";
 import { PaymentSubList } from "@/components/common/PaymentSubList";
+import { QuickPaymentDialog } from "@/components/common/QuickPaymentDialog";
+import { QuickInvoiceDialog } from "@/components/common/QuickInvoiceDialog";
 import { AttachmentField } from "@/components/common/AttachmentField";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -103,6 +105,8 @@ export default function Sales() {
   const [items, setItems] = useState<LineItem[]>([]);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [biz, setBiz] = useState<BizFilter>("all");
+  const [quickPay, setQuickPay] = useState<SalesOrder | null>(null);
+  const [quickInv, setQuickInv] = useState<SalesOrder | null>(null);
 
   useEffect(() => {
     customerApi.all().then((cs) => setCustomers(cs.filter((c) => c.stage === "formal")));
@@ -248,8 +252,10 @@ export default function Sales() {
                     <td className="mono">{o.signedAt ?? o.createdAt}</td>
                     <td className="num" onDoubleClick={(e) => e.stopPropagation()}>
                       <div className="inline-flex gap-1">
-                        <button className="size-8 rounded-full hover:bg-foreground/5 text-foreground/55 hover:text-foreground inline-flex items-center justify-center transition-colors" onClick={() => openEdit(o)}><Pencil className="h-3.5 w-3.5" /></button>
-                        <button className="size-8 rounded-full hover:bg-tomato/10 text-foreground/55 hover:text-tomato inline-flex items-center justify-center transition-colors" onClick={() => setDeletingId(o.id)}><Trash2 className="h-3.5 w-3.5" /></button>
+                        <button title="登记回款" className="size-8 rounded-full hover:bg-accent/10 text-foreground/55 hover:text-accent inline-flex items-center justify-center transition-colors" onClick={() => setQuickPay(o)}><ArrowDownLeft className="h-3.5 w-3.5" /></button>
+                        <button title="新增发票" className="size-8 rounded-full hover:bg-cobalt/10 text-foreground/55 hover:text-cobalt inline-flex items-center justify-center transition-colors" onClick={() => setQuickInv(o)}><Receipt className="h-3.5 w-3.5" /></button>
+                        <button title="编辑" className="size-8 rounded-full hover:bg-foreground/5 text-foreground/55 hover:text-foreground inline-flex items-center justify-center transition-colors" onClick={() => openEdit(o)}><Pencil className="h-3.5 w-3.5" /></button>
+                        <button title="删除" className="size-8 rounded-full hover:bg-tomato/10 text-foreground/55 hover:text-tomato inline-flex items-center justify-center transition-colors" onClick={() => setDeletingId(o.id)}><Trash2 className="h-3.5 w-3.5" /></button>
                       </div>
                     </td>
                   </tr>
@@ -390,7 +396,14 @@ export default function Sales() {
 
             <GroupTitle>回款记录</GroupTitle>
             <div className="col-span-12">
-              <PaymentSubList orderId={editing?.id} reloadKey={open} />
+              <PaymentSubList
+                orderId={editing?.id}
+                orderCode={editing?.code}
+                partyName={customers.find((c) => c.id === watch("customerId"))?.name}
+                refType="sales"
+                remaining={Math.max((editing?.contractAmount ?? editing?.totalAmount ?? 0) - (editing?.received ?? 0), 0)}
+                reloadKey={open}
+              />
             </div>
 
             <GroupTitle>订单执行</GroupTitle>
@@ -416,7 +429,12 @@ export default function Sales() {
 
             <GroupTitle>发票管理（开给客户）</GroupTitle>
             <div className="col-span-12">
-              <InvoiceList direction="out" value={watch("invoices") || []} onChange={(v) => setValue("invoices", v)} />
+              <InvoiceList
+                direction="out"
+                value={watch("invoices") || []}
+                onChange={(v) => setValue("invoices", v)}
+                defaultParty={customers.find((c) => c.id === watch("customerId"))?.name}
+              />
             </div>
 
             <GroupTitle>附件与备注</GroupTitle>
@@ -437,6 +455,29 @@ export default function Sales() {
       <ConfirmDialog open={!!deletingId} onOpenChange={(v) => !v && setDeletingId(null)} title="删除合同" onConfirm={async () => {
         if (deletingId) { await salesApi.remove(deletingId); toast.success("已删除"); setDeletingId(null); reload(); }
       }} />
+
+      <QuickPaymentDialog
+        open={!!quickPay}
+        onOpenChange={(v) => !v && setQuickPay(null)}
+        direction="in"
+        refType="sales"
+        refId={quickPay?.id || ""}
+        refCode={quickPay?.code || ""}
+        partyName={quickPay?.customerName || ""}
+        remaining={quickPay ? Math.max((quickPay.contractAmount ?? quickPay.totalAmount) - quickPay.received, 0) : 0}
+        onSaved={() => { setQuickPay(null); reload(); }}
+      />
+
+      <QuickInvoiceDialog
+        open={!!quickInv}
+        onOpenChange={(v) => !v && setQuickInv(null)}
+        refType="sales"
+        refId={quickInv?.id || ""}
+        refCode={quickInv?.code || ""}
+        partyName={quickInv?.customerName || ""}
+        existing={quickInv?.invoices || []}
+        onSaved={() => { setQuickInv(null); reload(); }}
+      />
     </>
   );
 }
