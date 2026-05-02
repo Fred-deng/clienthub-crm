@@ -440,6 +440,29 @@ export default function Purchases() {
           if (deletingId) { await purchaseApi.remove(deletingId); toast.success("已删除"); setDeletingId(null); reload(); }
         }}
       />
+
+      <QuickPaymentDialog
+        open={!!quickPay}
+        onOpenChange={(v) => !v && setQuickPay(null)}
+        direction="out"
+        refType="purchase"
+        refId={quickPay?.id || ""}
+        refCode={quickPay?.code || ""}
+        partyName={quickPay?.supplierName || ""}
+        remaining={quickPay ? Math.max((quickPay.contractAmount ?? quickPay.totalAmount) - quickPay.paid, 0) : 0}
+        onSaved={() => { setQuickPay(null); reload(); }}
+      />
+
+      <QuickInvoiceDialog
+        open={!!quickInv}
+        onOpenChange={(v) => !v && setQuickInv(null)}
+        refType="purchase"
+        refId={quickInv?.id || ""}
+        refCode={quickInv?.code || ""}
+        partyName={quickInv?.supplierName || ""}
+        existing={quickInv?.invoices || []}
+        onSaved={() => { setQuickInv(null); reload(); }}
+      />
     </>
   );
 }
