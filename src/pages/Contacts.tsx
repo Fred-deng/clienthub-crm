@@ -56,8 +56,11 @@ function Field({ label, required, span = 4, children }: { label: string; require
   );
 }
 
+const DRAFT_KEY = "contacts:draftForm";
+
 export default function Contacts() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const customerIdParam = searchParams.get("customerId") || "all";
 
   const { query, data, loading, reload, setFilter, setPage } = usePagedList(
