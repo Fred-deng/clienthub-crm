@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, ReactNode } from "react";
 import { useForm } from "react-hook-form";
-import { Plus, Pencil, Trash2, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Paperclip, X, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { DataPanel } from "@/components/common/DataPanel";
@@ -11,17 +11,117 @@ import { LineItemsEditor, LineItem } from "@/components/common/LineItemsEditor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { purchaseApi, supplierApi, productApi } from "@/services/api";
+import { purchaseApi, supplierApi, productApi, employeeApi, contractApi } from "@/services/api";
 import { usePagedList } from "@/hooks/usePagedList";
 import { fmtMoney } from "@/lib/format";
-import type { PurchaseOrder, Supplier, Product } from "@/types";
+import type { PurchaseOrder, Supplier, Product, Employee, Contract } from "@/types";
+
+function GroupTitle({ children }: { children: ReactNode }) {
+  return (
+    <div className="col-span-12 flex items-center gap-3 mt-2 first:mt-0">
+      <span className="inline-flex items-center px-3 h-7 rounded-md bg-foreground text-background text-xs font-semibold tracking-wide">
+        {children}
+      </span>
+      <div className="flex-1 h-px bg-foreground/10" />
+    </div>
+  );
+}
+function Field({ label, required, span = 4, children }: { label: string; required?: boolean; span?: number; children: ReactNode }) {
+  const m: Record<number, string> = {
+    3: "col-span-12 md:col-span-6 lg:col-span-3",
+    4: "col-span-12 md:col-span-6 lg:col-span-4",
+    6: "col-span-12 md:col-span-6",
+    12: "col-span-12",
+  };
+  return (
+    <div className={m[span]}>
+      <Label className="text-xs text-foreground/70 mb-1.5 block">
+        {label}{required && <span className="text-tomato ml-0.5">*</span>}
+      </Label>
+      {children}
+    </div>
+  );
+}
+
+function AttachmentList({ value, onChange }: { value: string[]; onChange: (v: string[]) => void }) {
+  const [draft, setDraft] = useState("");
+  const add = () => {
+    const v = draft.trim();
+    if (!v) return;
+    onChange([...(value || []), v]);
+    setDraft("");
+  };
+  return (
+    <div className="space-y-2">
+      <div className="space-y-1">
+        {(value || []).map((f, i) => (
+          <div key={i} className="flex items-center gap-2 text-xs px-2.5 h-8 rounded-md bg-foreground/[0.04] border border-foreground/8">
+            <FileText className="h-3.5 w-3.5 text-cobalt shrink-0" />
+            <span className="flex-1 truncate">{f}</span>
+            <button type="button" className="px-2 h-6 rounded text-[11px] text-tomato hover:bg-tomato/10" onClick={() => onChange(value.filter((_, idx) => idx !== i))}>
+              删除
+            </button>
+          </div>
+        ))}
+      </div>
+      <div className="flex gap-2">
+        <Input
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          placeholder="附件文件名或链接"
+          className="h-9"
+          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); add(); } }}
+        />
+        <Button type="button" variant="outline" size="sm" onClick={add} className="shrink-0">
+          <Plus className="h-3.5 w-3.5 mr-1" />添加附件
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+type FormValues = {
+  applicantId: string;
+  department: string;
+  appliedAt: string;
+  supplierId: string;
+  contractTitle: string;
+  signingParty: string;
+  signedAt: string;
+  contractExpireAt: string;
+  contractAmount: number;
+  linkedSalesContract: boolean;
+  linkedSalesContractId: string;
+  buyerId: string;
+  contractAttachments: string[];
+  invoiceAttachments: string[];
+  status: PurchaseOrder["status"];
+  paid: number;
+  createdAt: string;
+  expectedAt: string;
+  remark: string;
+};
+
+const today = () => new Date().toISOString().slice(0, 10);
+const emptyForm: FormValues = {
+  applicantId: "u1", department: "集马科技", appliedAt: today(),
+  supplierId: "", contractTitle: "", signingParty: "集马科技",
+  signedAt: today(), contractExpireAt: "", contractAmount: 0,
+  linkedSalesContract: false, linkedSalesContractId: "",
+  buyerId: "", contractAttachments: [], invoiceAttachments: [],
+  status: "draft", paid: 0, createdAt: today(), expectedAt: "", remark: "",
+};
 
 export default function Purchases() {
   const { query, data, loading, reload, setFilter, setPage } = usePagedList(purchaseApi.list);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [salesContracts, setSalesContracts] = useState<Contract[]>([]);
   const [editing, setEditing] = useState<PurchaseOrder | null>(null);
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<LineItem[]>([]);
@@ -30,47 +130,89 @@ export default function Purchases() {
   useEffect(() => {
     supplierApi.all().then(setSuppliers);
     productApi.all().then((p) => setProducts(p.filter((x) => x.category !== "software")));
+    employeeApi.all().then(setEmployees);
+    contractApi.all().then(setSalesContracts);
   }, []);
 
-  const { register, handleSubmit, reset, setValue, watch } = useForm<any>({
-    defaultValues: { supplierId: "", status: "draft", createdAt: new Date().toISOString().slice(0, 10), expectedAt: "", paid: 0, remark: "" },
-  });
+  const { register, handleSubmit, reset, setValue, watch } = useForm<FormValues>({ defaultValues: emptyForm });
 
   const openCreate = () => {
-    reset({ supplierId: suppliers[0]?.id, status: "draft", createdAt: new Date().toISOString().slice(0, 10), expectedAt: "", paid: 0, remark: "" });
-    setItems([]); setEditing(null); setOpen(true);
+    reset({ ...emptyForm });
+    setItems([]);
+    setEditing(null);
+    setOpen(true);
   };
   const openEdit = (o: PurchaseOrder) => {
-    reset({ supplierId: o.supplierId, status: o.status, createdAt: o.createdAt, expectedAt: o.expectedAt, paid: o.paid, remark: o.remark || "" });
-    setItems(o.items); setEditing(o); setOpen(true);
+    reset({
+      applicantId: o.applicantId,
+      department: o.department || "",
+      appliedAt: o.appliedAt,
+      supplierId: o.supplierId,
+      contractTitle: o.contractTitle || "",
+      signingParty: o.signingParty || "",
+      signedAt: o.signedAt || "",
+      contractExpireAt: o.contractExpireAt || "",
+      contractAmount: o.contractAmount || 0,
+      linkedSalesContract: !!o.linkedSalesContract,
+      linkedSalesContractId: o.linkedSalesContractId || "",
+      buyerId: o.buyerId || "",
+      contractAttachments: o.contractAttachments || [],
+      invoiceAttachments: o.invoiceAttachments || [],
+      status: o.status,
+      paid: o.paid,
+      createdAt: o.createdAt,
+      expectedAt: o.expectedAt,
+      remark: o.remark || "",
+    });
+    setItems(o.items);
+    setEditing(o);
+    setOpen(true);
   };
 
   const onSubmit = handleSubmit(async (v) => {
     const sup = suppliers.find((s) => s.id === v.supplierId);
     const totalAmount = items.reduce((s, it) => s + it.qty * it.price, 0);
-    const payload: any = { ...v, supplierName: sup?.name ?? "-", items, totalAmount, paid: Number(v.paid) || 0, code: editing?.code ?? `PO-${Date.now().toString().slice(-6)}` };
+    const payload: any = {
+      ...v,
+      contractAmount: Number(v.contractAmount) || 0,
+      paid: Number(v.paid) || 0,
+      supplierName: sup?.name ?? "-",
+      items,
+      totalAmount,
+      code: editing?.code ?? `CG-${Date.now().toString().slice(-6)}`,
+    };
     if (editing) await purchaseApi.update(editing.id, payload); else await purchaseApi.create(payload);
-    toast.success("已保存"); setOpen(false); reload();
+    toast.success("已保存");
+    setOpen(false);
+    reload();
   });
+
+  const empName = (id?: string) => employees.find((e) => e.id === id)?.name ?? "—";
 
   return (
     <>
       <PageHeader
-        title="采购管理"
-        meta="PROCUREMENT"
-        subtitle="硬件采购入库与供应商付款跟踪。"
-        actions={<Button size="sm" onClick={openCreate}><Plus className="h-4 w-4 mr-1.5" />新建采购单</Button>}
+        title="采购订单"
+        meta="PURCHASE ORDER"
+        subtitle="采购合同与订单一体化管理：申请 → 签约 → 执行 → 入库。"
+        actions={<Button size="sm" onClick={openCreate}><Plus className="h-4 w-4 mr-1.5" />新建采购订单</Button>}
       />
       <DataPanel
-        title={<h3 className="text-xs font-bold uppercase tracking-[0.2em]">采购单列表</h3>}
+        title="采购订单列表"
+        subtitle={`Purchase Orders · ${data.total} records`}
+        accent="mustard"
         actions={
           <div className="flex items-center gap-2">
             <div className="relative">
-              <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <Input placeholder="搜索单号/供应商" className="pl-8 h-8 w-56 text-xs" onChange={(e) => setFilter({ keyword: e.target.value })} />
+              <Search className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-foreground/40" />
+              <Input
+                placeholder="搜索单号 / 供应商 / 合同名"
+                className="pl-9 h-9 w-60 text-xs rounded-full"
+                onChange={(e) => setFilter({ keyword: e.target.value })}
+              />
             </div>
             <Select value={query.status ?? "all"} onValueChange={(v) => setFilter({ status: v })}>
-              <SelectTrigger className="h-8 w-28 text-xs"><SelectValue /></SelectTrigger>
+              <SelectTrigger className="h-9 w-28 text-xs rounded-full"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">全部</SelectItem>
                 <SelectItem value="draft">草稿</SelectItem>
@@ -81,31 +223,55 @@ export default function Purchases() {
             </Select>
           </div>
         }
->
+      >
         <div className="overflow-x-auto">
           <table className="data-table">
             <thead>
-              <tr>{["单号", "供应商", "状态", "金额", "已付款", "未付", "下单日", "预计入库", "操作"].map((h) => (
-                <th key={h}>{h}</th>
-              ))}</tr>
+              <tr>
+                <th>单号</th>
+                <th>合同/订单</th>
+                <th>供应商</th>
+                <th>状态</th>
+                <th className="num">合同金额</th>
+                <th className="num">明细合计</th>
+                <th className="num">已付</th>
+                <th>申请人</th>
+                <th>采购经理</th>
+                <th>申请日期</th>
+                <th className="num">操作</th>
+              </tr>
             </thead>
             <tbody>
-              {loading && <tr><td colSpan={9} className="py-12 text-center text-xs text-muted-foreground">加载中…</td></tr>}
+              {loading && <tr className="empty"><td colSpan={11} className="empty">加载中…</td></tr>}
+              {!loading && data.list.length === 0 && (
+                <tr className="empty"><td colSpan={11} className="empty">暂无采购订单</td></tr>
+              )}
               {data.list.map((o) => {
                 const unpaid = o.totalAmount - o.paid;
                 return (
                   <tr key={o.id}>
-                    <td className="font-mono text-xs">{o.code}</td>
-                    <td className="px-5 py-3">{o.supplierName}</td>
-                    <td className="px-5 py-3"><StatusBadge status={o.status} /></td>
-                    <td className="font-mono text-xs">{fmtMoney(o.totalAmount)}</td>
-                    <td className="font-mono text-xs text-accent">{fmtMoney(o.paid)}</td>
-                    <td className={"px-5 py-3 font-mono text-xs " + (unpaid> 0 ? "text-warning" : "text-muted-foreground")}>{fmtMoney(unpaid)}</td>
-                    <td className="text-xs text-muted-foreground">{o.createdAt}</td>
-                    <td className="text-xs text-muted-foreground">{o.expectedAt}</td>
-                    <td className="px-5 py-3">
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(o)}><Pencil className="h-3.5 w-3.5" /></Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setDeletingId(o.id)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                    <td className="mono">{o.code}</td>
+                    <td>
+                      <div className="font-semibold truncate max-w-[200px]">{o.contractTitle || "—"}</div>
+                      <div className="text-[11px] text-foreground/45">签约：{o.signingParty || "—"}</div>
+                    </td>
+                    <td className="text-foreground/75">{o.supplierName}</td>
+                    <td><StatusBadge status={o.status} /></td>
+                    <td className="num mono">{fmtMoney(o.contractAmount || 0)}</td>
+                    <td className="num mono">{fmtMoney(o.totalAmount)}</td>
+                    <td className={"num mono " + (unpaid > 0 ? "text-tomato" : "text-foreground/55")}>{fmtMoney(o.paid)}</td>
+                    <td className="text-foreground/70">{empName(o.applicantId)}</td>
+                    <td className="text-foreground/70">{empName(o.buyerId)}</td>
+                    <td className="text-[12px] text-foreground/60 mono">{o.appliedAt}</td>
+                    <td className="num">
+                      <div className="inline-flex gap-1">
+                        <button className="size-8 rounded-full hover:bg-foreground/5 text-foreground/55 hover:text-foreground inline-flex items-center justify-center transition-colors" onClick={() => openEdit(o)}>
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                        <button className="size-8 rounded-full hover:bg-tomato/10 text-foreground/55 hover:text-tomato inline-flex items-center justify-center transition-colors" onClick={() => setDeletingId(o.id)}>
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );
@@ -117,45 +283,136 @@ export default function Purchases() {
       </DataPanel>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader><DialogTitle>{editing ? "编辑采购单" : "新建采购单"}</DialogTitle></DialogHeader>
-          <form onSubmit={onSubmit} className="space-y-4">
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <Label className="text-xs">供应商</Label>
-                <Select value={watch("supplierId")} onValueChange={(v) => setValue("supplierId", v)}>
-                  <SelectTrigger><SelectValue placeholder="选择" /></SelectTrigger>
-                  <SelectContent>{suppliers.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
-                </Select>
+        <DialogContent className="max-w-5xl max-h-[88vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>{editing ? "编辑采购订单" : "新建采购订单"}</DialogTitle></DialogHeader>
+          <form onSubmit={onSubmit} className="grid grid-cols-12 gap-x-4 gap-y-3 text-sm">
+            {/* 申请信息 */}
+            <GroupTitle>申请信息</GroupTitle>
+            <Field label="申请人" required>
+              <Select value={watch("applicantId")} onValueChange={(v) => setValue("applicantId", v)}>
+                <SelectTrigger><SelectValue placeholder="请选择" /></SelectTrigger>
+                <SelectContent>
+                  {employees.map((e) => <SelectItem key={e.id} value={e.id}>{e.name}（{e.role}）</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="所属部门">
+              <Select value={watch("department")} onValueChange={(v) => setValue("department", v)}>
+                <SelectTrigger><SelectValue placeholder="请选择" /></SelectTrigger>
+                <SelectContent>
+                  {["集马科技", "集马科技 · 采购部", "集马科技 · 项目部", "集马科技 · 销售部"].map((d) => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="申请日期" required><Input type="date" {...register("appliedAt", { required: true })} /></Field>
+
+            {/* 合同与签约 */}
+            <GroupTitle>合同与签约</GroupTitle>
+            <Field label="供应商名称" required>
+              <Select value={watch("supplierId")} onValueChange={(v) => setValue("supplierId", v)}>
+                <SelectTrigger><SelectValue placeholder="请选择" /></SelectTrigger>
+                <SelectContent>
+                  {suppliers.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="合同名称"><Input placeholder="如：触摸一体机销售合同" {...register("contractTitle")} /></Field>
+            <Field label="签约单位">
+              <Select value={watch("signingParty")} onValueChange={(v) => setValue("signingParty", v)}>
+                <SelectTrigger><SelectValue placeholder="请选择" /></SelectTrigger>
+                <SelectContent>
+                  {["集马科技", "集马科技（深圳）", "集马科技（上海）"].map((n) => <SelectItem key={n} value={n}>{n}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="签订日期"><Input type="date" {...register("signedAt")} /></Field>
+            <Field label="合同到期日"><Input type="date" {...register("contractExpireAt")} /></Field>
+            <Field label="合同金额">
+              <Input type="number" step="0.01" className="mono text-right" {...register("contractAmount", { valueAsNumber: true })} />
+            </Field>
+            <Field label="是否关联销售合同" required span={12}>
+              <div className="flex items-center gap-3 h-10">
+                <Switch
+                  checked={watch("linkedSalesContract")}
+                  onCheckedChange={(v) => { setValue("linkedSalesContract", v); if (!v) setValue("linkedSalesContractId", ""); }}
+                />
+                <span className="text-xs text-foreground/60">{watch("linkedSalesContract") ? "已关联" : "未关联"}</span>
+                {watch("linkedSalesContract") && (
+                  <div className="flex-1 max-w-md">
+                    <Select value={watch("linkedSalesContractId") || ""} onValueChange={(v) => setValue("linkedSalesContractId", v)}>
+                      <SelectTrigger className="h-9"><SelectValue placeholder="选择销售合同" /></SelectTrigger>
+                      <SelectContent>
+                        {salesContracts.map((c) => <SelectItem key={c.id} value={c.id}>{c.code} · {c.title}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
               </div>
-              <div>
-                <Label className="text-xs">状态</Label>
-                <Select value={watch("status")} onValueChange={(v) => setValue("status", v)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="draft">草稿</SelectItem>
-                    <SelectItem value="ordered">已下单</SelectItem>
-                    <SelectItem value="received">已入库</SelectItem>
-                    <SelectItem value="cancelled">已取消</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div><Label className="text-xs">已付款</Label><Input type="number" step="0.01" {...register("paid", { valueAsNumber: true })} /></div>
-              <div><Label className="text-xs">下单日</Label><Input type="date" {...register("createdAt")} /></div>
-              <div><Label className="text-xs">预计入库</Label><Input type="date" {...register("expectedAt")} /></div>
-              <div><Label className="text-xs">备注</Label><Input {...register("remark")} /></div>
+            </Field>
+
+            {/* 采购执行 */}
+            <GroupTitle>采购执行</GroupTitle>
+            <Field label="采购经理" span={4}>
+              <Select value={watch("buyerId") || ""} onValueChange={(v) => setValue("buyerId", v)}>
+                <SelectTrigger><SelectValue placeholder="请选择" /></SelectTrigger>
+                <SelectContent>
+                  {employees.map((e) => <SelectItem key={e.id} value={e.id}>{e.name}（{e.role}）</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="订单状态">
+              <Select value={watch("status")} onValueChange={(v: any) => setValue("status", v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="draft">草稿</SelectItem>
+                  <SelectItem value="ordered">已下单</SelectItem>
+                  <SelectItem value="received">已入库</SelectItem>
+                  <SelectItem value="cancelled">已取消</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="预计入库"><Input type="date" {...register("expectedAt")} /></Field>
+            <Field label="下单日期"><Input type="date" {...register("createdAt")} /></Field>
+            <Field label="已付款">
+              <Input type="number" step="0.01" className="mono text-right" {...register("paid", { valueAsNumber: true })} />
+            </Field>
+
+            {/* 采购明细（保留子表） */}
+            <GroupTitle>采购明细</GroupTitle>
+            <div className="col-span-12">
+              <LineItemsEditor items={items} products={products} onChange={setItems} />
             </div>
-            <LineItemsEditor items={items} products={products} onChange={setItems} />
-            <DialogFooter>
+
+            {/* 附件资料 */}
+            <GroupTitle>附件资料</GroupTitle>
+            <Field label="采购合同附件" span={6}>
+              <AttachmentList value={watch("contractAttachments") || []} onChange={(v) => setValue("contractAttachments", v)} />
+            </Field>
+            <Field label="开票资料" span={6}>
+              <AttachmentList value={watch("invoiceAttachments") || []} onChange={(v) => setValue("invoiceAttachments", v)} />
+            </Field>
+
+            {/* 备注 */}
+            <GroupTitle>备注</GroupTitle>
+            <Field label="备注" span={12}><Textarea rows={3} placeholder="补充说明" {...register("remark")} /></Field>
+
+            <DialogFooter className="col-span-12 mt-4">
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>取消</Button>
-              <Button type="submit">{editing ? "保存" : "创建"}</Button>
+              <Button type="submit">{editing ? "保存修改" : "创建采购订单"}</Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
-      <ConfirmDialog open={!!deletingId} onOpenChange={(v) => !v && setDeletingId(null)} title="删除采购单" onConfirm={async () => {
-        if (deletingId) { await purchaseApi.remove(deletingId); toast.success("已删除"); setDeletingId(null); reload(); }
-      }} />
+
+      <ConfirmDialog
+        open={!!deletingId}
+        onOpenChange={(v) => !v && setDeletingId(null)}
+        title="删除采购订单"
+        description="删除后无法恢复。"
+        onConfirm={async () => {
+          if (deletingId) { await purchaseApi.remove(deletingId); toast.success("已删除"); setDeletingId(null); reload(); }
+        }}
+      />
     </>
   );
 }

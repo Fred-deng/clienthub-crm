@@ -27,8 +27,7 @@ const groups = [
   {
     label: "交易",
     items: [
-      { title: "采购管理", url: "/purchases", icon: ShoppingCart, dot: "mustard" },
-      { title: "合同管理", url: "/contracts", icon: FileText, dot: "tomato" },
+      { title: "采购订单", url: "/purchases", icon: ShoppingCart, dot: "mustard" },
       { title: "销售订单", url: "/sales", icon: Receipt, dot: "mint" },
       { title: "财务收支", url: "/payments", icon: Wallet, dot: "cobalt" },
     ],

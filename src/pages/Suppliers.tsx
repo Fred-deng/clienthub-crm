@@ -1,6 +1,6 @@
 import { useEffect, useState, ReactNode } from "react";
 import { useForm } from "react-hook-form";
-import { Plus, Pencil, Trash2, Search, X } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, X, Star } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { DataPanel } from "@/components/common/DataPanel";
@@ -10,12 +10,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { supplierApi, employeeApi } from "@/services/api";
+import { supplierApi, supplierContactApi, employeeApi } from "@/services/api";
 import { usePagedList } from "@/hooks/usePagedList";
 import { fmtMoney } from "@/lib/format";
-import type { Supplier, Employee } from "@/types";
+import type { Supplier, SupplierContact, Employee } from "@/types";
 
 const empty: Omit<Supplier, "id"> = {
   code: "", name: "", taxNo: "",
@@ -63,6 +64,8 @@ export default function Suppliers() {
   const [open, setOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [supplierContacts, setSupplierContacts] = useState<SupplierContact[]>([]);
+  const [miniContactOpen, setMiniContactOpen] = useState(false);
 
   useEffect(() => { employeeApi.all().then(setEmployees); }, []);
 
@@ -71,12 +74,20 @@ export default function Suppliers() {
   const openCreate = () => {
     reset({ ...empty, code: `SUP-${Date.now().toString().slice(-6)}` });
     setEditing(null);
+    setSupplierContacts([]);
     setOpen(true);
   };
-  const openEdit = (s: Supplier) => {
+  const openEdit = async (s: Supplier) => {
     reset({ ...empty, ...s, assistantIds: s.assistantIds ?? [] });
     setEditing(s);
     setOpen(true);
+    const list = await supplierContactApi.list({ supplierId: s.id, pageSize: 100 });
+    setSupplierContacts(list.list);
+  };
+  const reloadSupplierContacts = async () => {
+    if (!editing) return;
+    const list = await supplierContactApi.list({ supplierId: editing.id, pageSize: 100 });
+    setSupplierContacts(list.list);
   };
 
   const onSubmit = handleSubmit(async (values) => {
@@ -281,6 +292,67 @@ export default function Suppliers() {
               </div>
             </Field>
 
+            {editing && (
+              <>
+                <GroupTitle>供应商联系人</GroupTitle>
+                <div className="col-span-12 rounded-xl border border-foreground/10 bg-card overflow-hidden">
+                  <div className="flex items-center justify-between px-4 py-2.5 bg-foreground/[0.03] border-b border-foreground/8">
+                    <div className="text-xs text-foreground/60">
+                      共 <span className="font-bold text-foreground">{supplierContacts.length}</span> 位联系人
+                    </div>
+                    <Button type="button" size="sm" variant="outline" onClick={() => setMiniContactOpen(true)}>
+                      <Plus className="h-3.5 w-3.5 mr-1" />新增联系人
+                    </Button>
+                  </div>
+                  {supplierContacts.length === 0 ? (
+                    <div className="px-4 py-6 text-center text-xs text-foreground/45">暂无联系人，点击右上角新增。</div>
+                  ) : (
+                    <table className="data-table">
+                      <thead>
+                        <tr>
+                          <th>姓名</th>
+                          <th>职务</th>
+                          <th>电话</th>
+                          <th>邮箱</th>
+                          <th>微信</th>
+                          <th className="num">操作</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {supplierContacts.map((sc) => (
+                          <tr key={sc.id}>
+                            <td>
+                              <div className="flex items-center gap-1.5 font-semibold">
+                                {sc.name}
+                                {sc.isPrimary && <Star className="h-3 w-3 fill-tomato text-tomato" />}
+                              </div>
+                            </td>
+                            <td className="text-foreground/70">{sc.position || "—"}</td>
+                            <td className="mono">{sc.phone}</td>
+                            <td className="text-foreground/65 text-[12px]">{sc.email || "—"}</td>
+                            <td className="text-foreground/65 text-[12px]">{sc.wechat || "—"}</td>
+                            <td className="num">
+                              <button
+                                type="button"
+                                className="text-[11px] text-tomato hover:underline"
+                                onClick={async () => {
+                                  await supplierContactApi.remove(sc.id);
+                                  toast.success("联系人已删除");
+                                  reloadSupplierContacts();
+                                }}
+                              >
+                                删除
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              </>
+            )}
+
             <DialogFooter className="col-span-12 mt-4">
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>取消</Button>
               <Button type="submit">{editing ? "保存修改" : "创建供应商"}</Button>
@@ -288,6 +360,15 @@ export default function Suppliers() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {editing && (
+        <MiniSupplierContactDialog
+          open={miniContactOpen}
+          onOpenChange={setMiniContactOpen}
+          supplier={editing}
+          onCreated={reloadSupplierContacts}
+        />
+      )}
 
       <ConfirmDialog
         open={!!deletingId}
@@ -297,5 +378,71 @@ export default function Suppliers() {
         onConfirm={onDelete}
       />
     </>
+  );
+}
+
+// —— 供应商详情内：快速新增联系人对话框 ——
+function MiniSupplierContactDialog({
+  open, onOpenChange, supplier, onCreated,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  supplier: Supplier;
+  onCreated: () => void;
+}) {
+  const { register, handleSubmit, reset, setValue, watch } = useForm<Omit<SupplierContact, "id">>({
+    defaultValues: {
+      code: "", supplierId: supplier.id, supplierName: supplier.name,
+      name: "", phone: "", position: "", email: "", wechat: "",
+      isPrimary: false, remark: "",
+      createdAt: new Date().toISOString().slice(0, 10),
+    },
+  });
+
+  useEffect(() => {
+    if (open) {
+      reset({
+        code: `GLXR-${Date.now().toString().slice(-6)}`,
+        supplierId: supplier.id, supplierName: supplier.name,
+        name: "", phone: "", position: "", email: "", wechat: "",
+        isPrimary: false, remark: "",
+        createdAt: new Date().toISOString().slice(0, 10),
+      });
+    }
+  }, [open, supplier.id, supplier.name, reset]);
+
+  const submit = handleSubmit(async (values) => {
+    await supplierContactApi.create({ ...values, supplierId: supplier.id, supplierName: supplier.name });
+    toast.success("联系人已新增");
+    onOpenChange(false);
+    onCreated();
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>新增联系人 · {supplier.name}</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={submit} className="grid grid-cols-12 gap-x-4 gap-y-3 text-sm">
+          <Field label="姓名" required><Input {...register("name", { required: true })} /></Field>
+          <Field label="电话" required><Input {...register("phone", { required: true })} /></Field>
+          <Field label="职务"><Input placeholder="如：销售经理" {...register("position")} /></Field>
+          <Field label="邮箱"><Input {...register("email")} /></Field>
+          <Field label="微信"><Input {...register("wechat")} /></Field>
+          <Field label="主联系人">
+            <div className="h-10 flex items-center">
+              <Switch checked={watch("isPrimary")} onCheckedChange={(v) => setValue("isPrimary", v)} />
+              <span className="ml-2 text-xs text-foreground/60">设为该供应商主联系人</span>
+            </div>
+          </Field>
+          <Field label="备注" span={12}><Textarea rows={2} {...register("remark")} /></Field>
+          <DialogFooter className="col-span-12 mt-2">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>取消</Button>
+            <Button type="submit">创建联系人</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

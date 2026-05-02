@@ -11,7 +11,7 @@ import FollowUps from "./pages/FollowUps";
 import Products from "./pages/Products";
 import Suppliers from "./pages/Suppliers";
 import Purchases from "./pages/Purchases";
-import Contracts from "./pages/Contracts";
+
 import Sales from "./pages/Sales";
 import Payments from "./pages/Payments";
 import Reports from "./pages/Reports";
@@ -34,7 +34,7 @@ const App = () => (
             <Route path="/products" element={<Products />} />
             <Route path="/suppliers" element={<Suppliers />} />
             <Route path="/purchases" element={<Purchases />} />
-            <Route path="/contracts" element={<Contracts />} />
+            <Route path="/contracts" element={<Purchases />} />
             <Route path="/sales" element={<Sales />} />
             <Route path="/payments" element={<Payments />} />
             <Route path="/reports" element={<Reports />} />

@@ -1,7 +1,7 @@
 // Mock 数据生成，使用 mockjs。所有数据在内存中，提供 CRUD 能力。
 import Mock from "mockjs";
 import type {
-  Customer, Product, Supplier, PurchaseOrder, Contract, SalesOrder, Payment, Employee, Contact, FollowUp,
+  Customer, Product, Supplier, SupplierContact, PurchaseOrder, Contract, SalesOrder, Payment, Employee, Contact, FollowUp,
 } from "@/types";
 
 const Random = Mock.Random;
@@ -145,11 +145,28 @@ export const purchases: PurchaseOrder[] = Array.from({ length: 22 }).map((_, i) 
   });
   const total = items.reduce((s, it) => s + it.qty * it.price, 0);
   const status = Random.pick(["draft", "ordered", "received", "received"]) as PurchaseOrder["status"];
+  const applicant = Random.pick(employees);
+  const linked = Random.boolean();
+  const contractAmt = total + Random.integer(0, 5000);
+  const titlePool = ["触摸一体机销售合同", "工控机批量采购合同", "PDA 设备年度采购合同", "工业线缆采购框架合同", "电源模块采购合同"];
   return {
     id: `po${i + 1}`,
-    code: `PO-2024-${pad(101 + i)}`,
+    code: `CG-2024-${pad(101 + i)}`,
+    applicantId: applicant.id,
+    department: Random.pick(["集马科技", "集马科技 · 采购部", "集马科技 · 项目部"]),
+    appliedAt: Random.date("yyyy-MM-dd"),
     supplierId: sup.id,
     supplierName: sup.name,
+    contractTitle: Random.pick(titlePool),
+    signingParty: "集马科技",
+    signedAt: Random.date("yyyy-MM-dd"),
+    contractExpireAt: Random.date("yyyy-MM-dd"),
+    contractAmount: contractAmt,
+    linkedSalesContract: linked,
+    linkedSalesContractId: "",
+    buyerId: Random.pick(["u3", "u4", "u5"]),
+    contractAttachments: [`${sup.name}_采购合同.pdf`],
+    invoiceAttachments: [],
     status,
     items,
     totalAmount: total,
@@ -158,6 +175,28 @@ export const purchases: PurchaseOrder[] = Array.from({ length: 22 }).map((_, i) 
     expectedAt: Random.date("yyyy-MM-dd"),
     remark: "",
   };
+});
+
+// ---------- Supplier contacts ----------
+export const supplierContacts: SupplierContact[] = [];
+suppliers.forEach((s, si) => {
+  const n = Random.integer(1, 3);
+  for (let i = 0; i < n; i++) {
+    supplierContacts.push({
+      id: `sc-${si}-${i}`,
+      code: `GLXR-${pad(20001 + supplierContacts.length)}`,
+      supplierId: s.id,
+      supplierName: s.name,
+      name: i === 0 ? s.contact : Random.cname(),
+      phone: i === 0 ? s.phone : Mock.mock(/^1[3-9]\d{9}$/),
+      position: i === 0 ? (s.contactPosition || "销售经理") : Random.pick(["销售经理", "客户经理", "技术支持", "商务经理", "财务对接"]),
+      email: Random.email(),
+      wechat: Mock.mock(/[a-z0-9_]{6,12}/),
+      isPrimary: i === 0,
+      remark: "",
+      createdAt: Random.date("yyyy-MM-dd"),
+    });
+  }
 });
 
 // ---------- Contracts ----------
