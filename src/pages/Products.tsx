@@ -199,7 +199,7 @@ export default function Products() {
             <div><Label className="text-xs">售价</Label><Input type="number" step="0.01" {...register("price", { valueAsNumber: true })} /></div>
             <div><Label className="text-xs">成本</Label><Input type="number" step="0.01" {...register("cost", { valueAsNumber: true })} /></div>
             <div><Label className="text-xs">库存</Label><Input type="number" {...register("stock", { valueAsNumber: true })} /></div>
-            <div><Label className="text-xs">安全库存</Label><Input type="number" {...register("safetyStock", { valueAsNumber: true })} /></div>
+            <div><Label className="text-xs">安全库存</Label><Input type="number" disabled={watch("category") === "software"} {...register("safetyStock", { valueAsNumber: true })} /></div>
             <div className="col-span-2"><Label className="text-xs">规格</Label><Input {...register("spec")} /></div>
             <DialogFooter className="col-span-2">
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>取消</Button>
