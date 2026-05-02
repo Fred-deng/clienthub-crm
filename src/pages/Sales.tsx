@@ -116,6 +116,8 @@ export default function Sales() {
   const [biz, setBiz] = useState<BizFilter>("all");
   const [quickPay, setQuickPay] = useState<SalesOrder | null>(null);
   const [quickInv, setQuickInv] = useState<SalesOrder | null>(null);
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState<string>("");
 
   useEffect(() => {
     customerApi.all().then((cs) => setCustomers(cs.filter((c) => c.stage === "formal")));
