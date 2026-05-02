@@ -420,6 +420,11 @@ export default function Sales() {
               </Select>
             </Field>
 
+            <GroupTitle>发票管理（开给客户）</GroupTitle>
+            <div className="col-span-12">
+              <InvoiceList direction="out" value={watch("invoices") || []} onChange={(v) => setValue("invoices", v)} />
+            </div>
+
             <GroupTitle>附件与备注</GroupTitle>
             <Field label="合同附件" span={4}><AttachmentList value={watch("contractAttachments") || []} onChange={(v) => setValue("contractAttachments", v)} /></Field>
             <Field label="双方盖章合同扫描件" span={4}><AttachmentList value={watch("stampedContractAttachments") || []} onChange={(v) => setValue("stampedContractAttachments", v)} /></Field>
