@@ -1,6 +1,6 @@
 import { useEffect, useState, ReactNode } from "react";
 import { useForm } from "react-hook-form";
-import { Plus, Pencil, Trash2, Search, X } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, X, Star } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { DataPanel } from "@/components/common/DataPanel";
@@ -10,12 +10,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { supplierApi, employeeApi } from "@/services/api";
+import { supplierApi, supplierContactApi, employeeApi } from "@/services/api";
 import { usePagedList } from "@/hooks/usePagedList";
 import { fmtMoney } from "@/lib/format";
-import type { Supplier, Employee } from "@/types";
+import type { Supplier, SupplierContact, Employee } from "@/types";
 
 const empty: Omit<Supplier, "id"> = {
   code: "", name: "", taxNo: "",
@@ -63,6 +64,8 @@ export default function Suppliers() {
   const [open, setOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [supplierContacts, setSupplierContacts] = useState<SupplierContact[]>([]);
+  const [miniContactOpen, setMiniContactOpen] = useState(false);
 
   useEffect(() => { employeeApi.all().then(setEmployees); }, []);
 
@@ -71,12 +74,20 @@ export default function Suppliers() {
   const openCreate = () => {
     reset({ ...empty, code: `SUP-${Date.now().toString().slice(-6)}` });
     setEditing(null);
+    setSupplierContacts([]);
     setOpen(true);
   };
-  const openEdit = (s: Supplier) => {
+  const openEdit = async (s: Supplier) => {
     reset({ ...empty, ...s, assistantIds: s.assistantIds ?? [] });
     setEditing(s);
     setOpen(true);
+    const list = await supplierContactApi.list({ supplierId: s.id, pageSize: 100 });
+    setSupplierContacts(list.list);
+  };
+  const reloadSupplierContacts = async () => {
+    if (!editing) return;
+    const list = await supplierContactApi.list({ supplierId: editing.id, pageSize: 100 });
+    setSupplierContacts(list.list);
   };
 
   const onSubmit = handleSubmit(async (values) => {
