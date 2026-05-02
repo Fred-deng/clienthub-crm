@@ -78,6 +78,9 @@ export default function Customers() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [customerContacts, setCustomerContacts] = useState<Contact[]>([]);
   const [customerFollowUps, setCustomerFollowUps] = useState<FollowUp[]>([]);
+  // 新增客户时暂存（提交客户后批量写入）
+  const [draftContacts, setDraftContacts] = useState<Omit<Contact, "id">[]>([]);
+  const [draftFollowUps, setDraftFollowUps] = useState<Omit<FollowUp, "id">[]>([]);
   const [miniContactOpen, setMiniContactOpen] = useState(false);
   const [miniFollowUpOpen, setMiniFollowUpOpen] = useState(false);
   const navigate = useNavigate();
@@ -92,6 +95,8 @@ export default function Customers() {
     setEditing(null);
     setCustomerContacts([]);
     setCustomerFollowUps([]);
+    setDraftContacts([]);
+    setDraftFollowUps([]);
     setOpen(true);
   };
   const openEdit = async (c: Customer) => {
@@ -123,7 +128,18 @@ export default function Customers() {
       reload();
     } else {
       const created = await customerApi.create(values);
-      toast.success("客户已创建");
+      // 批量写入草稿子记录
+      if (draftContacts.length) {
+        await Promise.all(draftContacts.map((c) =>
+          contactApi.create({ ...c, customerId: created.id, customerName: created.name })
+        ));
+      }
+      if (draftFollowUps.length) {
+        await Promise.all(draftFollowUps.map((f) =>
+          followUpApi.create({ ...f, customerId: created.id, customerName: created.name, customerStatus: created.status })
+        ));
+      }
+      toast.success(`客户已创建${draftContacts.length ? `，含 ${draftContacts.length} 位联系人` : ""}${draftFollowUps.length ? `，含 ${draftFollowUps.length} 条跟进` : ""}`);
       setOpen(false);
       reload();
       // 如果是从联系人页跳转过来的，回跳并带上新建的客户ID
@@ -331,17 +347,6 @@ export default function Customers() {
             </Field>
             <Field label="归属区域"><Input placeholder="请输入归属区域" {...register("region")} /></Field>
 
-            {/* 联系信息 */}
-            <GroupTitle>联系信息</GroupTitle>
-            <Field label="联系人"><Input {...register("contact")} /></Field>
-            <Field label="电话"><Input {...register("phone")} /></Field>
-            <Field label="邮箱"><Input {...register("email")} /></Field>
-            <Field label="注册地址" span={6}><Input placeholder="请输入注册地址" {...register("registeredAddress")} /></Field>
-            <Field label="通讯地址" span={6}><Input {...register("address")} /></Field>
-            <Field label="经营范围" span={12}>
-              <Textarea rows={2} placeholder="请输入经营范围" {...register("businessScope")} />
-            </Field>
-
             {/* 工商信息 */}
             <GroupTitle>工商信息</GroupTitle>
             <Field label="法定代表人"><Input placeholder="请输入法定代表人" {...register("legalPerson")} /></Field>
@@ -366,6 +371,11 @@ export default function Customers() {
             <Field label="实缴资金（万元）"><Input type="number" step="0.01" {...register("paidInCapital", { valueAsNumber: true })} /></Field>
             <Field label="客户规模"><Input placeholder="请输入客户规模" {...register("scale")} /></Field>
             <Field label="参保人数"><Input type="number" {...register("insuredCount", { valueAsNumber: true })} /></Field>
+            <Field label="注册地址" span={6}><Input placeholder="请输入注册地址" {...register("registeredAddress")} /></Field>
+            <Field label="通讯地址" span={6}><Input {...register("address")} /></Field>
+            <Field label="经营范围" span={12}>
+              <Textarea rows={2} placeholder="请输入经营范围" {...register("businessScope")} />
+            </Field>
 
             {/* 合作信息 */}
             <GroupTitle>合作信息</GroupTitle>
@@ -437,138 +447,161 @@ export default function Customers() {
             </Field>
 
             {/* 客户联系人子表（仅编辑现有客户时显示） */}
-            {editing && (
-              <>
-                <GroupTitle>客户联系人</GroupTitle>
-                <div className="col-span-12 rounded-xl border border-foreground/10 bg-card overflow-hidden">
-                  <div className="flex items-center justify-between px-4 py-2.5 bg-foreground/[0.03] border-b border-foreground/8">
-                    <div className="text-xs text-foreground/60">
-                      共 <span className="font-bold text-foreground">{customerContacts.length}</span> 位联系人
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Link
-                        to={`/contacts?customerId=${editing.id}`}
-                        className="text-[11px] text-cobalt hover:underline"
-                      >
-                        前往联系人页 →
-                      </Link>
-                      <Button type="button" size="sm" variant="outline" onClick={() => setMiniContactOpen(true)}>
-                        <Plus className="h-3.5 w-3.5 mr-1" />新增联系人
-                      </Button>
-                    </div>
-                  </div>
-                  {customerContacts.length === 0 ? (
-                    <div className="px-4 py-6 text-center text-xs text-foreground/45">暂无联系人，点击右上角新增。</div>
-                  ) : (
-                    <table className="data-table">
-                      <thead>
-                        <tr>
-                          <th>姓名</th>
-                          <th>职位</th>
-                          <th>手机号</th>
-                          <th>邮箱</th>
-                          <th>负责人</th>
-                          <th className="num">操作</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {customerContacts.map((ct) => (
-                          <tr key={ct.id}>
-                            <td>
-                              <div className="flex items-center gap-1.5 font-semibold">
-                                {ct.name}
-                                {ct.isPrimary && <Star className="h-3 w-3 fill-tomato text-tomato" />}
-                              </div>
-                            </td>
-                            <td className="text-foreground/70">{ct.position || "—"}</td>
-                            <td className="mono">{ct.phone}</td>
-                            <td className="text-foreground/65 text-[12px]">{ct.email || "—"}</td>
-                            <td className="text-foreground/70">{ownerName(ct.ownerId)}</td>
-                            <td className="num">
+            {/* 客户联系人子表（编辑：真实数据 / 新增：草稿） */}
+            <GroupTitle>客户联系人</GroupTitle>
+            <div className="col-span-12 rounded-xl border border-foreground/10 bg-card overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-2.5 bg-foreground/[0.03] border-b border-foreground/8">
+                <div className="text-xs text-foreground/60">
+                  共 <span className="font-bold text-foreground">{editing ? customerContacts.length : draftContacts.length}</span> 位联系人
+                  {!editing && <span className="ml-2 text-foreground/40">（保存客户时一并创建）</span>}
+                </div>
+                <div className="flex items-center gap-2">
+                  {editing && (
+                    <Link
+                      to={`/contacts?customerId=${editing.id}`}
+                      className="text-[11px] text-cobalt hover:underline"
+                    >
+                      前往联系人页 →
+                    </Link>
+                  )}
+                  <Button type="button" size="sm" variant="outline" onClick={() => setMiniContactOpen(true)}>
+                    <Plus className="h-3.5 w-3.5 mr-1" />新增联系人
+                  </Button>
+                </div>
+              </div>
+              {(editing ? customerContacts.length : draftContacts.length) === 0 ? (
+                <div className="px-4 py-6 text-center text-xs text-foreground/45">暂无联系人，点击右上角新增。</div>
+              ) : (
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>姓名</th>
+                      <th>职位</th>
+                      <th>手机号</th>
+                      <th>邮箱</th>
+                      <th>负责人</th>
+                      <th className="num">操作</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(editing ? customerContacts : draftContacts).map((ct, idx) => (
+                      <tr key={(ct as any).id ?? `draft-${idx}`}>
+                        <td>
+                          <div className="flex items-center gap-1.5 font-semibold">
+                            {ct.name}
+                            {ct.isPrimary && <Star className="h-3 w-3 fill-tomato text-tomato" />}
+                          </div>
+                        </td>
+                        <td className="text-foreground/70">{ct.position || "—"}</td>
+                        <td className="mono">{ct.phone}</td>
+                        <td className="text-foreground/65 text-[12px]">{ct.email || "—"}</td>
+                        <td className="text-foreground/70">{ownerName(ct.ownerId)}</td>
+                        <td className="num">
+                          {editing ? (
+                            <Link
+                              to={`/contacts?customerId=${editing.id}&editId=${(ct as any).id}`}
+                              className="text-[11px] text-cobalt hover:underline"
+                            >
+                              编辑
+                            </Link>
+                          ) : (
+                            <button
+                              type="button"
+                              className="text-[11px] text-tomato hover:underline"
+                              onClick={() => setDraftContacts((arr) => arr.filter((_, i) => i !== idx))}
+                            >
+                              移除
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+
+            <GroupTitle>跟进记录</GroupTitle>
+            <div className="col-span-12 rounded-xl border border-foreground/10 bg-card overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-2.5 bg-foreground/[0.03] border-b border-foreground/8">
+                <div className="text-xs text-foreground/60">
+                  共 <span className="font-bold text-foreground">{editing ? customerFollowUps.length : draftFollowUps.length}</span> 条跟进
+                  {!editing && <span className="ml-2 text-foreground/40">（保存客户时一并创建）</span>}
+                </div>
+                <div className="flex items-center gap-2">
+                  {editing && (
+                    <Link
+                      to={`/follow-ups?customerId=${editing.id}`}
+                      className="text-[11px] text-cobalt hover:underline"
+                    >
+                      前往跟进记录页 →
+                    </Link>
+                  )}
+                  <Button type="button" size="sm" variant="outline" onClick={() => setMiniFollowUpOpen(true)}>
+                    <Plus className="h-3.5 w-3.5 mr-1" />新增跟进
+                  </Button>
+                </div>
+              </div>
+              {(editing ? customerFollowUps.length : draftFollowUps.length) === 0 ? (
+                <div className="px-4 py-6 text-center text-xs text-foreground/45">暂无跟进记录，点击右上角新增。</div>
+              ) : (
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>主题</th>
+                      <th>形式</th>
+                      <th>商机状态</th>
+                      <th>联系日期</th>
+                      <th>下次回访</th>
+                      <th className="num">预计金额</th>
+                      <th>负责人</th>
+                      <th className="num">操作</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(editing ? customerFollowUps : draftFollowUps).map((f, idx) => {
+                      const Icon = wayIcon[f.contactWay] ?? MoreHorizontal;
+                      return (
+                        <tr key={(f as any).id ?? `draft-${idx}`}>
+                          <td>
+                            <div className="font-semibold">{f.subject}</div>
+                            <div className="text-[11px] text-foreground/45 truncate max-w-[260px]">{f.content}</div>
+                          </td>
+                          <td>
+                            <span className="cell-chip bg-foreground/5 text-foreground/75 ring-1 ring-foreground/10 inline-flex items-center gap-1">
+                              <Icon className="h-3 w-3" />{f.contactWay}
+                            </span>
+                          </td>
+                          <td className="text-foreground/70">{f.oppStatus || "—"}</td>
+                          <td className="mono text-[12px]">{f.contactDate}</td>
+                          <td className="mono text-[12px] text-foreground/65">{f.nextVisitAt || "—"}</td>
+                          <td className="num">{f.expectedAmount ? fmtMoney(f.expectedAmount) : "—"}</td>
+                          <td className="text-foreground/70">{ownerName(f.ownerId)}</td>
+                          <td className="num">
+                            {editing ? (
                               <Link
-                                to={`/contacts?customerId=${editing.id}&editId=${ct.id}`}
+                                to={`/follow-ups?customerId=${editing.id}&editId=${(f as any).id}`}
                                 className="text-[11px] text-cobalt hover:underline"
                               >
                                 编辑
                               </Link>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  )}
-                </div>
-
-                <GroupTitle>跟进记录</GroupTitle>
-                <div className="col-span-12 rounded-xl border border-foreground/10 bg-card overflow-hidden">
-                  <div className="flex items-center justify-between px-4 py-2.5 bg-foreground/[0.03] border-b border-foreground/8">
-                    <div className="text-xs text-foreground/60">
-                      共 <span className="font-bold text-foreground">{customerFollowUps.length}</span> 条跟进
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Link
-                        to={`/follow-ups?customerId=${editing.id}`}
-                        className="text-[11px] text-cobalt hover:underline"
-                      >
-                        前往跟进记录页 →
-                      </Link>
-                      <Button type="button" size="sm" variant="outline" onClick={() => setMiniFollowUpOpen(true)}>
-                        <Plus className="h-3.5 w-3.5 mr-1" />新增跟进
-                      </Button>
-                    </div>
-                  </div>
-                  {customerFollowUps.length === 0 ? (
-                    <div className="px-4 py-6 text-center text-xs text-foreground/45">暂无跟进记录，点击右上角新增。</div>
-                  ) : (
-                    <table className="data-table">
-                      <thead>
-                        <tr>
-                          <th>主题</th>
-                          <th>形式</th>
-                          <th>商机状态</th>
-                          <th>联系日期</th>
-                          <th>下次回访</th>
-                          <th className="num">预计金额</th>
-                          <th>负责人</th>
-                          <th className="num">操作</th>
+                            ) : (
+                              <button
+                                type="button"
+                                className="text-[11px] text-tomato hover:underline"
+                                onClick={() => setDraftFollowUps((arr) => arr.filter((_, i) => i !== idx))}
+                              >
+                                移除
+                              </button>
+                            )}
+                          </td>
                         </tr>
-                      </thead>
-                      <tbody>
-                        {customerFollowUps.map((f) => {
-                          const Icon = wayIcon[f.contactWay] ?? MoreHorizontal;
-                          return (
-                            <tr key={f.id}>
-                              <td>
-                                <div className="font-semibold">{f.subject}</div>
-                                <div className="text-[11px] text-foreground/45 truncate max-w-[260px]">{f.content}</div>
-                              </td>
-                              <td>
-                                <span className="cell-chip bg-foreground/5 text-foreground/75 ring-1 ring-foreground/10 inline-flex items-center gap-1">
-                                  <Icon className="h-3 w-3" />{f.contactWay}
-                                </span>
-                              </td>
-                              <td className="text-foreground/70">{f.oppStatus || "—"}</td>
-                              <td className="mono text-[12px]">{f.contactDate}</td>
-                              <td className="mono text-[12px] text-foreground/65">{f.nextVisitAt || "—"}</td>
-                              <td className="num">{f.expectedAmount ? fmtMoney(f.expectedAmount) : "—"}</td>
-                              <td className="text-foreground/70">{ownerName(f.ownerId)}</td>
-                              <td className="num">
-                                <Link
-                                  to={`/follow-ups?customerId=${editing.id}&editId=${f.id}`}
-                                  className="text-[11px] text-cobalt hover:underline"
-                                >
-                                  编辑
-                                </Link>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  )}
-                </div>
-              </>
-            )}
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </div>
 
             <DialogFooter className="col-span-12 mt-4">
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>取消</Button>
@@ -578,27 +611,33 @@ export default function Customers() {
         </DialogContent>
       </Dialog>
 
-      {/* 在客户编辑窗口内快速新增联系人 */}
-      {editing && (
-        <MiniContactDialog
-          open={miniContactOpen}
-          onOpenChange={setMiniContactOpen}
-          customer={editing}
-          employees={employees}
-          onCreated={reloadCustomerContacts}
-        />
-      )}
+      {/* 在客户编辑窗口内快速新增联系人（新增模式则加入草稿） */}
+      <MiniContactDialog
+        open={miniContactOpen}
+        onOpenChange={setMiniContactOpen}
+        customer={editing ?? {
+          id: "", name: watch("name") || "（未保存客户）",
+          ownerId: watch("ownerId") || "u3",
+        } as Customer}
+        employees={employees}
+        onCreated={editing ? reloadCustomerContacts : undefined}
+        onDraft={editing ? undefined : (draft) => setDraftContacts((arr) => [...arr, draft])}
+      />
 
-      {editing && (
-        <MiniFollowUpDialog
-          open={miniFollowUpOpen}
-          onOpenChange={setMiniFollowUpOpen}
-          customer={editing}
-          contacts={customerContacts}
-          employees={employees}
-          onCreated={reloadCustomerFollowUps}
-        />
-      )}
+      <MiniFollowUpDialog
+        open={miniFollowUpOpen}
+        onOpenChange={setMiniFollowUpOpen}
+        customer={editing ?? {
+          id: "", name: watch("name") || "（未保存客户）",
+          status: watch("status") || "potential",
+          ownerId: watch("ownerId") || "u3",
+        } as Customer}
+        contacts={editing ? customerContacts : (draftContacts as unknown as Contact[])}
+        employees={employees}
+        onCreated={editing ? reloadCustomerFollowUps : undefined}
+        onDraft={editing ? undefined : (draft) => setDraftFollowUps((arr) => [...arr, draft])}
+      />
+
 
       <ConfirmDialog
         open={!!deletingId}
@@ -613,13 +652,14 @@ export default function Customers() {
 
 // —— 客户详情内：快速新增联系人对话框 ——
 function MiniContactDialog({
-  open, onOpenChange, customer, employees, onCreated,
+  open, onOpenChange, customer, employees, onCreated, onDraft,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   customer: Customer;
   employees: Employee[];
-  onCreated: () => void;
+  onCreated?: () => void;
+  onDraft?: (draft: Omit<Contact, "id">) => void;
 }) {
   const { register, handleSubmit, reset, setValue, watch } = useForm<Omit<Contact, "id">>({
     defaultValues: {
@@ -643,10 +683,15 @@ function MiniContactDialog({
   }, [open, customer.id, customer.name, customer.ownerId, reset]);
 
   const submit = handleSubmit(async (values) => {
-    await contactApi.create({ ...values, customerId: customer.id, customerName: customer.name });
-    toast.success("联系人已新增");
+    if (onDraft) {
+      onDraft({ ...values, customerId: customer.id, customerName: customer.name });
+      toast.success("已加入草稿，将在保存客户时一起创建");
+    } else {
+      await contactApi.create({ ...values, customerId: customer.id, customerName: customer.name });
+      toast.success("联系人已新增");
+      onCreated?.();
+    }
     onOpenChange(false);
-    onCreated();
   });
 
   return (
@@ -689,14 +734,15 @@ function MiniContactDialog({
 
 // —— 客户详情内：快速新增跟进记录对话框 ——
 function MiniFollowUpDialog({
-  open, onOpenChange, customer, contacts, employees, onCreated,
+  open, onOpenChange, customer, contacts, employees, onCreated, onDraft,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   customer: Customer;
   contacts: Contact[];
   employees: Employee[];
-  onCreated: () => void;
+  onCreated?: () => void;
+  onDraft?: (draft: Omit<FollowUp, "id">) => void;
 }) {
   const { register, handleSubmit, reset, setValue, watch } = useForm<Omit<FollowUp, "id">>({
     defaultValues: {
@@ -731,16 +777,22 @@ function MiniFollowUpDialog({
 
   const submit = handleSubmit(async (values) => {
     const ct = contacts.find((x) => x.id === values.contactId);
-    await followUpApi.create({
+    const payload = {
       ...values,
       customerId: customer.id,
       customerName: customer.name,
       customerStatus: customer.status,
       contactName: ct?.name ?? "",
-    });
-    toast.success("跟进记录已新增");
+    };
+    if (onDraft) {
+      onDraft(payload);
+      toast.success("已加入草稿，将在保存客户时一起创建");
+    } else {
+      await followUpApi.create(payload);
+      toast.success("跟进记录已新增");
+      onCreated?.();
+    }
     onOpenChange(false);
-    onCreated();
   });
 
   return (
