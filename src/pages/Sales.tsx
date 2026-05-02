@@ -301,7 +301,9 @@ export default function Sales() {
                     <td className="num">{fmtMoney(sumContract)}</td>
                     <td className="num text-mint">{fmtMoney(sumReceived)}</td>
                     <td className="num text-cobalt">{fmtMoney(sumInvoice)}</td>
-                    <td colSpan={3} />
+                    <td />
+                    <td />
+                    <td />
                   </tr>
                 </tfoot>
               );
