@@ -105,6 +105,7 @@ export default function Sales() {
   const [editing, setEditing] = useState<SalesOrder | null>(null);
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<LineItem[]>([]);
+  const [draftScope, setDraftScope] = useState<string>("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [logOpen, setLogOpen] = useState(false);
   const [logRefId, setLogRefId] = useState<string | undefined>(undefined);
