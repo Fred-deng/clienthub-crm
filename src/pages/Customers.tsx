@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Plus, Pencil, Trash2, Search, Download, Users as UsersIcon } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Plus, Pencil, Trash2, Search, Download, Users as UsersIcon, Star, ArrowLeft } from "lucide-react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { DataPanel } from "@/components/common/DataPanel";
@@ -11,16 +11,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { customerApi, employeeApi } from "@/services/api";
+import { customerApi, contactApi, employeeApi } from "@/services/api";
 import { usePagedList } from "@/hooks/usePagedList";
 import { fmtMoney, customerStageLabel, customerTypeLabel } from "@/lib/format";
-import type { Customer, Employee } from "@/types";
+import type { Customer, Contact, Employee } from "@/types";
 import { useEffect, ReactNode } from "react";
 
 const emptyCustomer: Omit<Customer, "id"> = {
@@ -75,6 +76,10 @@ export default function Customers() {
   const [open, setOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [customerContacts, setCustomerContacts] = useState<Contact[]>([]);
+  const [miniContactOpen, setMiniContactOpen] = useState(false);
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => { employeeApi.all().then(setEmployees); }, []);
 
@@ -83,24 +88,44 @@ export default function Customers() {
   const openCreate = () => {
     reset({ ...emptyCustomer, code: `CUS-${Date.now().toString().slice(-6)}` });
     setEditing(null);
+    setCustomerContacts([]);
     setOpen(true);
   };
-  const openEdit = (c: Customer) => {
+  const openEdit = async (c: Customer) => {
     reset({ ...emptyCustomer, ...c });
     setEditing(c);
     setOpen(true);
+    const list = await contactApi.list({ customerId: c.id, pageSize: 100 });
+    setCustomerContacts(list.list);
   };
+
+  // —— 跨页流程：从「联系人」过来新增客户 ——
+  useEffect(() => {
+    if (searchParams.get("createNew") === "1") {
+      openCreate();
+      // 不立即移除 createNew，留待保存时根据 returnTo 跳转
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const onSubmit = handleSubmit(async (values) => {
     if (editing) {
       await customerApi.update(editing.id, values);
       toast.success("客户已更新");
+      setOpen(false);
+      reload();
     } else {
-      await customerApi.create(values);
+      const created = await customerApi.create(values);
       toast.success("客户已创建");
+      setOpen(false);
+      reload();
+      // 如果是从联系人页跳转过来的，回跳并带上新建的客户ID
+      const returnTo = searchParams.get("returnTo");
+      if (returnTo) {
+        const sep = returnTo.includes("?") ? "&" : "?";
+        navigate(`${returnTo}${sep}newCustomerId=${created.id}`);
+      }
     }
-    setOpen(false);
-    reload();
   });
 
   const onDelete = async () => {
@@ -113,6 +138,12 @@ export default function Customers() {
 
   const ownerName = (id: string) => employees.find(e => e.id === id)?.name ?? "—";
 
+  const reloadCustomerContacts = async () => {
+    if (!editing) return;
+    const list = await contactApi.list({ customerId: editing.id, pageSize: 100 });
+    setCustomerContacts(list.list);
+  };
+
   return (
     <>
       <PageHeader
@@ -121,6 +152,11 @@ export default function Customers() {
         subtitle="软件客户与硬件客户档案，区分潜在与正式客户。"
         actions={
           <>
+            {searchParams.get("returnTo") && (
+              <Button variant="outline" size="sm" onClick={() => navigate(searchParams.get("returnTo")!)}>
+                <ArrowLeft className="h-4 w-4 mr-1.5" />返回联系人
+              </Button>
+            )}
             <Button variant="outline" size="sm"><Download className="h-4 w-4 mr-1.5" />导出</Button>
             <Button size="sm" onClick={openCreate}><Plus className="h-4 w-4 mr-1.5" />新增客户</Button>
           </>

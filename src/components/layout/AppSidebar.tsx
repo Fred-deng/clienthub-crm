@@ -18,7 +18,7 @@ const groups = [
     label: "业务",
     items: [
       { title: "客户管理", url: "/customers", icon: Users, dot: "mustard" },
-      { title: "联系人", url: "/contacts", icon: ContactIcon, dot: "tomato" },
+      { title: "客户联系人", url: "/contacts", icon: ContactIcon, dot: "tomato" },
       { title: "产品库存", url: "/products", icon: Package, dot: "mint" },
       { title: "供应商", url: "/suppliers", icon: Truck, dot: "cobalt" },
     ],
