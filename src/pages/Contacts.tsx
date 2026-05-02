@@ -1,8 +1,8 @@
 import { useEffect, useState, ReactNode } from "react";
 import { useForm } from "react-hook-form";
-import { Plus, Pencil, Trash2, Search, Star } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Star, UserPlus } from "lucide-react";
 import { toast } from "sonner";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { DataPanel } from "@/components/common/DataPanel";
 import { PaginationBar } from "@/components/common/PaginationBar";
