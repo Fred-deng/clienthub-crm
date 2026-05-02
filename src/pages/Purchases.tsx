@@ -589,6 +589,13 @@ export default function Purchases() {
         existing={quickInv?.invoices || []}
         onSaved={() => { setQuickInv(null); reload(); }}
       />
+      <OrderLogDialog
+        open={logOpen}
+        onOpenChange={setLogOpen}
+        module="purchase"
+        refId={logRefId}
+        refCode={logRefCode}
+      />
     </>
   );
 }
