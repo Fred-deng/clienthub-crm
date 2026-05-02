@@ -1,6 +1,6 @@
 import { useEffect, useState, ReactNode } from "react";
 import { useForm } from "react-hook-form";
-import { Plus, Pencil, Trash2, Search, Paperclip, X, FileText, ArrowUpRight, Receipt } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Paperclip, X, FileText, ArrowUpRight, Receipt, History } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { DataPanel } from "@/components/common/DataPanel";
@@ -22,6 +22,9 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { purchaseApi, supplierApi, productApi, employeeApi, contractApi } from "@/services/api";
 import { applyPurchaseReceive, revertPurchaseReceive, findOrCreateProductByName } from "@/services/inventory";
+import { logOrderUpdate, logOrderDelete } from "@/services/orderLog";
+import { useCurrentUser } from "@/context/CurrentUserContext";
+import { OrderLogDialog } from "@/components/common/OrderLogDialog";
 import { usePagedList } from "@/hooks/usePagedList";
 import { fmtMoney } from "@/lib/format";
 import { splitPurchase, bizLabel, bizTone, type BizFilter } from "@/lib/biz";
