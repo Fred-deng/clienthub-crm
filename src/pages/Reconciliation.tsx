@@ -73,6 +73,7 @@ export default function Reconciliation() {
 
   const all = tab === "in" ? inRows : outRows;
   const filtered = all.filter((r) => {
+    if (!inRange(r.createdAt, range)) return false;
     if (filter === "outstanding" && r.outstanding <= 0) return false;
     if (keyword) {
       const k = keyword.toLowerCase();
