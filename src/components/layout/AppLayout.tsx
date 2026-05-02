@@ -57,7 +57,7 @@ export default function AppLayout() {
         <div className="flex-1 flex flex-col min-w-0 relative z-10">
           <header className="h-16 flex items-center justify-between px-8 lg:px-10 shrink-0 border-b border-foreground/[0.06]">
             <div className="flex items-center gap-3">
-              <SidebarTrigger className="text-foreground/55 hover:text-foreground rounded-lg" />
+              <SidebarToggle />
               <div className="hidden md:flex items-center gap-2.5 rounded-full bg-card/70 backdrop-blur border border-foreground/10 px-4 h-10 w-72 lg:w-[380px] focus-within:border-foreground/30 focus-within:bg-card transition-all">
                 <Search className="h-3.5 w-3.5 text-foreground/40 shrink-0" />
                 <input
