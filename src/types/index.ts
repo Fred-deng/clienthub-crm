@@ -263,6 +263,7 @@ export type SalesMode = "普通销售" | "渠道销售" | "项目销售" | "服�
 export interface SalesItem {
   productId: string;
   productName: string;
+  category?: ProductCategory;
   qty: number;
   price: number;
 }
