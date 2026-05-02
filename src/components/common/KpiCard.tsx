@@ -54,21 +54,21 @@ export function KpiCard({ label, value, hint, tone = "default", icon, index }: K
     <div
       className={cn(
         "group relative rounded-3xl bg-card border border-foreground/[0.07]",
-        "p-6 pt-7 flex flex-col justify-between min-h-[180px] overflow-hidden",
+        "p-4 md:p-6 md:pt-7 flex flex-col justify-between min-h-[140px] md:min-h-[180px] overflow-hidden",
         "transition-all duration-300 cursor-default",
         "shadow-[0_1px_2px_0_hsl(var(--ink)/0.04)]",
         "hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-12px_hsl(var(--ink)/0.15)] hover:border-foreground/15",
       )}
     >
       {/* top accent bar */}
-      <div className={cn("absolute left-6 right-6 top-0 h-[3px] rounded-b-full", s.accent)} />
+      <div className={cn("absolute left-4 right-4 md:left-6 md:right-6 top-0 h-[3px] rounded-b-full", s.accent)} />
 
       {/* soft glow behind number */}
       <div className={cn("absolute -bottom-12 -right-8 size-48 rounded-full bg-gradient-to-tl to-transparent blur-2xl opacity-90", s.glow)} />
 
       {/* header: index + label + icon */}
-      <div className="flex items-start justify-between gap-3 relative">
-        <div className="flex items-center gap-2.5 min-w-0">
+      <div className="flex items-start justify-between gap-2 relative">
+        <div className="flex items-center gap-2 min-w-0">
           {typeof index === "number" && (
             <span className={cn(
               "font-mono text-[10px] font-bold tracking-[0.15em] tabular-nums",
@@ -77,20 +77,20 @@ export function KpiCard({ label, value, hint, tone = "default", icon, index }: K
               {String(index).padStart(2, "0")}
             </span>
           )}
-          <span className="text-[12px] font-semibold tracking-wide text-foreground/55 uppercase truncate">
+          <span className="text-[11px] md:text-[12px] font-semibold tracking-wide text-foreground/55 uppercase truncate">
             {label}
           </span>
         </div>
         {icon && (
-          <div className={cn("size-8 rounded-xl flex items-center justify-center shrink-0", s.iconBg)}>
+          <div className={cn("size-7 md:size-8 rounded-xl flex items-center justify-center shrink-0", s.iconBg)}>
             {icon}
           </div>
         )}
       </div>
 
       {/* value */}
-      <div className="relative mt-3">
-        <div className="font-display font-black text-foreground text-[40px] leading-[1.05] tabular-nums tracking-tight whitespace-nowrap">
+      <div className="relative mt-3 min-w-0">
+        <div className="font-display font-black text-foreground text-[26px] md:text-[40px] leading-[1.05] tabular-nums tracking-tight truncate">
           {value}
         </div>
         {hint && (

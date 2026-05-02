@@ -6,6 +6,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useCurrentUser } from "@/context/CurrentUserContext";
 import { AppSidebar } from "./AppSidebar";
+import { MobileBottomNav } from "./MobileBottomNav";
 
 function SidebarToggle() {
   const { state, toggleSidebar, isMobile } = useSidebar();
@@ -55,8 +56,8 @@ export default function AppLayout() {
         <div className="memphis-blob-mint" />
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0 relative z-10">
-          <header className="h-16 flex items-center justify-between px-8 lg:px-10 shrink-0 border-b border-foreground/[0.06]">
-            <div className="flex items-center gap-3">
+          <header className="h-14 md:h-16 flex items-center justify-between px-3 md:px-8 lg:px-10 shrink-0 border-b border-foreground/[0.06] gap-2">
+            <div className="flex items-center gap-2 md:gap-3 min-w-0">
               <SidebarToggle />
               <div className="hidden md:flex items-center gap-2.5 rounded-full bg-card/70 backdrop-blur border border-foreground/10 px-4 h-10 w-72 lg:w-[380px] focus-within:border-foreground/30 focus-within:bg-card transition-all">
                 <Search className="h-3.5 w-3.5 text-foreground/40 shrink-0" />
@@ -69,8 +70,16 @@ export default function AppLayout() {
                   <Command className="h-2.5 w-2.5" />K
                 </kbd>
               </div>
+              {/* Mobile: brand mark in place of full sidebar */}
+              <div className="md:hidden flex items-center gap-2 min-w-0">
+                <div className="size-8 rounded-lg bg-foreground flex items-stretch overflow-hidden shrink-0">
+                  <span className="flex-1 flex items-center justify-center text-[12px] font-display font-black bg-tomato text-[hsl(var(--paper))]">J</span>
+                  <span className="flex-1 flex items-center justify-center text-[12px] font-display font-black text-mustard">M</span>
+                </div>
+                <span className="font-display font-bold text-[14px] truncate">集马<span className="text-tomato">·</span>科技</span>
+              </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 md:gap-3 shrink-0">
               <div className="hidden lg:flex flex-col items-end leading-tight">
                 <span className="text-[10px] text-foreground/45 font-mono uppercase tracking-wider">{date}</span>
                 <span className="text-xs font-mono tabular-nums text-foreground/75 font-semibold">{time}</span>
@@ -87,10 +96,10 @@ export default function AppLayout() {
                       <span className="text-[10px] text-foreground/45">{greet}</span>
                       <span className="text-xs font-bold">{current.name}</span>
                     </div>
-                    <div className="size-9 rounded-full bg-gradient-to-br from-mustard to-[hsl(32_72%_50%)] flex items-center justify-center font-display font-black text-foreground text-sm ring-2 ring-card shadow-sm">
+                    <div className="size-8 md:size-9 rounded-full bg-gradient-to-br from-mustard to-[hsl(32_72%_50%)] flex items-center justify-center font-display font-black text-foreground text-sm ring-2 ring-card shadow-sm">
                       {initial}
                     </div>
-                    <ChevronDown className="h-3.5 w-3.5 text-foreground/45" />
+                    <ChevronDown className="h-3.5 w-3.5 text-foreground/45 hidden md:block" />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
@@ -107,11 +116,12 @@ export default function AppLayout() {
               </DropdownMenu>
             </div>
           </header>
-          <main className="flex-1 overflow-y-auto">
-            <div className="px-8 lg:px-12 pb-16 max-w-[1600px] mx-auto animate-fade-in">
+          <main className="flex-1 overflow-y-auto pb-16 md:pb-0">
+            <div className="px-3 md:px-8 lg:px-12 pb-16 max-w-[1600px] mx-auto animate-fade-in">
               <Outlet />
             </div>
           </main>
+          <MobileBottomNav />
         </div>
       </div>
     </SidebarProvider>

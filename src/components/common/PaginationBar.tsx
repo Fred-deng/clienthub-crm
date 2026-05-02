@@ -17,7 +17,7 @@ export function PaginationBar({ page, pageSize, total, onPageChange }: Paginatio
   for (let i = start; i <= end; i++) window.push(i);
 
   return (
-    <div className="flex items-center justify-between px-6 py-4 border-t border-foreground/[0.06] text-xs">
+    <div className="flex items-center justify-between gap-2 flex-wrap px-3 md:px-6 py-3 md:py-4 border-t border-foreground/[0.06] text-xs">
       <div className="text-foreground/55">
         共 <span className="text-foreground font-mono font-bold">{total}</span> 条 ·
         每页 <span className="text-foreground font-mono">{pageSize}</span> 条
