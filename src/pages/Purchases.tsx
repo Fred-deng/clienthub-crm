@@ -8,6 +8,7 @@ import { PaginationBar } from "@/components/common/PaginationBar";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { StatusBadge } from "@/components/common/StatusBadge";
 import { LineItemsEditor, LineItem } from "@/components/common/LineItemsEditor";
+import { InvoiceList, InvoiceRecord } from "@/components/common/InvoiceList";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -99,6 +100,7 @@ type FormValues = {
   buyerId: string;
   contractAttachments: string[];
   invoiceAttachments: string[];
+  invoices: InvoiceRecord[];
   status: PurchaseOrder["status"];
   paid: number;
   createdAt: string;
@@ -112,7 +114,7 @@ const emptyForm: FormValues = {
   supplierId: "", contractTitle: "", signingParty: "集马科技",
   signedAt: today(), contractExpireAt: "", contractAmount: 0,
   linkedSalesContract: false, linkedSalesContractId: "",
-  buyerId: "", contractAttachments: [], invoiceAttachments: [],
+  buyerId: "", contractAttachments: [], invoiceAttachments: [], invoices: [],
   status: "draft", paid: 0, createdAt: today(), expectedAt: "", remark: "",
 };
 
@@ -158,6 +160,7 @@ export default function Purchases() {
       buyerId: o.buyerId || "",
       contractAttachments: o.contractAttachments || [],
       invoiceAttachments: o.invoiceAttachments || [],
+      invoices: o.invoices || [],
       status: o.status,
       paid: o.paid,
       createdAt: o.createdAt,
@@ -235,6 +238,7 @@ export default function Purchases() {
                 <th className="num">合同金额</th>
                 <th className="num">明细合计</th>
                 <th className="num">已付</th>
+                <th className="num">发票</th>
                 <th>申请人</th>
                 <th>采购经理</th>
                 <th>申请日期</th>
@@ -242,9 +246,9 @@ export default function Purchases() {
               </tr>
             </thead>
             <tbody>
-              {loading && <tr className="empty"><td colSpan={11} className="empty">加载中…</td></tr>}
+              {loading && <tr className="empty"><td colSpan={12} className="empty">加载中…</td></tr>}
               {!loading && data.list.length === 0 && (
-                <tr className="empty"><td colSpan={11} className="empty">暂无采购订单</td></tr>
+                <tr className="empty"><td colSpan={12} className="empty">暂无采购订单</td></tr>
               )}
               {data.list.map((o) => {
                 const unpaid = o.totalAmount - o.paid;
@@ -260,6 +264,7 @@ export default function Purchases() {
                     <td className="num mono">{fmtMoney(o.contractAmount || 0)}</td>
                     <td className="num mono">{fmtMoney(o.totalAmount)}</td>
                     <td className={"num mono " + (unpaid > 0 ? "text-tomato" : "text-foreground/55")}>{fmtMoney(o.paid)}</td>
+                    <td className="num mono text-[12px] text-foreground/70">{(o.invoices?.length ?? 0)} 张 / {fmtMoney((o.invoices || []).reduce((s, r) => s + (r.amount || 0), 0))}</td>
                     <td className="text-foreground/70">{empName(o.applicantId)}</td>
                     <td className="text-foreground/70">{empName(o.buyerId)}</td>
                     <td className="text-[12px] text-foreground/60 mono">{o.appliedAt}</td>
@@ -388,9 +393,15 @@ export default function Purchases() {
             <Field label="采购合同附件" span={6}>
               <AttachmentList value={watch("contractAttachments") || []} onChange={(v) => setValue("contractAttachments", v)} />
             </Field>
-            <Field label="开票资料" span={6}>
+            <Field label="开票资料附件" span={6}>
               <AttachmentList value={watch("invoiceAttachments") || []} onChange={(v) => setValue("invoiceAttachments", v)} />
             </Field>
+
+            {/* 发票管理（子表）：供应商开给我方 */}
+            <GroupTitle>发票管理（供应商开票）</GroupTitle>
+            <div className="col-span-12">
+              <InvoiceList direction="in" value={watch("invoices") || []} onChange={(v) => setValue("invoices", v)} />
+            </div>
 
             {/* 备注 */}
             <GroupTitle>备注</GroupTitle>

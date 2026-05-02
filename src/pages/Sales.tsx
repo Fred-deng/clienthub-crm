@@ -8,6 +8,7 @@ import { PaginationBar } from "@/components/common/PaginationBar";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { StatusBadge } from "@/components/common/StatusBadge";
 import { LineItemsEditor, LineItem } from "@/components/common/LineItemsEditor";
+import { InvoiceList, InvoiceRecord } from "@/components/common/InvoiceList";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -111,6 +112,7 @@ type FormValues = {
   licenseAttachments: string[];
   invoiceAttachments: string[];
   otherAttachments: string[];
+  invoices: InvoiceRecord[];
   status: string;
   ownerId: string;
   createdAt: string;
@@ -148,7 +150,7 @@ export default function Sales() {
       signedAt: "", contractExpireAt: "", accountManagerId: "", assistantIds: [],
       isSettled: false, isPartyA: false,
       serviceFee: 0, outsourceFee: 0, salesFee: 0, productStdCost: 0,
-      contractAttachments: [], stampedContractAttachments: [], licenseAttachments: [], invoiceAttachments: [], otherAttachments: [],
+      contractAttachments: [], stampedContractAttachments: [], licenseAttachments: [], invoiceAttachments: [], otherAttachments: [], invoices: [],
       status: "pending", ownerId: "u3", createdAt: new Date().toISOString().slice(0, 10), received: 0, remark: "",
     },
   });
@@ -161,7 +163,7 @@ export default function Sales() {
       signedAt: "", contractExpireAt: "", accountManagerId: "u3", assistantIds: [],
       isSettled: false, isPartyA: false,
       serviceFee: 0, outsourceFee: 0, salesFee: 0, productStdCost: 0,
-      contractAttachments: [], stampedContractAttachments: [], licenseAttachments: [], invoiceAttachments: [], otherAttachments: [],
+      contractAttachments: [], stampedContractAttachments: [], licenseAttachments: [], invoiceAttachments: [], otherAttachments: [], invoices: [],
       status: "pending", ownerId: "u3", createdAt: new Date().toISOString().slice(0, 10), received: 0, remark: "",
     });
     setItems([]); setEditing(null); setOpen(true);
@@ -177,7 +179,7 @@ export default function Sales() {
       isSettled: !!o.isSettled, isPartyA: !!o.isPartyA,
       serviceFee: o.serviceFee ?? 0, outsourceFee: o.outsourceFee ?? 0, salesFee: o.salesFee ?? 0, productStdCost: o.productStdCost ?? 0,
       contractAttachments: o.contractAttachments ?? [], stampedContractAttachments: o.stampedContractAttachments ?? [],
-      licenseAttachments: o.licenseAttachments ?? [], invoiceAttachments: o.invoiceAttachments ?? [], otherAttachments: o.otherAttachments ?? [],
+      licenseAttachments: o.licenseAttachments ?? [], invoiceAttachments: o.invoiceAttachments ?? [], otherAttachments: o.otherAttachments ?? [], invoices: o.invoices ?? [],
       status: o.status, ownerId: o.ownerId, createdAt: o.createdAt, received: o.received, remark: o.remark ?? "",
     });
     setItems(o.items); setEditing(o); setOpen(true);
@@ -249,13 +251,14 @@ export default function Sales() {
                 <th>状态</th>
                 <th className="num">合同金额</th>
                 <th className="num">已回款</th>
+                <th className="num">已开票</th>
                 <th>客户经理</th>
                 <th>签订日</th>
                 <th className="num">操作</th>
               </tr>
             </thead>
             <tbody>
-              {loading && <tr className="empty"><td colSpan={10} className="empty">加载中…</td></tr>}
+              {loading && <tr className="empty"><td colSpan={11} className="empty">加载中…</td></tr>}
               {data.list.map((o) => {
                 const owner = employees.find((e) => e.id === (o.accountManagerId || o.ownerId));
                 return (
@@ -267,6 +270,7 @@ export default function Sales() {
                     <td><StatusBadge status={o.status} /></td>
                     <td className="num">{fmtMoney(o.contractAmount ?? o.totalAmount)}</td>
                     <td className={"num " + (o.received > 0 ? "!text-mint" : "!text-foreground/40")}>{fmtMoney(o.received)}</td>
+                    <td className="num text-xs"><span className="mono">{(o.invoices?.length ?? 0)}</span> 张<div className="text-[10px] text-foreground/55 mono">{fmtMoney((o.invoices || []).reduce((s, r) => s + (r.amount || 0), 0))}</div></td>
                     <td className="text-xs">{owner?.name ?? "—"}</td>
                     <td className="mono">{o.signedAt ?? o.createdAt}</td>
                     <td className="num">
@@ -417,6 +421,11 @@ export default function Sales() {
                 <SelectContent>{employees.filter((e) => e.role !== "管理员").map((e) => <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>)}</SelectContent>
               </Select>
             </Field>
+
+            <GroupTitle>发票管理（开给客户）</GroupTitle>
+            <div className="col-span-12">
+              <InvoiceList direction="out" value={watch("invoices") || []} onChange={(v) => setValue("invoices", v)} />
+            </div>
 
             <GroupTitle>附件与备注</GroupTitle>
             <Field label="合同附件" span={4}><AttachmentList value={watch("contractAttachments") || []} onChange={(v) => setValue("contractAttachments", v)} /></Field>

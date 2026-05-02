@@ -1,5 +1,20 @@
 // 集中类型定义，方便后端对接
 
+// —— 发票记录（采购/销售子表共用） ——
+export interface InvoiceRecord {
+  id: string;
+  invoiceNo: string;
+  invoiceType: string;
+  invoiceDate: string;
+  amount: number;
+  taxRate: number;
+  taxAmount?: number;
+  buyerOrSeller?: string;
+  status?: string;
+  attachment?: string;
+  remark?: string;
+}
+
 export type CustomerType = "software" | "hardware";
 export type CustomerStage = "lead" | "formal"; // 潜在 / 正式
 export type CustomerLevel = "A" | "B" | "C";
@@ -214,6 +229,9 @@ export interface PurchaseOrder {
   contractAttachments?: string[];
   invoiceAttachments?: string[];
 
+  // —— 发票管理（子表，供应商开给我方） ——
+  invoices?: InvoiceRecord[];
+
   // —— 业务字段 ——
   status: PurchaseStatus;
   items: PurchaseItem[];
@@ -287,6 +305,9 @@ export interface SalesOrder {
   licenseAttachments?: string[];      // 营业执照
   invoiceAttachments?: string[];      // 开票资料
   otherAttachments?: string[];        // 其他附件
+
+  // —— 发票管理（子表，我方开给客户） ——
+  invoices?: InvoiceRecord[];
 
   // —— 业务字段（保留） ——
   contractId?: string;
