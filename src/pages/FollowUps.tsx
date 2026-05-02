@@ -256,6 +256,13 @@ export default function FollowUps() {
                 {customers.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
               </SelectContent>
             </Select>
+            <Select value={(query.contactWay as string) ?? "all"} onValueChange={(v) => setFilter({ contactWay: v })}>
+              <SelectTrigger className="h-9 w-28 text-xs rounded-full"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">全部形式</SelectItem>
+                {Object.keys(wayIcon).map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+              </SelectContent>
+            </Select>
             <Select value={(query.oppStatus as string) ?? "all"} onValueChange={(v) => setFilter({ oppStatus: v })}>
               <SelectTrigger className="h-9 w-32 text-xs rounded-full"><SelectValue /></SelectTrigger>
               <SelectContent>
