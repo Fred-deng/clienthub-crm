@@ -71,7 +71,6 @@ export const customerApi = buildCrud(customers, {
   idPrefix: "c",
   searchFields: ["name", "code", "contact", "phone"],
   filter: (it, q) => {
-    if (q.type && q.type !== "all" && it.type !== q.type) return false;
     if (q.stage && q.stage !== "all" && it.stage !== q.stage) return false;
     if (q.level && q.level !== "all" && it.level !== q.level) return false;
     return true;
@@ -170,6 +169,8 @@ export const employeeApi = {
 };
 
 // ---------- Aggregations for dashboard / reports ----------
+import { splitSales, splitPurchase, splitSalesReceived, splitPurchasePaid } from "@/lib/biz";
+
 export const statsApi = {
   async dashboard() {
     await delay(150);
@@ -180,35 +181,83 @@ export const statsApi = {
     const formalCustomers = customers.filter((c) => c.stage === "formal").length;
     const leadCustomers = customers.filter((c) => c.stage === "lead").length;
 
-    // 月度销售趋势（按 createdAt 分组）
-    const trendMap = new Map<string, number>();
+    // 销售按软硬件拆分
+    let revSw = 0, revHw = 0, recvSw = 0, recvHw = 0;
+    salesOrders.forEach((o) => {
+      const s = splitSales(o, products);
+      revSw += s.software; revHw += s.hardware;
+      const r = splitSalesReceived(o, products);
+      recvSw += r.software; recvHw += r.hardware;
+    });
+    let payableSw = 0, payableHw = 0;
+    purchases.forEach((p) => {
+      const s = splitPurchase(p, products);
+      payableSw += s.software; payableHw += s.hardware;
+      const paid = splitPurchasePaid(p, products);
+      payableSw -= paid.software; payableHw -= paid.hardware;
+    });
+    // 应收按软硬件
+    const recvAbleSw = revSw - recvSw;
+    const recvAbleHw = revHw - recvHw;
+
+    // 月度销售趋势（按 createdAt 分组，软硬件分列）
+    const trendMap = new Map<string, { software: number; hardware: number; amount: number }>();
     salesOrders.forEach((o) => {
       const m = o.createdAt.slice(0, 7);
-      trendMap.set(m, (trendMap.get(m) || 0) + o.totalAmount);
+      const cur = trendMap.get(m) || { software: 0, hardware: 0, amount: 0 };
+      const s = splitSales(o, products);
+      cur.software += s.software;
+      cur.hardware += s.hardware;
+      cur.amount += s.total;
+      trendMap.set(m, cur);
     });
     const trend = Array.from(trendMap.entries())
       .sort((a, b) => a[0].localeCompare(b[0]))
       .slice(-8)
-      .map(([month, amount]) => ({ month, amount }));
+      .map(([month, v]) => ({ month, ...v }));
 
-    // 销售员业绩
-    const ownerMap = new Map<string, number>();
-    salesOrders.forEach((o) => ownerMap.set(o.ownerId, (ownerMap.get(o.ownerId) || 0) + o.totalAmount));
+    // 销售员业绩（拆分软硬件）
+    const ownerMap = new Map<string, { amount: number; software: number; hardware: number }>();
+    salesOrders.forEach((o) => {
+      const cur = ownerMap.get(o.ownerId) || { amount: 0, software: 0, hardware: 0 };
+      const s = splitSales(o, products);
+      cur.amount += s.total; cur.software += s.software; cur.hardware += s.hardware;
+      ownerMap.set(o.ownerId, cur);
+    });
     const ranking = Array.from(ownerMap.entries())
-      .map(([ownerId, amount]) => ({
+      .map(([ownerId, v]) => ({
         ownerId,
         name: employees.find((e) => e.id === ownerId)?.name ?? ownerId,
-        amount,
+        ...v,
       }))
       .sort((a, b) => b.amount - a.amount);
 
     // 低库存
     const lowStock = products.filter((p) => p.stock <= p.safetyStock && p.category !== "software").slice(0, 6);
 
-    // 客户类型分布
+    // 客户业务覆盖分布
+    const cusBiz = new Map<string, { sw: boolean; hw: boolean }>();
+    salesOrders.forEach((o) => {
+      const has = cusBiz.get(o.customerId) || { sw: false, hw: false };
+      o.items.forEach((it) => {
+        const p = products.find((pp) => pp.id === it.productId);
+        if (p?.category === "software") has.sw = true; else has.hw = true;
+      });
+      cusBiz.set(o.customerId, has);
+    });
+    let swOnly = 0, hwOnly = 0, both = 0, none = 0;
+    customers.forEach((c) => {
+      const b = cusBiz.get(c.id);
+      if (!b) none++;
+      else if (b.sw && b.hw) both++;
+      else if (b.sw) swOnly++;
+      else hwOnly++;
+    });
     const typeDist = [
-      { name: "软件客户", value: customers.filter((c) => c.type === "software").length },
-      { name: "硬件客户", value: customers.filter((c) => c.type === "hardware").length },
+      { name: "纯软件客户", value: swOnly },
+      { name: "纯硬件客户", value: hwOnly },
+      { name: "软+硬客户", value: both },
+      { name: "无订单", value: none },
     ];
 
     return {
@@ -223,6 +272,13 @@ export const statsApi = {
       lowStock,
       typeDist,
       recentSales: salesOrders.slice(0, 6),
+      // 软硬件拆分
+      biz: {
+        revenue: { software: revSw, hardware: revHw },
+        received: { software: recvSw, hardware: recvHw },
+        receivable: { software: recvAbleSw, hardware: recvAbleHw },
+        payable: { software: payableSw, hardware: payableHw },
+      },
     };
   },
 
@@ -230,6 +286,27 @@ export const statsApi = {
     await delay(200);
     const inSales = salesOrders.filter((o) => o.createdAt.startsWith(month));
     const inPays = payments.filter((p) => p.paidAt.startsWith(month));
+    let salesSw = 0, salesHw = 0, recvSw = 0, recvHw = 0, paidSw = 0, paidHw = 0;
+    inSales.forEach((o) => {
+      const s = splitSales(o, products);
+      salesSw += s.software; salesHw += s.hardware;
+    });
+    inPays.forEach((p) => {
+      const ref = p.refType === "sales" ? salesOrders.find((s) => s.id === p.refId) : purchases.find((x) => x.id === p.refId);
+      if (!ref) return;
+      const items = (ref as any).items || [];
+      let sw = 0, hw = 0;
+      items.forEach((it: any) => {
+        const sub = it.qty * it.price;
+        const prod = products.find((pp) => pp.id === it.productId);
+        if (prod?.category === "software") sw += sub; else hw += sub;
+      });
+      const sum = sw + hw || 1;
+      const swPart = (sw / sum) * p.amount;
+      const hwPart = p.amount - swPart;
+      if (p.direction === "in") { recvSw += swPart; recvHw += hwPart; }
+      else { paidSw += swPart; paidHw += hwPart; }
+    });
     return {
       month,
       sales: inSales,
@@ -237,6 +314,11 @@ export const statsApi = {
       totalSales: inSales.reduce((s, o) => s + o.totalAmount, 0),
       totalReceived: inPays.filter((p) => p.direction === "in").reduce((s, p) => s + p.amount, 0),
       totalPaid: inPays.filter((p) => p.direction === "out").reduce((s, p) => s + p.amount, 0),
+      biz: {
+        sales: { software: salesSw, hardware: salesHw },
+        received: { software: recvSw, hardware: recvHw },
+        paid: { software: paidSw, hardware: paidHw },
+      },
     };
   },
 };

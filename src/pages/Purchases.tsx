@@ -20,6 +20,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { purchaseApi, supplierApi, productApi, employeeApi, contractApi } from "@/services/api";
 import { usePagedList } from "@/hooks/usePagedList";
 import { fmtMoney } from "@/lib/format";
+import { splitPurchase, bizLabel, bizTone, type BizFilter } from "@/lib/biz";
+import { BizTabs } from "@/components/common/BizTabs";
 import type { PurchaseOrder, Supplier, Product, Employee, Contract } from "@/types";
 
 function GroupTitle({ children }: { children: ReactNode }) {
@@ -92,6 +94,7 @@ export default function Purchases() {
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<LineItem[]>([]);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [biz, setBiz] = useState<BizFilter>("all");
 
   useEffect(() => {
     supplierApi.all().then(setSuppliers);
@@ -162,7 +165,7 @@ export default function Purchases() {
         title="采购订单"
         meta="PURCHASE ORDER"
         subtitle="采购合同与订单一体化管理：申请 → 签约 → 执行 → 入库。"
-        actions={<Button size="sm" onClick={openCreate}><Plus className="h-4 w-4 mr-1.5" />新建采购订单</Button>}
+        actions={<><BizTabs value={biz} onChange={setBiz} /><Button size="sm" onClick={openCreate}><Plus className="h-4 w-4 mr-1.5" />新建采购订单</Button></>}
       />
       <DataPanel
         title="采购订单列表"
@@ -198,6 +201,7 @@ export default function Purchases() {
                 <th>单号</th>
                 <th>合同/订单</th>
                 <th>供应商</th>
+                <th>业务</th>
                 <th>状态</th>
                 <th className="num">合同金额</th>
                 <th className="num">明细合计</th>
@@ -210,11 +214,14 @@ export default function Purchases() {
               </tr>
             </thead>
             <tbody>
-              {loading && <tr className="empty"><td colSpan={12} className="empty">加载中…</td></tr>}
+              {loading && <tr className="empty"><td colSpan={13} className="empty">加载中…</td></tr>}
               {!loading && data.list.length === 0 && (
-                <tr className="empty"><td colSpan={12} className="empty">暂无采购订单</td></tr>
+                <tr className="empty"><td colSpan={13} className="empty">暂无采购订单</td></tr>
               )}
-              {data.list.map((o) => {
+              {data.list
+                .map((o) => ({ o, split: splitPurchase(o, products) }))
+                .filter(({ split }) => biz === "all" || (biz === "software" ? split.software > 0 : split.hardware > 0))
+                .map(({ o, split }) => {
                 const unpaid = o.totalAmount - o.paid;
                 return (
                   <tr key={o.id} className="clickable" onDoubleClick={() => openEdit(o)} title="双击查看详情">
@@ -224,6 +231,7 @@ export default function Purchases() {
                       <div className="text-[11px] text-foreground/45">签约：{o.signingParty || "—"}</div>
                     </td>
                     <td className="text-foreground/75">{o.supplierName}</td>
+                    <td><span className={"cell-chip " + bizTone[split.category]}>{bizLabel[split.category]}</span></td>
                     <td><StatusBadge status={o.status} /></td>
                     <td className="num mono">{fmtMoney(o.contractAmount || 0)}</td>
                     <td className="num mono">{fmtMoney(o.totalAmount)}</td>
@@ -254,7 +262,7 @@ export default function Purchases() {
               return (
                 <tfoot>
                   <tr>
-                    <td colSpan={4} className="label">本页 {data.list.length} 单 / 共 {data.total} 单 · 合计</td>
+                    <td colSpan={5} className="label">本页 {data.list.length} 单 / 共 {data.total} 单 · 合计</td>
                     <td className="num">{fmtMoney(sumContract)}</td>
                     <td className="num">{fmtMoney(sumTotal)}</td>
                     <td className="num text-tomato">{fmtMoney(sumPaid)}</td>

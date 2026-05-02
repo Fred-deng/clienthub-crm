@@ -1,13 +1,15 @@
-import { useEffect, useState } from "react";
-import { TrendingUp, Wallet, FileCheck2, Users, AlertTriangle, ArrowRight } from "lucide-react";
+import { useEffect, useState, useMemo } from "react";
+import { TrendingUp, Wallet, FileCheck2, AlertTriangle, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, BarChart, Bar, Cell } from "recharts";
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, BarChart, Bar, Cell, Legend } from "recharts";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { KpiCard } from "@/components/common/KpiCard";
 import { DataPanel } from "@/components/common/DataPanel";
 import { StatusBadge } from "@/components/common/StatusBadge";
+import { BizTabs, BizSplitChip } from "@/components/common/BizTabs";
 import { statsApi } from "@/services/api";
-import { fmtMoney, fmtMoneyShort, fmtInt, currentMonth, splitMoneyShort } from "@/lib/format";
+import { fmtMoney, fmtMoneyShort, currentMonth, splitMoneyShort } from "@/lib/format";
+import type { BizFilter } from "@/lib/biz";
 
 const Money = ({ n }: { n: number }) => {
   const { num, unit } = splitMoneyShort(n);
@@ -22,9 +24,30 @@ const Money = ({ n }: { n: number }) => {
 
 export default function Dashboard() {
   const [data, setData] = useState<Awaited<ReturnType<typeof statsApi.dashboard>> | null>(null);
+  const [biz, setBiz] = useState<BizFilter>("all");
   useEffect(() => { statsApi.dashboard().then(setData); }, []);
 
-  if (!data) {
+  const view = useMemo(() => {
+    if (!data) return null;
+    const pick = (sw: number, hw: number, total: number) =>
+      biz === "software" ? sw : biz === "hardware" ? hw : total;
+    return {
+      monthRevenue: pick(data.biz.revenue.software, data.biz.revenue.hardware, data.monthRevenue),
+      receivable: pick(data.biz.receivable.software, data.biz.receivable.hardware, data.receivable),
+      payable: pick(data.biz.payable.software, data.biz.payable.hardware, data.payable),
+      trend: data.trend.map((t) => ({
+        month: t.month,
+        amount: biz === "software" ? t.software : biz === "hardware" ? t.hardware : t.amount,
+        software: t.software,
+        hardware: t.hardware,
+      })),
+      ranking: data.ranking
+        .map((r) => ({ ...r, amount: biz === "software" ? r.software : biz === "hardware" ? r.hardware : r.amount }))
+        .sort((a, b) => b.amount - a.amount),
+    };
+  }, [data, biz]);
+
+  if (!data || !view) {
     return (
       <div className="space-y-6">
         <div className="h-24 bg-card border border-border animate-pulse" />
@@ -41,33 +64,40 @@ export default function Dashboard() {
         title="控制面板"
         meta={`MISSION CONTROL · ${currentMonth()}`}
         subtitle="实时业务全景：销售、应收应付、合同与库存关键指标。"
+        actions={<BizTabs value={biz} onChange={setBiz} />}
       />
 
       {/* KPI grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
         <KpiCard
           index={1}
-          label="累计销售总额"
-          value={<Money n={data.monthRevenue} />}
+          label={biz === "all" ? "累计销售总额" : biz === "software" ? "软件销售总额" : "硬件销售总额"}
+          value={<Money n={view.monthRevenue} />}
           tone="primary"
           icon={<TrendingUp className="h-3.5 w-3.5" />}
-          hint={<span className="inline-flex items-center gap-1.5">▲ 12.4% <span className="opacity-70 font-normal">同比上月</span></span>}
+          hint={biz === "all"
+            ? <BizSplitChip software={data.biz.revenue.software} hardware={data.biz.revenue.hardware} formatter={fmtMoneyShort} />
+            : <span className="inline-flex items-center gap-1.5">▲ <span className="opacity-70 font-normal">业务占比 {((view.monthRevenue / Math.max(1, data.monthRevenue)) * 100).toFixed(1)}%</span></span>}
         />
         <KpiCard
           index={2}
           label="应收账款"
-          value={<Money n={data.receivable} />}
+          value={<Money n={view.receivable} />}
           tone="warning"
           icon={<Wallet className="h-3.5 w-3.5" />}
-          hint={<span className="inline-flex items-center gap-1.5">● <span className="opacity-80 font-normal">需重点跟进</span></span>}
+          hint={biz === "all"
+            ? <BizSplitChip software={data.biz.receivable.software} hardware={data.biz.receivable.hardware} formatter={fmtMoneyShort} />
+            : <span className="inline-flex items-center gap-1.5">● <span className="opacity-80 font-normal">需重点跟进</span></span>}
         />
         <KpiCard
           index={3}
           label="应付账款"
-          value={<Money n={data.payable} />}
+          value={<Money n={view.payable} />}
           tone="destructive"
           icon={<Wallet className="h-3.5 w-3.5" />}
-          hint={<span className="inline-flex items-center gap-1.5">● <span className="opacity-80 font-normal">供应商结款</span></span>}
+          hint={biz === "all"
+            ? <BizSplitChip software={data.biz.payable.software} hardware={data.biz.payable.hardware} formatter={fmtMoneyShort} />
+            : <span className="inline-flex items-center gap-1.5">● <span className="opacity-80 font-normal">供应商结款</span></span>}
         />
         <KpiCard
           index={4}
@@ -81,26 +111,34 @@ export default function Dashboard() {
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5">
-        <DataPanel title="月度销售趋势" subtitle="Revenue · last 12 months" accent="tomato" className="lg:col-span-2">
+        <DataPanel title="月度销售趋势" subtitle={biz === "all" ? "Revenue · 软硬件叠加" : `Revenue · ${biz === "software" ? "软件" : "硬件"}`} accent="tomato" className="lg:col-span-2">
           <div className="p-4 h-[280px]">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={data.trend}>
-                <defs>
-                  <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.6} />
-                    <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-                <XAxis dataKey="month" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => v / 10000 + "万"} />
-                <Tooltip
-                  contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", fontSize: 12 }}
-                  labelStyle={{ color: "hsl(var(--foreground))" }}
-                  formatter={(v: number) => fmtMoney(v)}
-                />
-                <Area type="monotone" dataKey="amount" stroke="hsl(var(--primary))" fill="url(#colorRev)" strokeWidth={2} />
-              </AreaChart>
+              {biz === "all" ? (
+                <BarChart data={view.trend}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                  <XAxis dataKey="month" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => v / 10000 + "万"} />
+                  <Tooltip contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", fontSize: 12 }} formatter={(v: number) => fmtMoney(v)} />
+                  <Legend wrapperStyle={{ fontSize: 11 }} />
+                  <Bar dataKey="software" name="软件" stackId="a" fill="hsl(var(--cobalt, 215 80% 50%))" radius={[0, 0, 0, 0]} />
+                  <Bar dataKey="hardware" name="硬件" stackId="a" fill="hsl(var(--mint, 152 38% 60%))" radius={[2, 2, 0, 0]} />
+                </BarChart>
+              ) : (
+                <AreaChart data={view.trend}>
+                  <defs>
+                    <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.6} />
+                      <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                  <XAxis dataKey="month" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => v / 10000 + "万"} />
+                  <Tooltip contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", fontSize: 12 }} formatter={(v: number) => fmtMoney(v)} />
+                  <Area type="monotone" dataKey="amount" stroke="hsl(var(--primary))" fill="url(#colorRev)" strokeWidth={2} />
+                </AreaChart>
+              )}
             </ResponsiveContainer>
           </div>
         </DataPanel>
@@ -108,13 +146,13 @@ export default function Dashboard() {
         <DataPanel title="销售员业绩" subtitle="Top performers" accent="cobalt">
           <div className="p-4 h-[280px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data.ranking} layout="vertical" margin={{ left: 20 }}>
+              <BarChart data={view.ranking} layout="vertical" margin={{ left: 20 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
                 <XAxis type="number" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => v / 10000 + "万"} />
                 <YAxis type="category" dataKey="name" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} axisLine={false} tickLine={false} width={50} />
                 <Tooltip contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", fontSize: 12 }} formatter={(v: number) => fmtMoney(v)} />
                 <Bar dataKey="amount" radius={[0, 2, 2, 0]}>
-                  {data.ranking.map((_, i) => (
+                  {view.ranking.map((_, i) => (
                     <Cell key={i} fill={i === 0 ? "hsl(var(--primary))" : "hsl(var(--primary) / 0.4)"} />
                   ))}
                 </Bar>

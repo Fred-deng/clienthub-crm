@@ -15,7 +15,6 @@ export interface InvoiceRecord {
   remark?: string;
 }
 
-export type CustomerType = "software" | "hardware";
 export type CustomerStage = "lead" | "formal"; // 潜在 / 正式
 export type CustomerLevel = "A" | "B" | "C";
 export type CustomerStatus = "active" | "inactive" | "potential" | "lost"; // 客户状态
@@ -31,7 +30,6 @@ export interface Customer {
   code: string;          // 客户编号
   name: string;          // 客户全称
   taxNo?: string;        // 税号
-  type: CustomerType;    // 客户类型
   status?: CustomerStatus; // 客户状态
   region?: string;       // 归属区域
 

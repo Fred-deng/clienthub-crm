@@ -18,14 +18,14 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { customerApi, contactApi, followUpApi, employeeApi } from "@/services/api";
+import { customerApi, contactApi, followUpApi, employeeApi, salesApi, productApi } from "@/services/api";
 import { usePagedList } from "@/hooks/usePagedList";
-import { fmtMoney, customerStageLabel, customerTypeLabel } from "@/lib/format";
-import type { Customer, Contact, FollowUp, Employee } from "@/types";
+import { fmtMoney, customerStageLabel } from "@/lib/format";
+import type { Customer, Contact, FollowUp, Employee, SalesOrder, Product } from "@/types";
 import { useEffect, ReactNode } from "react";
 
 const emptyCustomer: Omit<Customer, "id"> = {
-  code: "", name: "", taxNo: "", type: "software", status: "potential", region: "",
+  code: "", name: "", taxNo: "", status: "potential", region: "",
   stage: "lead", level: "B",
   contact: "", phone: "", email: "",
   registeredAddress: "", businessScope: "", address: "",
@@ -83,10 +83,27 @@ export default function Customers() {
   const [draftFollowUps, setDraftFollowUps] = useState<Omit<FollowUp, "id">[]>([]);
   const [miniContactOpen, setMiniContactOpen] = useState(false);
   const [miniFollowUpOpen, setMiniFollowUpOpen] = useState(false);
+  const [bizMap, setBizMap] = useState<Map<string, { sw: boolean; hw: boolean }>>(new Map());
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => { employeeApi.all().then(setEmployees); }, []);
+
+  // 聚合每个客户的业务覆盖（软/硬/双）
+  useEffect(() => {
+    Promise.all([salesApi.all(), productApi.all()]).then(([orders, prods]: [SalesOrder[], Product[]]) => {
+      const m = new Map<string, { sw: boolean; hw: boolean }>();
+      orders.forEach((o) => {
+        const cur = m.get(o.customerId) || { sw: false, hw: false };
+        o.items.forEach((it) => {
+          const p = prods.find((pp) => pp.id === it.productId);
+          if (p?.category === "software") cur.sw = true; else cur.hw = true;
+        });
+        m.set(o.customerId, cur);
+      });
+      setBizMap(m);
+    });
+  }, []);
 
   const { register, handleSubmit, reset, setValue, watch } = useForm<Omit<Customer, "id">>({ defaultValues: emptyCustomer });
 
@@ -209,14 +226,6 @@ export default function Customers() {
                 onChange={(e) => setFilter({ keyword: e.target.value })}
               />
             </div>
-            <Select value={query.type ?? "all"} onValueChange={(v) => setFilter({ type: v })}>
-              <SelectTrigger className="h-9 w-28 text-xs rounded-full"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">全部类型</SelectItem>
-                <SelectItem value="software">软件客户</SelectItem>
-                <SelectItem value="hardware">硬件客户</SelectItem>
-              </SelectContent>
-            </Select>
             <Select value={query.stage ?? "all"} onValueChange={(v) => setFilter({ stage: v })}>
               <SelectTrigger className="h-9 w-28 text-xs rounded-full"><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -234,7 +243,7 @@ export default function Customers() {
               <tr>
                 <th>编号</th>
                 <th>客户</th>
-                <th>类型</th>
+                <th>业务覆盖</th>
                 <th>类别</th>
                 <th>区域</th>
                 <th>负责人</th>
@@ -250,7 +259,17 @@ export default function Customers() {
                 <tr className="empty"><td colSpan={10} className="empty">暂无客户数据</td></tr>
               )}
               {data.list.map((c) => {
-                const avatarTone = c.type === "software" ? "bg-cobalt text-white" : "bg-mint text-foreground";
+                const biz = bizMap.get(c.id);
+                const bizCat: "software" | "hardware" | "both" | "none" = !biz
+                  ? "none" : biz.sw && biz.hw ? "both" : biz.sw ? "software" : "hardware";
+                const avatarTone = bizCat === "software" ? "bg-cobalt text-white"
+                  : bizCat === "hardware" ? "bg-mint text-foreground"
+                  : bizCat === "both" ? "bg-mustard text-foreground"
+                  : "bg-foreground/10 text-foreground";
+                const bizChip = bizCat === "software" ? { c: "bg-cobalt/10 text-cobalt ring-1 ring-cobalt/20", t: "软件" }
+                  : bizCat === "hardware" ? { c: "bg-mint/20 text-foreground ring-1 ring-mint/40", t: "硬件" }
+                  : bizCat === "both" ? { c: "bg-mustard/20 text-foreground ring-1 ring-mustard/40", t: "软+硬" }
+                  : { c: "bg-foreground/5 text-foreground/55 ring-1 ring-foreground/10", t: "—" };
                 return (
                   <tr key={c.id} className="clickable" onDoubleClick={() => openEdit(c)} title="双击查看详情">
                     <td className="mono">{c.code}</td>
@@ -266,9 +285,7 @@ export default function Customers() {
                       </div>
                     </td>
                     <td>
-                      <span className={"cell-chip " + (c.type === "software" ? "bg-cobalt/10 text-cobalt ring-1 ring-cobalt/20" : "bg-mint/20 text-foreground ring-1 ring-mint/40")}>
-                        {customerTypeLabel(c.type)}
-                      </span>
+                      <span className={"cell-chip " + bizChip.c}>{bizChip.t}</span>
                     </td>
                     <td className="text-foreground/70">{c.category || "—"}</td>
                     <td className="text-foreground/70">{c.region || "—"}</td>
@@ -325,15 +342,6 @@ export default function Customers() {
             <Field label="客户全称" required><Input placeholder="请输入客户全称" {...register("name", { required: true })} /></Field>
             <Field label="客户编号"><Input placeholder="请输入客户编号" {...register("code", { required: true })} /></Field>
             <Field label="税号"><Input placeholder="请输入税号" {...register("taxNo")} /></Field>
-            <Field label="客户类型">
-              <Select value={watch("type")} onValueChange={(v: any) => setValue("type", v)}>
-                <SelectTrigger><SelectValue placeholder="请选择" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="software">软件客户</SelectItem>
-                  <SelectItem value="hardware">硬件客户</SelectItem>
-                </SelectContent>
-              </Select>
-            </Field>
             <Field label="客户状态">
               <Select value={watch("status") || ""} onValueChange={(v: any) => setValue("status", v)}>
                 <SelectTrigger><SelectValue placeholder="请选择" /></SelectTrigger>

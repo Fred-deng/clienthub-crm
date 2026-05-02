@@ -20,6 +20,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { salesApi, customerApi, productApi, employeeApi } from "@/services/api";
 import { usePagedList } from "@/hooks/usePagedList";
 import { fmtMoney } from "@/lib/format";
+import { splitSales, bizLabel, bizTone, type BizFilter } from "@/lib/biz";
+import { BizTabs } from "@/components/common/BizTabs";
 import type { SalesOrder, Customer, Product, Employee } from "@/types";
 
 function GroupTitle({ children }: { children: ReactNode }) {
@@ -99,6 +101,7 @@ export default function Sales() {
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<LineItem[]>([]);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [biz, setBiz] = useState<BizFilter>("all");
 
   useEffect(() => {
     customerApi.all().then((cs) => setCustomers(cs.filter((c) => c.stage === "formal")));
@@ -181,7 +184,7 @@ export default function Sales() {
         title="销售订单"
         meta="SALES PIPELINE"
         subtitle="销售合同 / 订单：从签约、申请、结算到交付的全流程档案。"
-        actions={<Button size="sm" onClick={openCreate}><Plus className="h-4 w-4 mr-1.5" />新建销售合同</Button>}
+        actions={<><BizTabs value={biz} onChange={setBiz} /><Button size="sm" onClick={openCreate}><Plus className="h-4 w-4 mr-1.5" />新建销售合同</Button></>}
       />
       <DataPanel
         title={<h3 className="text-xs font-bold uppercase tracking-[0.2em]">合同列表</h3>}
@@ -211,6 +214,7 @@ export default function Sales() {
                 <th>合同编号</th>
                 <th>合同名称</th>
                 <th>客户</th>
+                <th>业务</th>
                 <th>属性</th>
                 <th>状态</th>
                 <th className="num">合同金额</th>
@@ -222,14 +226,18 @@ export default function Sales() {
               </tr>
             </thead>
             <tbody>
-              {loading && <tr className="empty"><td colSpan={11} className="empty">加载中…</td></tr>}
-              {data.list.map((o) => {
+              {loading && <tr className="empty"><td colSpan={12} className="empty">加载中…</td></tr>}
+              {data.list
+                .map((o) => ({ o, split: splitSales(o, products) }))
+                .filter(({ split }) => biz === "all" || (biz === "software" ? split.software > 0 : split.hardware > 0))
+                .map(({ o, split }) => {
                 const owner = employees.find((e) => e.id === (o.accountManagerId || o.ownerId));
                 return (
                   <tr key={o.id} className="clickable" onDoubleClick={() => openEdit(o)} title="双击查看详情">
                     <td className="mono">{o.code}</td>
                     <td className="bold"><span className="block max-w-[200px] truncate">{o.contractTitle ?? "—"}</span></td>
                     <td><span className="block max-w-[180px] truncate">{o.customerName}</span></td>
+                    <td><span className={"cell-chip " + bizTone[split.category]}>{bizLabel[split.category]}</span></td>
                     <td className="text-xs">{o.contractProperty ?? "—"}</td>
                     <td><StatusBadge status={o.status} /></td>
                     <td className="num">{fmtMoney(o.contractAmount ?? o.totalAmount)}</td>
