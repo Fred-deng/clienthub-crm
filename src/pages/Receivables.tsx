@@ -81,7 +81,7 @@ export default function Receivables() {
       if (r) r.level = c.level;
     });
     return Array.from(map.values()).sort((a, b) => b.outstanding - a.outstanding);
-  }, [orders, customers, products]);
+  }, [orders, customers, products, range]);
 
   // 按 biz 视图选取金额
   const view = (r: Row) => {
