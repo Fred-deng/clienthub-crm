@@ -14,6 +14,8 @@ import Purchases from "./pages/Purchases";
 
 import Sales from "./pages/Sales";
 import Payments from "./pages/Payments";
+import Receivables from "./pages/Receivables";
+import Payables from "./pages/Payables";
 import Reports from "./pages/Reports";
 import NotFound from "./pages/NotFound";
 
@@ -37,6 +39,8 @@ const App = () => (
             <Route path="/contracts" element={<Purchases />} />
             <Route path="/sales" element={<Sales />} />
             <Route path="/payments" element={<Payments />} />
+            <Route path="/receivables" element={<Receivables />} />
+            <Route path="/payables" element={<Payables />} />
             <Route path="/reports" element={<Reports />} />
           </Route>
           <Route path="*" element={<NotFound />} />
