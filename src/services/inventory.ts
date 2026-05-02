@@ -1,5 +1,6 @@
 // 库存联动 + 日志服务（基于 mock 内存数据）
 import { products, stockLogs } from "@/mock/data";
+import { readCurrentOperator } from "@/context/CurrentUserContext";
 import type { Product, ProductCategory, PurchaseOrder, StockLog, StockLogAction } from "@/types";
 
 const todayStr = () => new Date().toISOString().slice(0, 19).replace("T", " ");
@@ -49,7 +50,7 @@ export function findOrCreateProductByName(
     beforeStock: 0,
     afterStock: 0,
     refType: "purchase",
-    operator,
+    operator: operator || readCurrentOperator(),
     remark: `采购明细自动建档（${category}）`,
   });
   return created;
@@ -80,7 +81,7 @@ export function adjustStock(opts: {
     refType: opts.refType,
     refId: opts.refId,
     refCode: opts.refCode,
-    operator: opts.operator,
+    operator: opts.operator || readCurrentOperator(),
     remark: opts.remark,
   });
 }
@@ -129,7 +130,7 @@ export function logProductChange(p: Product, action: "update" | "delete", remark
     beforeStock: p.stock,
     afterStock: action === "delete" ? 0 : p.stock,
     refType: "manual",
-    operator,
+    operator: operator || readCurrentOperator(),
     remark,
   });
 }

@@ -1,6 +1,6 @@
 import { useEffect, useState, ReactNode } from "react";
 import { useForm } from "react-hook-form";
-import { Plus, Pencil, Trash2, Search, Paperclip, X, FileText, ArrowUpRight, Receipt } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Paperclip, X, FileText, ArrowUpRight, Receipt, History } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { DataPanel } from "@/components/common/DataPanel";
@@ -22,6 +22,9 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { purchaseApi, supplierApi, productApi, employeeApi, contractApi } from "@/services/api";
 import { applyPurchaseReceive, revertPurchaseReceive, findOrCreateProductByName } from "@/services/inventory";
+import { logOrderUpdate, logOrderDelete } from "@/services/orderLog";
+import { useCurrentUser } from "@/context/CurrentUserContext";
+import { OrderLogDialog } from "@/components/common/OrderLogDialog";
 import { usePagedList } from "@/hooks/usePagedList";
 import { fmtMoney } from "@/lib/format";
 import { splitPurchase, bizLabel, bizTone, type BizFilter } from "@/lib/biz";
@@ -104,6 +107,10 @@ export default function Purchases() {
   const [quickInv, setQuickInv] = useState<PurchaseOrder | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [bulkStatus, setBulkStatus] = useState<PurchaseOrder["status"] | "">("");
+  const [logOpen, setLogOpen] = useState(false);
+  const [logRefId, setLogRefId] = useState<string | undefined>(undefined);
+  const [logRefCode, setLogRefCode] = useState<string | undefined>(undefined);
+  const { current } = useCurrentUser();
 
   useEffect(() => {
     supplierApi.all().then(setSuppliers);
@@ -178,26 +185,26 @@ export default function Purchases() {
     };
 
     // 2) 库存联动：状态切换涉及 received 时加减
+    const op = current.name;
     const prevStatus = editing?.status;
     const nextStatus = payload.status as PurchaseOrder["status"];
     if (editing) {
-      // 旧订单已入库 → 先用旧明细回滚
       if (prevStatus === "received" && nextStatus !== "received") {
-        revertPurchaseReceive(editing, "采购订单", "状态变更撤销入库");
+        revertPurchaseReceive(editing, op, "状态变更撤销入库");
       }
-      // 新订单将入库 → 用新明细入库
       if (nextStatus === "received" && prevStatus !== "received") {
-        applyPurchaseReceive({ ...editing, ...payload }, "采购订单");
+        applyPurchaseReceive({ ...editing, ...payload }, op);
       }
-      // 入库状态下明细变更 → 先回滚旧、再按新入库
       if (prevStatus === "received" && nextStatus === "received") {
-        revertPurchaseReceive(editing, "采购订单", "明细变更回滚");
-        applyPurchaseReceive({ ...editing, ...payload }, "采购订单");
+        revertPurchaseReceive(editing, op, "明细变更回滚");
+        applyPurchaseReceive({ ...editing, ...payload }, op);
       }
+      // 写订单操作日志（仅修改）
+      logOrderUpdate("purchase", editing, payload);
       await purchaseApi.update(editing.id, payload);
     } else {
       const created = await purchaseApi.create(payload);
-      if (nextStatus === "received") applyPurchaseReceive(created, "采购订单");
+      if (nextStatus === "received") applyPurchaseReceive(created, op);
     }
     toast.success("已保存");
     setOpen(false);
@@ -207,8 +214,9 @@ export default function Purchases() {
 
   const handleDelete = async (id: string) => {
     const order = data.list.find((o) => o.id === id);
-    if (order && order.status === "received") {
-      revertPurchaseReceive(order, "采购订单", "订单删除回滚入库");
+    if (order) {
+      if (order.status === "received") revertPurchaseReceive(order, current.name, "订单删除回滚入库");
+      logOrderDelete("purchase", order);
     }
     await purchaseApi.remove(id);
     toast.success("已删除");
@@ -219,15 +227,17 @@ export default function Purchases() {
 
   const applyBulkStatus = async () => {
     if (!bulkStatus || selectedIds.length === 0) return;
+    const op = current.name;
     for (const id of selectedIds) {
       const order = data.list.find((o) => o.id === id);
       if (!order || order.status === bulkStatus) continue;
       if (order.status === "received" && bulkStatus !== "received") {
-        revertPurchaseReceive(order, "批量操作", "批量改状态回滚入库");
+        revertPurchaseReceive(order, op, "批量改状态回滚入库");
       }
       if (bulkStatus === "received" && order.status !== "received") {
-        applyPurchaseReceive(order, "批量操作");
+        applyPurchaseReceive(order, op);
       }
+      logOrderUpdate("purchase", order, { status: bulkStatus });
       await purchaseApi.update(id, { status: bulkStatus });
     }
     toast.success(`已将 ${selectedIds.length} 单更新为「${bulkStatus}」`);
@@ -245,7 +255,13 @@ export default function Purchases() {
         title="采购订单"
         meta="PURCHASE ORDER"
         subtitle="采购合同与订单一体化管理：申请 → 签约 → 执行 → 入库。"
-        actions={<><BizTabs value={biz} onChange={setBiz} /><Button size="sm" onClick={openCreate}><Plus className="h-4 w-4 mr-1.5" />新建采购订单</Button></>}
+        actions={<>
+          <BizTabs value={biz} onChange={setBiz} />
+          <Button size="sm" variant="outline" onClick={() => { setLogRefId(undefined); setLogRefCode(undefined); setLogOpen(true); }}>
+            <History className="h-4 w-4 mr-1.5" />全部日志
+          </Button>
+          <Button size="sm" onClick={openCreate}><Plus className="h-4 w-4 mr-1.5" />新建采购订单</Button>
+        </>}
       />
       <DataPanel
         title="采购订单列表"
@@ -359,6 +375,9 @@ export default function Purchases() {
                         </button>
                         <button title="新增发票" className="size-8 rounded-full hover:bg-cobalt/10 text-foreground/55 hover:text-cobalt inline-flex items-center justify-center transition-colors" onClick={() => setQuickInv(o)}>
                           <Receipt className="h-3.5 w-3.5" />
+                        </button>
+                        <button title="操作日志" className="size-8 rounded-full hover:bg-foreground/5 text-foreground/55 hover:text-foreground inline-flex items-center justify-center transition-colors" onClick={() => { setLogRefId(o.id); setLogRefCode(o.code); setLogOpen(true); }}>
+                          <History className="h-3.5 w-3.5" />
                         </button>
                         <button title="编辑" className="size-8 rounded-full hover:bg-foreground/5 text-foreground/55 hover:text-foreground inline-flex items-center justify-center transition-colors" onClick={() => openEdit(o)}>
                           <Pencil className="h-3.5 w-3.5" />
@@ -569,6 +588,13 @@ export default function Purchases() {
         partyName={quickInv?.supplierName || ""}
         existing={quickInv?.invoices || []}
         onSaved={() => { setQuickInv(null); reload(); }}
+      />
+      <OrderLogDialog
+        open={logOpen}
+        onOpenChange={setLogOpen}
+        module="purchase"
+        refId={logRefId}
+        refCode={logRefCode}
       />
     </>
   );

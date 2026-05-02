@@ -51,22 +51,20 @@ export default function Products() {
             delta: stockDiff,
             action: "adjust",
             refType: "manual",
-            operator: "产品编辑",
             remark: "手工修改库存",
           });
         }
         // 其他字段变更
         const fieldChanged = Object.keys(v).some((k) => k !== "stock" && (v as any)[k] !== (editing as any)[k]);
-        if (fieldChanged) logProductChange(updated, "update", "编辑产品资料", "产品管理");
+        if (fieldChanged) logProductChange(updated, "update", "编辑产品资料");
       }
       toast.success("已更新");
     } else {
       const created = await productApi.create(v);
-      logProductChange(created, "create" as any, "新增产品", "产品管理");
+      logProductChange(created, "create" as any, "新增产品");
       if ((Number(v.stock) || 0) > 0) {
-        // 调整记录初始库存
         created.stock = 0;
-        adjustStock({ productId: created.id, delta: Number(v.stock) || 0, action: "in", refType: "manual", operator: "产品管理", remark: "新增产品初始库存" });
+        adjustStock({ productId: created.id, delta: Number(v.stock) || 0, action: "in", refType: "manual", remark: "新增产品初始库存" });
       }
       toast.success("已创建");
     }
@@ -76,7 +74,7 @@ export default function Products() {
   const onDelete = async () => {
     if (!deletingId) return;
     const p = data.list.find((x) => x.id === deletingId);
-    if (p) logProductChange(p, "delete", "删除产品", "产品管理");
+    if (p) logProductChange(p, "delete", "删除产品");
     await productApi.remove(deletingId);
     toast.success("已删除"); setDeletingId(null); reload();
   };
