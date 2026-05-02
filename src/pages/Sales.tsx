@@ -251,13 +251,14 @@ export default function Sales() {
                 <th>状态</th>
                 <th className="num">合同金额</th>
                 <th className="num">已回款</th>
+                <th className="num">已开票</th>
                 <th>客户经理</th>
                 <th>签订日</th>
                 <th className="num">操作</th>
               </tr>
             </thead>
             <tbody>
-              {loading && <tr className="empty"><td colSpan={10} className="empty">加载中…</td></tr>}
+              {loading && <tr className="empty"><td colSpan={11} className="empty">加载中…</td></tr>}
               {data.list.map((o) => {
                 const owner = employees.find((e) => e.id === (o.accountManagerId || o.ownerId));
                 return (
@@ -269,6 +270,7 @@ export default function Sales() {
                     <td><StatusBadge status={o.status} /></td>
                     <td className="num">{fmtMoney(o.contractAmount ?? o.totalAmount)}</td>
                     <td className={"num " + (o.received > 0 ? "!text-mint" : "!text-foreground/40")}>{fmtMoney(o.received)}</td>
+                    <td className="num text-xs"><span className="mono">{(o.invoices?.length ?? 0)}</span> 张<div className="text-[10px] text-foreground/55 mono">{fmtMoney((o.invoices || []).reduce((s, r) => s + (r.amount || 0), 0))}</div></td>
                     <td className="text-xs">{owner?.name ?? "—"}</td>
                     <td className="mono">{o.signedAt ?? o.createdAt}</td>
                     <td className="num">
