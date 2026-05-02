@@ -242,9 +242,9 @@ export default function Customers() {
               </tr>
             </thead>
             <tbody>
-              {loading && <tr className="empty"><td colSpan={9} className="empty">加载中…</td></tr>}
+              {loading && <tr className="empty"><td colSpan={10} className="empty">加载中…</td></tr>}
               {!loading && data.list.length === 0 && (
-                <tr className="empty"><td colSpan={9} className="empty">暂无客户数据</td></tr>
+                <tr className="empty"><td colSpan={10} className="empty">暂无客户数据</td></tr>
               )}
               {data.list.map((c) => {
                 return (
