@@ -1,7 +1,7 @@
 // Mock 数据生成，使用 mockjs。所有数据在内存中，提供 CRUD 能力。
 import Mock from "mockjs";
 import type {
-  Customer, Product, Supplier, SupplierContact, PurchaseOrder, Contract, SalesOrder, Payment, Employee, Contact, FollowUp,
+  Customer, Product, Supplier, SupplierContact, PurchaseOrder, Contract, SalesOrder, Payment, Employee, Contact, FollowUp, InvoiceRecord,
 } from "@/types";
 
 const Random = Mock.Random;
@@ -167,6 +167,31 @@ export const purchases: PurchaseOrder[] = Array.from({ length: 22 }).map((_, i) 
     buyerId: Random.pick(["u3", "u4", "u5"]),
     contractAttachments: [`${sup.name}_采购合同.pdf`],
     invoiceAttachments: [],
+    invoices: (() => {
+      if (status === "draft") return [];
+      const n = Random.integer(0, 3);
+      const out: InvoiceRecord[] = [];
+      let remain = total;
+      for (let k = 0; k < n; k++) {
+        const rate = Random.pick([6, 9, 13]);
+        const amt = k === n - 1 ? remain : Math.floor(remain / (n - k) * Random.float(0.5, 1.2, 0, 0));
+        if (amt <= 0) break;
+        remain -= amt;
+        out.push({
+          id: `pinv-${i}-${k}`,
+          invoiceNo: "24" + Mock.mock(/[0-9]{8}/),
+          invoiceType: Random.pick(["增值税专用发票", "增值税普通发票", "电子专用发票"]),
+          invoiceDate: Random.date("yyyy-MM-dd"),
+          amount: amt,
+          taxRate: rate,
+          taxAmount: Number((amt * rate / (100 + rate)).toFixed(2)),
+          buyerOrSeller: sup.name,
+          status: Random.pick(["已收到", "已收到", "未收到"]),
+          remark: "",
+        });
+      }
+      return out;
+    })(),
     status,
     items,
     totalAmount: total,
@@ -263,6 +288,31 @@ export const salesOrders: SalesOrder[] = Array.from({ length: 40 }).map((_, i) =
     licenseAttachments: [],
     invoiceAttachments: [],
     otherAttachments: [],
+    invoices: (() => {
+      if (status === "pending") return [];
+      const n = Random.integer(0, 3);
+      const out: InvoiceRecord[] = [];
+      let remain = total;
+      for (let k = 0; k < n; k++) {
+        const rate = Random.pick([6, 9, 13]);
+        const amt = k === n - 1 ? remain : Math.floor(remain / (n - k));
+        if (amt <= 0) break;
+        remain -= amt;
+        out.push({
+          id: `sinv-${i}-${k}`,
+          invoiceNo: "24" + Mock.mock(/[0-9]{8}/),
+          invoiceType: Random.pick(["增值税专用发票", "增值税普通发票", "电子专用发票"]),
+          invoiceDate: Random.date("yyyy-MM-dd"),
+          amount: amt,
+          taxRate: rate,
+          taxAmount: Number((amt * rate / (100 + rate)).toFixed(2)),
+          buyerOrSeller: cus.name,
+          status: Random.pick(["已开具", "已开具", "待开具"]),
+          remark: "",
+        });
+      }
+      return out;
+    })(),
     contractId: Random.pick([undefined, ...contracts.map((c) => c.id).slice(0, 5)]),
     status,
     items,
