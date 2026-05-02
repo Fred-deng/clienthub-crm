@@ -1,6 +1,6 @@
 import { readCurrentOperator } from "@/context/CurrentUserContext";
 import type { LineItem } from "@/components/common/LineItemsEditor";
-import { productCategoryLabel } from "@/lib/format";
+import { fmtMoney, productCategoryLabel } from "@/lib/format";
 
 export type LineItemLogAction = "add" | "update" | "delete";
 export type LineItemLogModule = "purchase" | "sales";
@@ -58,6 +58,8 @@ function fmt(field: keyof LineItem, val: any): any {
   return val;
 }
 
+const lineTotal = (item: LineItem) => (Number(item.qty) || 0) * (Number(item.price) || 0);
+
 /** 比较两行，返回字段差异（不包含 productId） */
 export function diffLineItem(before: LineItem, after: LineItem): LineItemFieldChange[] {
   const out: LineItemFieldChange[] = [];
@@ -67,6 +69,9 @@ export function diffLineItem(before: LineItem, after: LineItem): LineItemFieldCh
       out.push({ field: fieldLabel[k], before: fmt(k, before[k]), after: fmt(k, after[k]) });
     }
   });
+  if (lineTotal(before) !== lineTotal(after)) {
+    out.push({ field: "合计", before: fmtMoney(lineTotal(before)), after: fmtMoney(lineTotal(after)) });
+  }
   return out;
 }
 
@@ -81,30 +86,33 @@ function append(log: Omit<LineItemLog, "id" | "createdAt" | "operator">) {
   writeAll(all);
 }
 
-export function logLineItemAdd(module: LineItemLogModule, scope: string, item: LineItem) {
+export function logLineItemAdd(module: LineItemLogModule, scope: string, item: LineItem): boolean {
   append({
     module, scope, action: "add",
     productName: item.productName || "（未命名）",
     snapshot: { ...item },
   });
+  return true;
 }
 
-export function logLineItemUpdate(module: LineItemLogModule, scope: string, before: LineItem, after: LineItem) {
+export function logLineItemUpdate(module: LineItemLogModule, scope: string, before: LineItem, after: LineItem): boolean {
   const changes = diffLineItem(before, after);
-  if (!changes.length) return;
+  if (!changes.length) return false;
   append({
     module, scope, action: "update",
     productName: after.productName || before.productName || "（未命名）",
     changes,
   });
+  return true;
 }
 
-export function logLineItemDelete(module: LineItemLogModule, scope: string, item: LineItem) {
+export function logLineItemDelete(module: LineItemLogModule, scope: string, item: LineItem): boolean {
   append({
     module, scope, action: "delete",
     productName: item.productName || "（未命名）",
     snapshot: { ...item },
   });
+  return true;
 }
 
 /** 查询某 scope 的全部日志（按时间倒序） */
