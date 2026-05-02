@@ -273,6 +273,7 @@ export default function Sales() {
                       <div className="inline-flex gap-1">
                         <button title="登记回款" className="size-8 rounded-full hover:bg-accent/10 text-foreground/55 hover:text-accent inline-flex items-center justify-center transition-colors" onClick={() => setQuickPay(o)}><ArrowDownLeft className="h-3.5 w-3.5" /></button>
                         <button title="新增发票" className="size-8 rounded-full hover:bg-cobalt/10 text-foreground/55 hover:text-cobalt inline-flex items-center justify-center transition-colors" onClick={() => setQuickInv(o)}><Receipt className="h-3.5 w-3.5" /></button>
+                        <button title="操作日志" className="size-8 rounded-full hover:bg-foreground/5 text-foreground/55 hover:text-foreground inline-flex items-center justify-center transition-colors" onClick={() => { setLogRefId(o.id); setLogRefCode(o.code); setLogOpen(true); }}><History className="h-3.5 w-3.5" /></button>
                         <button title="编辑" className="size-8 rounded-full hover:bg-foreground/5 text-foreground/55 hover:text-foreground inline-flex items-center justify-center transition-colors" onClick={() => openEdit(o)}><Pencil className="h-3.5 w-3.5" /></button>
                         <button title="删除" className="size-8 rounded-full hover:bg-tomato/10 text-foreground/55 hover:text-tomato inline-flex items-center justify-center transition-colors" onClick={() => setDeletingId(o.id)}><Trash2 className="h-3.5 w-3.5" /></button>
                       </div>
@@ -472,7 +473,12 @@ export default function Sales() {
         </DialogContent>
       </Dialog>
       <ConfirmDialog open={!!deletingId} onOpenChange={(v) => !v && setDeletingId(null)} title="删除合同" onConfirm={async () => {
-        if (deletingId) { await salesApi.remove(deletingId); toast.success("已删除"); setDeletingId(null); reload(); }
+        if (deletingId) {
+          const order = data.list.find((o) => o.id === deletingId);
+          if (order) logOrderDelete("sales", order);
+          await salesApi.remove(deletingId);
+          toast.success("已删除"); setDeletingId(null); reload();
+        }
       }} />
 
       <QuickPaymentDialog
@@ -496,6 +502,13 @@ export default function Sales() {
         partyName={quickInv?.customerName || ""}
         existing={quickInv?.invoices || []}
         onSaved={() => { setQuickInv(null); reload(); }}
+      />
+      <OrderLogDialog
+        open={logOpen}
+        onOpenChange={setLogOpen}
+        module="sales"
+        refId={logRefId}
+        refCode={logRefCode}
       />
     </>
   );
