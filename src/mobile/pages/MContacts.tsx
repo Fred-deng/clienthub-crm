@@ -21,7 +21,7 @@ export default function MContacts() {
   useEffect(() => { customerApi.all().then(setCustomers); }, []);
 
   const onSearch = (v: string) => { setKeyword(v); setFilter({ keyword: v }); };
-  const openCreate = () => setEditing({ ownerId: current.id, isPrimary: false, name: "", phone: "", customerId: "", customerName: "", code: "" }) || setEditOpen(true);
+  const openCreate = () => { setEditing({ ownerId: current.id, isPrimary: false, name: "", phone: "", customerId: "", customerName: "", code: "" }); setEditOpen(true); };
   const save = async () => {
     if (!editing?.name || !editing.customerId) return toast({ title: "请填写姓名和所属客户" });
     const cus = customers.find(c => c.id === editing.customerId);
