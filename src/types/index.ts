@@ -15,7 +15,6 @@ export interface InvoiceRecord {
   remark?: string;
 }
 
-export type CustomerType = "software" | "hardware";
 export type CustomerStage = "lead" | "formal"; // 潜在 / 正式
 export type CustomerLevel = "A" | "B" | "C";
 export type CustomerStatus = "active" | "inactive" | "potential" | "lost"; // 客户状态
