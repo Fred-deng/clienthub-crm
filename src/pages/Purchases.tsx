@@ -8,6 +8,7 @@ import { PaginationBar } from "@/components/common/PaginationBar";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { StatusBadge } from "@/components/common/StatusBadge";
 import { LineItemsEditor, LineItem } from "@/components/common/LineItemsEditor";
+import { InvoiceList, InvoiceRecord } from "@/components/common/InvoiceList";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -99,6 +100,7 @@ type FormValues = {
   buyerId: string;
   contractAttachments: string[];
   invoiceAttachments: string[];
+  invoices: InvoiceRecord[];
   status: PurchaseOrder["status"];
   paid: number;
   createdAt: string;
@@ -112,7 +114,7 @@ const emptyForm: FormValues = {
   supplierId: "", contractTitle: "", signingParty: "集马科技",
   signedAt: today(), contractExpireAt: "", contractAmount: 0,
   linkedSalesContract: false, linkedSalesContractId: "",
-  buyerId: "", contractAttachments: [], invoiceAttachments: [],
+  buyerId: "", contractAttachments: [], invoiceAttachments: [], invoices: [],
   status: "draft", paid: 0, createdAt: today(), expectedAt: "", remark: "",
 };
 
@@ -158,6 +160,7 @@ export default function Purchases() {
       buyerId: o.buyerId || "",
       contractAttachments: o.contractAttachments || [],
       invoiceAttachments: o.invoiceAttachments || [],
+      invoices: o.invoices || [],
       status: o.status,
       paid: o.paid,
       createdAt: o.createdAt,
@@ -388,9 +391,15 @@ export default function Purchases() {
             <Field label="采购合同附件" span={6}>
               <AttachmentList value={watch("contractAttachments") || []} onChange={(v) => setValue("contractAttachments", v)} />
             </Field>
-            <Field label="开票资料" span={6}>
+            <Field label="开票资料附件" span={6}>
               <AttachmentList value={watch("invoiceAttachments") || []} onChange={(v) => setValue("invoiceAttachments", v)} />
             </Field>
+
+            {/* 发票管理（子表）：供应商开给我方 */}
+            <GroupTitle>发票管理（供应商开票）</GroupTitle>
+            <div className="col-span-12">
+              <InvoiceList direction="in" value={watch("invoices") || []} onChange={(v) => setValue("invoices", v)} />
+            </div>
 
             {/* 备注 */}
             <GroupTitle>备注</GroupTitle>
