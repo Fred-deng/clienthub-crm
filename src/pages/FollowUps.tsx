@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/select";
 import { followUpApi, customerApi, contactApi, employeeApi } from "@/services/api";
 import { usePagedList } from "@/hooks/usePagedList";
-import { fmtMoney } from "@/lib/format";
+import { fmtMoney, customerStatusLabel } from "@/lib/format";
 import type { FollowUp, Customer, Contact, Employee } from "@/types";
 
 const empty: Omit<FollowUp, "id"> = {
