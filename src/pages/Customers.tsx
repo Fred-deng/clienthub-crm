@@ -210,6 +210,9 @@ export default function Customers() {
                     <td className="num">{fmtMoney(c.receivable)}</td>
                     <td className="num">
                       <div className="inline-flex gap-1">
+                        <Link to={`/contacts?customerId=${c.id}`} title="查看联系人" className="size-8 rounded-full hover:bg-cobalt/10 text-foreground/55 hover:text-cobalt inline-flex items-center justify-center transition-colors">
+                          <UsersIcon className="h-3.5 w-3.5" />
+                        </Link>
                         <button className="size-8 rounded-full hover:bg-foreground/5 text-foreground/55 hover:text-foreground inline-flex items-center justify-center transition-colors" onClick={() => openEdit(c)}>
                           <Pencil className="h-3.5 w-3.5" />
                         </button>
