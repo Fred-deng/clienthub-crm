@@ -25,6 +25,7 @@ import { syncPurchaseStock, applyPurchaseReceive, revertPurchaseReceive, findOrC
 import { logOrderUpdate, logOrderDelete } from "@/services/orderLog";
 import { useCurrentUser } from "@/context/CurrentUserContext";
 import { OrderLogDialog } from "@/components/common/OrderLogDialog";
+import { CancelOrderDialog } from "@/components/common/CancelOrderDialog";
 import { usePagedList } from "@/hooks/usePagedList";
 import { fmtMoney } from "@/lib/format";
 import { splitPurchase, bizLabel, bizTone, type BizFilter } from "@/lib/biz";
