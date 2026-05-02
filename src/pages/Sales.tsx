@@ -421,7 +421,7 @@ export default function Sales() {
             <GroupTitle>附件与备注</GroupTitle>
             <Field label="合同附件" span={4}><AttachmentField value={watch("contractAttachments") || []} onChange={(v) => setValue("contractAttachments", v)} /></Field>
             <Field label="双方盖章合同扫描件" span={4}><AttachmentField value={watch("stampedContractAttachments") || []} onChange={(v) => setValue("stampedContractAttachments", v)} /></Field>
-            <Field label="营业执照" span={4}><AttachmentField value={watch("licenseAttachments") || []} onChange={(v) => setValue("licenseAttachments", v)} /></Field>
+            
             <Field label="开票资料" span={4}><AttachmentField value={watch("invoiceAttachments") || []} onChange={(v) => setValue("invoiceAttachments", v)} /></Field>
             <Field label="其他附件" span={4}><AttachmentField value={watch("otherAttachments") || []} onChange={(v) => setValue("otherAttachments", v)} /></Field>
             <Field label="备注" span={4}><Textarea rows={3} {...register("remark")} /></Field>
