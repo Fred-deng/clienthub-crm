@@ -290,10 +290,38 @@ export default function Customers() {
             );
           })}
         </div>
+        {/* 批量操作工具条 */}
+        {selectedIds.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 px-4 py-2.5 bg-mustard/10 border-b border-mustard/30">
+            <span className="text-xs font-semibold text-foreground">
+              已选 <span className="text-tomato">{selectedIds.length}</span> 位客户
+            </span>
+            <div className="flex-1" />
+            <Button size="sm" variant="outline" onClick={() => { setBulkSeaValue("公海"); setBulkSeaOpen(true); }}>
+              转入公海
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => { setBulkSeaValue("私海"); setBulkSeaOpen(true); }}>
+              转入私海
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => setBulkStatusOpen(true)}>
+              修改客户状态
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setSelectedIds([])}>
+              取消选择
+            </Button>
+          </div>
+        )}
         <div className="overflow-x-auto">
           <table className="data-table">
             <thead>
               <tr>
+                <th className="w-10">
+                  <Checkbox
+                    checked={allOnPageSelected ? true : someOnPageSelected ? "indeterminate" : false}
+                    onCheckedChange={(v) => togglePage(!!v)}
+                    aria-label="全选当页"
+                  />
+                </th>
                 <th>编号</th>
                 <th>客户</th>
                 <th>状态</th>
@@ -307,13 +335,21 @@ export default function Customers() {
               </tr>
             </thead>
             <tbody>
-              {loading && <tr className="empty"><td colSpan={10} className="empty">加载中…</td></tr>}
+              {loading && <tr className="empty"><td colSpan={11} className="empty">加载中…</td></tr>}
               {!loading && data.list.length === 0 && (
-                <tr className="empty"><td colSpan={10} className="empty">暂无客户数据</td></tr>
+                <tr className="empty"><td colSpan={11} className="empty">暂无客户数据</td></tr>
               )}
               {data.list.map((c) => {
+                const checked = selectedIds.includes(c.id);
                 return (
                   <tr key={c.id} className="clickable" onDoubleClick={() => openEdit(c)} title="双击查看详情">
+                    <td onDoubleClick={(e) => e.stopPropagation()}>
+                      <Checkbox
+                        checked={checked}
+                        onCheckedChange={(v) => toggleOne(c.id, !!v)}
+                        aria-label={`选择 ${c.name}`}
+                      />
+                    </td>
                     <td className="mono">{c.code}</td>
                     <td>
                       <div className="flex items-center gap-2.5">
