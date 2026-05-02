@@ -6,6 +6,7 @@ import { KpiCard } from "@/components/common/KpiCard";
 import { BizTabs, BizSplitChip } from "@/components/common/BizTabs";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DateRangeFilter, inRange, type DateRangeValue } from "@/components/common/DateRangeFilter";
 import { purchaseApi, supplierApi, productApi } from "@/services/api";
 import { fmtMoney, fmtMoneyShort } from "@/lib/format";
 import { splitPurchase, splitPurchasePaid, type BizFilter } from "@/lib/biz";
@@ -33,6 +34,7 @@ export default function Payables() {
   const [keyword, setKeyword] = useState("");
   const [filter, setFilter] = useState<"all" | "outstanding" | "settled">("outstanding");
   const [biz, setBiz] = useState<BizFilter>("all");
+  const [range, setRange] = useState<DateRangeValue>({});
 
   useEffect(() => {
     purchaseApi.all().then(setOrders);
@@ -42,7 +44,7 @@ export default function Payables() {
 
   const rows: Row[] = useMemo(() => {
     const map = new Map<string, Row>();
-    orders.filter((o) => o.status !== "cancelled" && o.status !== "draft").forEach((o) => {
+    orders.filter((o) => o.status !== "cancelled" && o.status !== "draft" && inRange(o.createdAt, range)).forEach((o) => {
       const contract = o.contractAmount || o.totalAmount;
       const invoiced = (o.invoices || []).reduce((s, r) => s + (r.amount || 0), 0);
       const sCon = splitPurchase(o, products);
@@ -78,7 +80,7 @@ export default function Payables() {
       if (r) r.category = s.category;
     });
     return Array.from(map.values()).sort((a, b) => b.outstanding - a.outstanding);
-  }, [orders, suppliers, products]);
+  }, [orders, suppliers, products, range]);
 
   const view = (r: Row) => {
     if (biz === "software") return { contract: r.swContract, paid: r.swPaid, outstanding: r.swOutstanding };
@@ -164,6 +166,7 @@ export default function Payables() {
                 <SelectItem value="settled">已结清</SelectItem>
               </SelectContent>
             </Select>
+            <DateRangeFilter label="下单" value={range} onChange={setRange} />
           </div>
         }
       >

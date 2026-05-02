@@ -129,6 +129,8 @@ export const purchaseApi = buildCrud(purchases, {
   searchFields: ["code", "supplierName"],
   filter: (it, q) => {
     if (q.status && q.status !== "all" && it.status !== q.status) return false;
+    if (q.dateFrom && (it.createdAt || "") < q.dateFrom) return false;
+    if (q.dateTo && (it.createdAt || "") > q.dateTo) return false;
     return true;
   },
 });
@@ -151,6 +153,8 @@ export const salesApi = buildCrud(salesOrders, {
       const m = (it as any).createdAt?.slice(0, 7);
       if (m !== q.month) return false;
     }
+    if (q.dateFrom && (it.createdAt || "") < q.dateFrom) return false;
+    if (q.dateTo && (it.createdAt || "") > q.dateTo) return false;
     return true;
   },
 });
@@ -160,6 +164,8 @@ export const paymentApi = buildCrud(payments, {
   searchFields: ["code", "partyName", "refCode"],
   filter: (it, q) => {
     if (q.direction && q.direction !== "all" && it.direction !== q.direction) return false;
+    if (q.dateFrom && (it.paidAt || "") < q.dateFrom) return false;
+    if (q.dateTo && (it.paidAt || "") > q.dateTo) return false;
     return true;
   },
 });

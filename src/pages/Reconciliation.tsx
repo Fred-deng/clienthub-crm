@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { QuickPaymentDialog } from "@/components/common/QuickPaymentDialog";
+import { DateRangeFilter, inRange, type DateRangeValue } from "@/components/common/DateRangeFilter";
 import { salesApi, purchaseApi } from "@/services/api";
 import { fmtMoney } from "@/lib/format";
 import type { SalesOrder, PurchaseOrder } from "@/types";
@@ -42,6 +43,7 @@ export default function Reconciliation() {
   const [keyword, setKeyword] = useState("");
   const [filter, setFilter] = useState<"outstanding" | "all">("outstanding");
   const [dlg, setDlg] = useState<Row | null>(null);
+  const [range, setRange] = useState<DateRangeValue>({});
 
   const reload = () => {
     salesApi.all().then(setSales);
@@ -71,6 +73,7 @@ export default function Reconciliation() {
 
   const all = tab === "in" ? inRows : outRows;
   const filtered = all.filter((r) => {
+    if (!inRange(r.createdAt, range)) return false;
     if (filter === "outstanding" && r.outstanding <= 0) return false;
     if (keyword) {
       const k = keyword.toLowerCase();
@@ -79,8 +82,9 @@ export default function Reconciliation() {
     return true;
   }).sort((a, b) => b.outstanding - a.outstanding);
 
-  // KPI（基于当前 tab 全量有效订单，与 Dashboard 应收/应付口径一致，不受筛选影响）
-  const totals = all.reduce(
+  // KPI（基于当前 tab + 日期段，不受搜索/未结清筛选影响）
+  const kpiSource = all.filter((r) => inRange(r.createdAt, range));
+  const totals = kpiSource.reduce(
     (s, r) => ({
       contract: s.contract + r.contract,
       paid: s.paid + r.paid,
@@ -133,7 +137,7 @@ export default function Reconciliation() {
         subtitle={`${groups.length} parties · ${filtered.length} orders`}
         accent={tab === "in" ? "tomato" : "cobalt"}
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <div className="relative">
               <Search className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-foreground/40" />
               <Input placeholder="搜索对手方/单号" value={keyword} onChange={(e) => setKeyword(e.target.value)} className="pl-9 h-9 w-56 text-xs rounded-full" />
@@ -145,6 +149,7 @@ export default function Reconciliation() {
                 <SelectItem value="all">全部</SelectItem>
               </SelectContent>
             </Select>
+            <DateRangeFilter label="下单" value={range} onChange={setRange} />
           </div>
         }
       >

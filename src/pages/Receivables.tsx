@@ -6,6 +6,7 @@ import { KpiCard } from "@/components/common/KpiCard";
 import { BizTabs, BizSplitChip } from "@/components/common/BizTabs";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DateRangeFilter, inRange, type DateRangeValue } from "@/components/common/DateRangeFilter";
 import { salesApi, customerApi, productApi } from "@/services/api";
 import { fmtMoney, fmtMoneyShort } from "@/lib/format";
 import { splitSales, splitSalesReceived, type BizFilter } from "@/lib/biz";
@@ -34,6 +35,7 @@ export default function Receivables() {
   const [keyword, setKeyword] = useState("");
   const [filter, setFilter] = useState<"all" | "outstanding" | "settled">("outstanding");
   const [biz, setBiz] = useState<BizFilter>("all");
+  const [range, setRange] = useState<DateRangeValue>({});
 
   useEffect(() => {
     salesApi.all().then(setOrders);
@@ -43,7 +45,7 @@ export default function Receivables() {
 
   const rows: Row[] = useMemo(() => {
     const map = new Map<string, Row>();
-    orders.filter((o) => o.status !== "cancelled").forEach((o) => {
+    orders.filter((o) => o.status !== "cancelled" && inRange(o.createdAt, range)).forEach((o) => {
       const contract = o.contractAmount ?? o.totalAmount;
       const invoiced = (o.invoices || []).reduce((s, r) => s + (r.amount || 0), 0);
       const sCon = splitSales(o, products);
@@ -79,7 +81,7 @@ export default function Receivables() {
       if (r) r.level = c.level;
     });
     return Array.from(map.values()).sort((a, b) => b.outstanding - a.outstanding);
-  }, [orders, customers, products]);
+  }, [orders, customers, products, range]);
 
   // 按 biz 视图选取金额
   const view = (r: Row) => {
@@ -166,6 +168,7 @@ export default function Receivables() {
                 <SelectItem value="settled">已结清</SelectItem>
               </SelectContent>
             </Select>
+            <DateRangeFilter label="下单" value={range} onChange={setRange} />
           </div>
         }
       >
