@@ -64,6 +64,25 @@ export interface Customer {
   remark?: string;
 }
 
+// —— 客户联系人 ——
+export interface Contact {
+  id: string;
+  code: string;            // 联系人编号
+  customerId: string;      // 所属客户
+  customerName: string;    // 客户名称（冗余便于展示）
+  name: string;            // 联系人姓名
+  phone: string;           // 手机号
+  position?: string;       // 职位
+  email?: string;
+  address?: string;
+  birthday?: string;
+  ownerId: string;         // 销售负责人
+  isPrimary: boolean;      // 首要联系人
+  remark?: string;
+  attachment?: string;
+  createdAt: string;
+}
+
 export type ProductCategory = "software" | "ipc" | "pda" | "mouse" | "cable" | "power" | "other";
 
 export interface Product {
