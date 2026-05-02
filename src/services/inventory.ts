@@ -50,7 +50,7 @@ export function findOrCreateProductByName(
     beforeStock: 0,
     afterStock: 0,
     refType: "purchase",
-    operator,
+    operator: operator || readCurrentOperator(),
     remark: `采购明细自动建档（${category}）`,
   });
   return created;
@@ -130,7 +130,7 @@ export function logProductChange(p: Product, action: "update" | "delete", remark
     beforeStock: p.stock,
     afterStock: action === "delete" ? 0 : p.stock,
     refType: "manual",
-    operator,
+    operator: operator || readCurrentOperator(),
     remark,
   });
 }
