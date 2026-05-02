@@ -72,6 +72,7 @@ export const customerApi = buildCrud(customers, {
   searchFields: ["name", "code", "contact", "phone"],
   filter: (it, q) => {
     if (q.stage && q.stage !== "all" && it.stage !== q.stage) return false;
+    if (q.status && q.status !== "all" && it.status !== q.status) return false;
     if (q.level && q.level !== "all" && it.level !== q.level) return false;
     return true;
   },

@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/select";
 import { customerApi, contactApi, followUpApi, employeeApi, salesApi, productApi } from "@/services/api";
 import { usePagedList } from "@/hooks/usePagedList";
-import { fmtMoney, customerStageLabel } from "@/lib/format";
+import { fmtMoney, customerStageLabel, customerStatusLabel, customerStatusTone, deriveCustomerStage } from "@/lib/format";
 import type { Customer, Contact, FollowUp, Employee, SalesOrder, Product } from "@/types";
 import { useEffect, ReactNode } from "react";
 
@@ -32,7 +32,7 @@ const emptyCustomer: Omit<Customer, "id"> = {
   legalPerson: "", companyNature: "民营", industry: "",
   registeredAt: "", registeredCapital: 0, paidInCapital: 0,
   scale: "", insuredCount: 0,
-  firstCooperationAt: "", cooperationStatus: "未合作", cooperationProducts: "",
+  firstCooperationAt: "", cooperationProducts: "",
   ownerId: "u3",
   category: "潜在客户", source: "电话开发", seaStatus: "私海",
   lastVisitAt: "", nextVisitAt: "",
@@ -122,7 +122,9 @@ export default function Customers() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const onSubmit = handleSubmit(async (values) => {
+  const onSubmit = handleSubmit(async (raw) => {
+    // 自动从「客户状态」推导阶段（潜在/意向 = lead，否则 formal）
+    const values = { ...raw, stage: deriveCustomerStage(raw.status) } as Omit<Customer, "id">;
     if (editing) {
       await customerApi.update(editing.id, values);
       toast.success("客户已更新");
@@ -211,12 +213,13 @@ export default function Customers() {
                 onChange={(e) => setFilter({ keyword: e.target.value })}
               />
             </div>
-            <Select value={query.stage ?? "all"} onValueChange={(v) => setFilter({ stage: v })}>
-              <SelectTrigger className="h-9 w-28 text-xs rounded-full"><SelectValue /></SelectTrigger>
+            <Select value={query.status ?? "all"} onValueChange={(v) => setFilter({ status: v })}>
+              <SelectTrigger className="h-9 w-32 text-xs rounded-full"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">全部阶段</SelectItem>
-                <SelectItem value="lead">潜在客户</SelectItem>
-                <SelectItem value="formal">正式客户</SelectItem>
+                <SelectItem value="all">全部状态</SelectItem>
+                {Object.entries(customerStatusLabel).map(([v, l]) => (
+                  <SelectItem key={v} value={v}>{l}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -228,6 +231,7 @@ export default function Customers() {
               <tr>
                 <th>编号</th>
                 <th>客户</th>
+                <th>状态</th>
                 <th>类别</th>
                 <th>区域</th>
                 <th>负责人</th>
@@ -238,9 +242,9 @@ export default function Customers() {
               </tr>
             </thead>
             <tbody>
-              {loading && <tr className="empty"><td colSpan={9} className="empty">加载中…</td></tr>}
+              {loading && <tr className="empty"><td colSpan={10} className="empty">加载中…</td></tr>}
               {!loading && data.list.length === 0 && (
-                <tr className="empty"><td colSpan={9} className="empty">暂无客户数据</td></tr>
+                <tr className="empty"><td colSpan={10} className="empty">暂无客户数据</td></tr>
               )}
               {data.list.map((c) => {
                 return (
@@ -256,6 +260,23 @@ export default function Customers() {
                           <div className="text-[11px] text-foreground/45 truncate">{c.industry || "—"}</div>
                         </div>
                       </div>
+                    </td>
+                    <td>
+                      {(() => {
+                        const tone = customerStatusTone[c.status || "potential"] || "muted";
+                        const toneCls: Record<string, string> = {
+                          mint: "bg-mint/25 text-foreground ring-mint/40",
+                          mustard: "bg-mustard/25 text-foreground ring-mustard/40",
+                          tomato: "bg-tomato/15 text-tomato ring-tomato/30",
+                          cobalt: "bg-cobalt/12 text-cobalt ring-cobalt/25",
+                          muted: "bg-foreground/5 text-foreground/65 ring-foreground/15",
+                        };
+                        return (
+                          <span className={`cell-chip ring-1 ${toneCls[tone]}`}>
+                            {customerStatusLabel[c.status || "potential"] || "—"}
+                          </span>
+                        );
+                      })()}
                     </td>
                     <td className="text-foreground/70">{c.category || "—"}</td>
                     <td className="text-foreground/70">{c.region || "—"}</td>
@@ -286,7 +307,7 @@ export default function Customers() {
             {data.list.length > 0 && (
               <tfoot>
                 <tr>
-                  <td colSpan={8} className="label">本页合计 · {data.list.length} 条 / 共 {data.total} 条</td>
+                  <td colSpan={9} className="label">本页合计 · {data.list.length} 条 / 共 {data.total} 条</td>
                   <td className="num">{fmtMoney(data.list.reduce((s, c) => s + (c.receivable || 0), 0))}</td>
                   <td />
                 </tr>
@@ -316,10 +337,9 @@ export default function Customers() {
               <Select value={watch("status") || ""} onValueChange={(v: any) => setValue("status", v)}>
                 <SelectTrigger><SelectValue placeholder="请选择" /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="potential">潜在</SelectItem>
-                  <SelectItem value="active">活跃</SelectItem>
-                  <SelectItem value="inactive">沉默</SelectItem>
-                  <SelectItem value="lost">流失</SelectItem>
+                  {Object.entries(customerStatusLabel).map(([v, l]) => (
+                    <SelectItem key={v} value={v}>{l}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </Field>
@@ -358,14 +378,7 @@ export default function Customers() {
             {/* 合作信息 */}
             <GroupTitle>合作信息</GroupTitle>
             <Field label="首次合作时间"><Input type="date" {...register("firstCooperationAt")} /></Field>
-            <Field label="合作状态">
-              <Select value={watch("cooperationStatus") || ""} onValueChange={(v: any) => setValue("cooperationStatus", v)}>
-                <SelectTrigger><SelectValue placeholder="请选择" /></SelectTrigger>
-                <SelectContent>
-                  {["未合作","意向中","合作中","已暂停","已终止"].map(n => <SelectItem key={n} value={n}>{n}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </Field>
+            {/* 合作状态已合并至顶部「客户状态」，此处不再单独展示 */}
             <Field label="合作产品/服务"><Input placeholder="请输入合作产品/服务" {...register("cooperationProducts")} /></Field>
             <Field label="销售负责人">
               <Select value={watch("ownerId")} onValueChange={(v: any) => setValue("ownerId", v)}>

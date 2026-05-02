@@ -28,14 +28,22 @@ export const employees: Employee[] = [
 
 // ---------- Customers ----------
 export const customers: Customer[] = Array.from({ length: 48 }).map((_, i) => {
-  const stage = Random.pick(["lead", "lead", "formal", "formal", "formal"]) as Customer["stage"];
+  const status = Random.pick([
+    "active", "active", "active",
+    "intent", "intent",
+    "potential",
+    "paused",
+    "inactive",
+    "lost",
+  ]) as Customer["status"];
+  const stage: Customer["stage"] = (status === "potential" || status === "intent") ? "lead" : "formal";
   const name = (Random as any).cnCompany();
   return {
     id: `c${i + 1}`,
     code: `CUS-${pad(1001 + i)}`,
     name,
     taxNo: "91" + Mock.mock(/[0-9A-Z]{16}/),
-    status: Random.pick(["active", "active", "potential", "inactive", "lost"]) as Customer["status"],
+    status,
     region: Random.pick(["华东", "华南", "华北", "华中", "西南", "西北", "东北"]),
     stage,
     level: Random.pick(["A", "B", "C"]) as Customer["level"],
@@ -54,7 +62,7 @@ export const customers: Customer[] = Array.from({ length: 48 }).map((_, i) => {
     scale: Random.pick(["小型(<50人)", "中型(50-500人)", "大型(500-2000人)", "超大型(>2000人)"]),
     insuredCount: Random.integer(10, 3000),
     firstCooperationAt: Random.date("yyyy-MM-dd"),
-    cooperationStatus: Random.pick(["未合作", "意向中", "合作中", "合作中", "已暂停"]) as any,
+    // cooperationStatus 已合并到 status，不再单独生成
     cooperationProducts: Random.pick(["MES 系统", "ERP + 工控机", "PDA + WMS", "BI 平台", "运维服务"]),
     ownerId: Random.pick(["u3", "u4", "u5"]),
     category: Random.pick(["战略客户", "重点客户", "普通客户", "潜在客户"]) as any,
