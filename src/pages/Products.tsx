@@ -1,18 +1,20 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Plus, Pencil, Trash2, Search, AlertTriangle } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, AlertTriangle, History } from "lucide-react";
 import { toast } from "sonner";
 import { useSearchParams } from "react-router-dom";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { DataPanel } from "@/components/common/DataPanel";
 import { PaginationBar } from "@/components/common/PaginationBar";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
+import { StockLogDialog } from "@/components/common/StockLogDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { productApi } from "@/services/api";
+import { adjustStock, logProductChange } from "@/services/inventory";
 import { usePagedList } from "@/hooks/usePagedList";
 import { fmtMoney, productCategoryLabel } from "@/lib/format";
 import type { Product } from "@/types";
@@ -28,19 +30,53 @@ export default function Products() {
   const [editing, setEditing] = useState<Product | null>(null);
   const [open, setOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [logOpen, setLogOpen] = useState(false);
+  const [logProduct, setLogProduct] = useState<Product | null>(null);
   const { register, handleSubmit, reset, setValue, watch } = useForm<Omit<Product, "id">>({ defaultValues: empty });
 
   const openCreate = () => { reset({ ...empty, code: `PRD-${Date.now().toString().slice(-6)}` }); setEditing(null); setOpen(true); };
   const openEdit = (p: Product) => { reset(p); setEditing(p); setOpen(true); };
 
   const onSubmit = handleSubmit(async (v) => {
-    if (editing) { await productApi.update(editing.id, v); toast.success("已更新"); }
-    else { await productApi.create(v); toast.success("已创建"); }
+    if (editing) {
+      const stockDiff = (Number(v.stock) || 0) - editing.stock;
+      const updated = await productApi.update(editing.id, v);
+      if (updated) {
+        // 数量变化 → 写入 adjust 日志（且实际库存已通过 update 写入，这里仅补记录）
+        if (stockDiff !== 0) {
+          // update 已把 stock 设到目标值，但 adjustStock 会再次叠加，所以先回退再调用
+          updated.stock = editing.stock;
+          adjustStock({
+            productId: updated.id,
+            delta: stockDiff,
+            action: "adjust",
+            refType: "manual",
+            operator: "产品编辑",
+            remark: "手工修改库存",
+          });
+        }
+        // 其他字段变更
+        const fieldChanged = Object.keys(v).some((k) => k !== "stock" && (v as any)[k] !== (editing as any)[k]);
+        if (fieldChanged) logProductChange(updated, "update", "编辑产品资料", "产品管理");
+      }
+      toast.success("已更新");
+    } else {
+      const created = await productApi.create(v);
+      logProductChange(created, "create" as any, "新增产品", "产品管理");
+      if ((Number(v.stock) || 0) > 0) {
+        // 调整记录初始库存
+        created.stock = 0;
+        adjustStock({ productId: created.id, delta: Number(v.stock) || 0, action: "in", refType: "manual", operator: "产品管理", remark: "新增产品初始库存" });
+      }
+      toast.success("已创建");
+    }
     setOpen(false); reload();
   });
 
   const onDelete = async () => {
     if (!deletingId) return;
+    const p = data.list.find((x) => x.id === deletingId);
+    if (p) logProductChange(p, "delete", "删除产品", "产品管理");
     await productApi.remove(deletingId);
     toast.success("已删除"); setDeletingId(null); reload();
   };
