@@ -43,7 +43,7 @@ export default function Receivables() {
 
   const rows: Row[] = useMemo(() => {
     const map = new Map<string, Row>();
-    orders.forEach((o) => {
+    orders.filter((o) => o.status !== "cancelled").forEach((o) => {
       const contract = o.contractAmount ?? o.totalAmount;
       const invoiced = (o.invoices || []).reduce((s, r) => s + (r.amount || 0), 0);
       const sCon = splitSales(o, products);
