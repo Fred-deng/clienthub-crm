@@ -32,7 +32,7 @@ interface Row {
 
 const statusZh: Record<string, string> = {
   pending: "待发货", shipped: "已发货", delivered: "已送达", cancelled: "已取消",
-  draft: "草稿", confirmed: "已确认", received: "已入库",
+  draft: "草稿", ordered: "已下单", received: "已入库",
 };
 
 export default function Reconciliation() {
