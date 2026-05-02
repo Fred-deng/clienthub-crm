@@ -345,8 +345,10 @@ export default function Contacts() {
             </Field>
 
             <GroupTitle>其他信息</GroupTitle>
-            <Field label="备注" span={6}><Textarea rows={3} {...register("remark")} /></Field>
-            <Field label="附件" span={6}><Input placeholder="附件链接或文件名" {...register("attachment")} /></Field>
+            <Field label="备注" span={12}><Textarea rows={3} {...register("remark")} /></Field>
+            <Field label="附件" span={12}>
+              <AttachmentField singleValue={watch("attachment") || ""} onSingleChange={(v) => setValue("attachment", v)} hint="名片 / 合同 / 资质等" />
+            </Field>
 
             <GroupTitle>系统信息</GroupTitle>
             <Field label="联系人编号"><Input {...register("code")} /></Field>
