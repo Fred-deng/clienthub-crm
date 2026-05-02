@@ -421,3 +421,19 @@ customers.forEach((c, ci) => {
     });
   }
 });
+
+// ---------- Stock logs ----------
+import type { StockLog } from "@/types";
+export const stockLogs: StockLog[] = products.map((p, i) => ({
+  id: `sl-init-${i}`,
+  productId: p.id,
+  productName: p.name,
+  action: "create",
+  delta: p.stock,
+  beforeStock: 0,
+  afterStock: p.stock,
+  refType: "manual",
+  operator: "系统初始化",
+  remark: "初始化导入库存",
+  createdAt: todayStr(),
+}));
