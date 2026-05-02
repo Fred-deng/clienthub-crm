@@ -34,6 +34,7 @@ export default function Payables() {
   const [keyword, setKeyword] = useState("");
   const [filter, setFilter] = useState<"all" | "outstanding" | "settled">("outstanding");
   const [biz, setBiz] = useState<BizFilter>("all");
+  const [range, setRange] = useState<DateRangeValue>({});
 
   useEffect(() => {
     purchaseApi.all().then(setOrders);
