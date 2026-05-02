@@ -175,7 +175,7 @@ export default function Sales() {
       customerName: cus.name,
       items,
       totalAmount,
-      contractAmount: Number(v.contractAmount) || totalAmount,
+      contractAmount: totalAmount,
       received: Number(v.received) || 0,
       serviceFee: Number(v.serviceFee) || 0,
       outsourceFee: Number(v.outsourceFee) || 0,
