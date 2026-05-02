@@ -51,7 +51,6 @@ export default function Products() {
             delta: stockDiff,
             action: "adjust",
             refType: "manual",
-            operator: "产品编辑",
             remark: "手工修改库存",
           });
         }
@@ -62,11 +61,10 @@ export default function Products() {
       toast.success("已更新");
     } else {
       const created = await productApi.create(v);
-      logProductChange(created, "create" as any, "新增产品", "产品管理");
+      logProductChange(created, "create" as any, "新增产品");
       if ((Number(v.stock) || 0) > 0) {
-        // 调整记录初始库存
         created.stock = 0;
-        adjustStock({ productId: created.id, delta: Number(v.stock) || 0, action: "in", refType: "manual", operator: "产品管理", remark: "新增产品初始库存" });
+        adjustStock({ productId: created.id, delta: Number(v.stock) || 0, action: "in", refType: "manual", remark: "新增产品初始库存" });
       }
       toast.success("已创建");
     }
