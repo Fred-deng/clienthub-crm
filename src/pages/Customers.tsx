@@ -331,17 +331,6 @@ export default function Customers() {
             </Field>
             <Field label="归属区域"><Input placeholder="请输入归属区域" {...register("region")} /></Field>
 
-            {/* 联系信息 */}
-            <GroupTitle>联系信息</GroupTitle>
-            <Field label="联系人"><Input {...register("contact")} /></Field>
-            <Field label="电话"><Input {...register("phone")} /></Field>
-            <Field label="邮箱"><Input {...register("email")} /></Field>
-            <Field label="注册地址" span={6}><Input placeholder="请输入注册地址" {...register("registeredAddress")} /></Field>
-            <Field label="通讯地址" span={6}><Input {...register("address")} /></Field>
-            <Field label="经营范围" span={12}>
-              <Textarea rows={2} placeholder="请输入经营范围" {...register("businessScope")} />
-            </Field>
-
             {/* 工商信息 */}
             <GroupTitle>工商信息</GroupTitle>
             <Field label="法定代表人"><Input placeholder="请输入法定代表人" {...register("legalPerson")} /></Field>
@@ -366,6 +355,11 @@ export default function Customers() {
             <Field label="实缴资金（万元）"><Input type="number" step="0.01" {...register("paidInCapital", { valueAsNumber: true })} /></Field>
             <Field label="客户规模"><Input placeholder="请输入客户规模" {...register("scale")} /></Field>
             <Field label="参保人数"><Input type="number" {...register("insuredCount", { valueAsNumber: true })} /></Field>
+            <Field label="注册地址" span={6}><Input placeholder="请输入注册地址" {...register("registeredAddress")} /></Field>
+            <Field label="通讯地址" span={6}><Input {...register("address")} /></Field>
+            <Field label="经营范围" span={12}>
+              <Textarea rows={2} placeholder="请输入经营范围" {...register("businessScope")} />
+            </Field>
 
             {/* 合作信息 */}
             <GroupTitle>合作信息</GroupTitle>
