@@ -289,7 +289,7 @@ export default function FollowUps() {
               {data.list.map((f) => {
                 const Icon = wayIcon[f.contactWay] ?? MoreHorizontal;
                 return (
-                  <tr key={f.id}>
+                  <tr key={f.id} className="clickable" onDoubleClick={() => openEdit(f)} title="双击查看详情">
                     <td className="mono">{f.code}</td>
                     <td>
                       <div className="font-semibold text-foreground">{f.subject}</div>
@@ -313,7 +313,7 @@ export default function FollowUps() {
                     <td className="mono text-[12px] text-foreground/65">{f.nextVisitAt || "—"}</td>
                     <td className="num">{f.expectedAmount ? fmtMoney(f.expectedAmount) : "—"}</td>
                     <td className="text-foreground/70">{ownerName(f.ownerId)}</td>
-                    <td className="num">
+                    <td className="num" onDoubleClick={(e) => e.stopPropagation()}>
                       <div className="inline-flex gap-1">
                         <button className="size-8 rounded-full hover:bg-foreground/5 text-foreground/55 hover:text-foreground inline-flex items-center justify-center transition-colors" onClick={() => openEdit(f)}>
                           <Pencil className="h-3.5 w-3.5" />
@@ -327,6 +327,15 @@ export default function FollowUps() {
                 );
               })}
             </tbody>
+            {data.list.length > 0 && (
+              <tfoot>
+                <tr>
+                  <td colSpan={8} className="label">本页 {data.list.length} 条 · 共 {data.total} 条 · 预计金额合计</td>
+                  <td className="num">{fmtMoney(data.list.reduce((s, f) => s + (f.expectedAmount || 0), 0))}</td>
+                  <td colSpan={2} />
+                </tr>
+              </tfoot>
+            )}
           </table>
         </div>
         <PaginationBar
