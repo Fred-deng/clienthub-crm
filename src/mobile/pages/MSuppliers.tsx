@@ -4,7 +4,7 @@ import { useInfiniteList } from "../hooks/useInfiniteList";
 import { useToast } from "@/hooks/use-toast";
 import type { Supplier } from "@/types";
 import { Truck, Phone } from "lucide-react";
-import { MPageHeader, MSearchBar, MList, MCard, MFab, MSheet, MField, MInput, MTextarea, MButton, MConfirm, MRow } from "../components/MUI";
+import { MPageHeader, MSearchBar, MList, MLoadMore, MCard, MFab, MSheet, MField, MInput, MTextarea, MButton, MConfirm, MRow } from "../components/MUI";
 
 export default function MSuppliers() {
   const { toast } = useToast();
@@ -45,6 +45,7 @@ export default function MSuppliers() {
             </div>
           </MCard>
         ))}
+        {items.length > 0 && <MLoadMore hasMore={hasMore} loading={loading} onLoad={loadMore} />}
       </MList>
       <MFab onClick={openCreate} />
 

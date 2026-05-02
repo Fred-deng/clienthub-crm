@@ -4,7 +4,7 @@ import { useInfiniteList } from "../hooks/useInfiniteList";
 import { useToast } from "@/hooks/use-toast";
 import type { Product, ProductCategory } from "@/types";
 import { Package, AlertTriangle } from "lucide-react";
-import { MPageHeader, MSearchBar, MList, MCard, MTag, MFab, MSheet, MField, MInput, MSelect, MButton, MChipFilter, MConfirm, MRow } from "../components/MUI";
+import { MPageHeader, MSearchBar, MList, MLoadMore, MCard, MTag, MFab, MSheet, MField, MInput, MSelect, MButton, MChipFilter, MConfirm, MRow } from "../components/MUI";
 
 const CATS: { value: ProductCategory | "all"; label: string }[] = [
   { value: "all", label: "全部" }, { value: "software", label: "软件" }, { value: "ipc", label: "工控机" }, { value: "pda", label: "PDA" }, { value: "mouse", label: "鼠标" }, { value: "cable", label: "线材" }, { value: "power", label: "电源" }, { value: "other", label: "其他" },
@@ -55,6 +55,7 @@ export default function MProducts() {
             </MCard>
           );
         })}
+        {items.length > 0 && <MLoadMore hasMore={hasMore} loading={loading} onLoad={loadMore} />}
       </MList>
       <MFab onClick={openCreate} />
 

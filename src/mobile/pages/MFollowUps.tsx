@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useCurrentUser } from "@/context/CurrentUserContext";
 import type { FollowUp, Customer } from "@/types";
 import { CalendarDays, Phone } from "lucide-react";
-import { MPageHeader, MSearchBar, MList, MCard, MTag, MFab, MSheet, MField, MInput, MTextarea, MSelect, MButton, MChipFilter, MConfirm, MRow } from "../components/MUI";
+import { MPageHeader, MSearchBar, MList, MLoadMore, MCard, MTag, MFab, MSheet, MField, MInput, MTextarea, MSelect, MButton, MChipFilter, MConfirm, MRow } from "../components/MUI";
 
 const WAYS = ["电话", "拜访", "微信", "邮件", "短信", "其他"] as const;
 const OPP = ["意向初探", "需求确认", "方案沟通", "报价中", "商务谈判", "已签约", "已流失"] as const;
@@ -52,6 +52,7 @@ export default function MFollowUps() {
             <div className="text-[12px] text-foreground/70 mt-1.5 line-clamp-2">{f.content}</div>
           </MCard>
         ))}
+        {items.length > 0 && <MLoadMore hasMore={hasMore} loading={loading} onLoad={loadMore} />}
       </MList>
       <MFab onClick={openCreate} />
 

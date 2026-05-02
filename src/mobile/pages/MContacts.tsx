@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useCurrentUser } from "@/context/CurrentUserContext";
 import type { Contact, Customer } from "@/types";
 import { Phone, Star } from "lucide-react";
-import { MPageHeader, MSearchBar, MList, MCard, MTag, MFab, MSheet, MField, MInput, MTextarea, MSelect, MButton, MConfirm, MRow } from "../components/MUI";
+import { MPageHeader, MSearchBar, MList, MLoadMore, MCard, MTag, MFab, MSheet, MField, MInput, MTextarea, MSelect, MButton, MConfirm, MRow } from "../components/MUI";
 
 export default function MContacts() {
   const { current } = useCurrentUser();
@@ -54,6 +54,7 @@ export default function MContacts() {
             </div>
           </MCard>
         ))}
+        {items.length > 0 && <MLoadMore hasMore={hasMore} loading={loading} onLoad={loadMore} />}
       </MList>
       <MFab onClick={openCreate} />
 
