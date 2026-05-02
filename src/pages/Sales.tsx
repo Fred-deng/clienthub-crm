@@ -176,7 +176,8 @@ export default function Sales() {
       items,
       totalAmount,
       contractAmount: totalAmount,
-      received: Number(v.received) || 0,
+      // 已回款由「回款记录」累计维护，编辑时保持原值，新建时为 0
+      received: editing ? editing.received : 0,
       serviceFee: Number(v.serviceFee) || 0,
       outsourceFee: Number(v.outsourceFee) || 0,
       salesFee: Number(v.salesFee) || 0,
@@ -446,7 +447,7 @@ export default function Sales() {
               </Select>
             </Field>
             <Field label="下单日" span={3}><Input type="date" {...register("createdAt")} /></Field>
-            <Field label="已回款" span={3}><Input type="number" step="0.01" {...register("received", { valueAsNumber: true })} /></Field>
+            <Field label="已回款" span={3}><Input type="number" step="0.01" className="bg-muted/40" readOnly value={editing?.received ?? 0} title="由回款记录自动累计，无法直接修改" /></Field>
             <Field label="销售员" span={3}>
               <Select value={watch("ownerId")} onValueChange={(v) => setValue("ownerId", v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
