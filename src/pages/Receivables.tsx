@@ -177,16 +177,16 @@ export default function Receivables() {
                 <th>等级</th>
                 <th className="num">合同数</th>
                 <th className="num">合同金额{biz !== "all" && <span className="text-[10px] text-foreground/45 ml-1">({biz === "software" ? "软" : "硬"})</span>}</th>
-                <th className="num">已开票</th>
+                {biz === "all" && <th className="num">已开票</th>}
                 <th className="num">已回款</th>
                 <th className="num">未收账款</th>
-                <th className="num">最早签约</th>
+                <th className="num">最早下单</th>
                 <th className="num">账龄(天)</th>
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 && (
-                <tr className="empty"><td colSpan={9} className="empty">暂无应收数据</td></tr>
+                <tr className="empty"><td colSpan={biz === "all" ? 9 : 8} className="empty">暂无应收数据</td></tr>
               )}
               {filtered.map((r) => {
                 const days = aging(r.oldest);
@@ -203,7 +203,7 @@ export default function Receivables() {
                         <div className="text-[10px] text-foreground/45 mono">软{fmtMoneyShort(r.swContract)} · 硬{fmtMoneyShort(r.hwContract)}</div>
                       )}
                     </td>
-                    <td className="num text-cobalt">{fmtMoney(r.invoiced)}</td>
+                    {biz === "all" && <td className="num text-cobalt">{fmtMoney(r.invoiced)}</td>}
                     <td className="num text-mint">{fmtMoney(v.received)}</td>
                     <td className={"num " + (v.outstanding > 0 ? "text-tomato" : "text-foreground/40")}>{fmtMoney(v.outstanding)}</td>
                     <td className="num mono text-[12px] text-foreground/60">{r.oldest}</td>
