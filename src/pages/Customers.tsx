@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Plus, Pencil, Trash2, Search, Download } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Download, Users as UsersIcon } from "lucide-react";
+import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { DataPanel } from "@/components/common/DataPanel";
@@ -209,6 +210,9 @@ export default function Customers() {
                     <td className="num">{fmtMoney(c.receivable)}</td>
                     <td className="num">
                       <div className="inline-flex gap-1">
+                        <Link to={`/contacts?customerId=${c.id}`} title="查看联系人" className="size-8 rounded-full hover:bg-cobalt/10 text-foreground/55 hover:text-cobalt inline-flex items-center justify-center transition-colors">
+                          <UsersIcon className="h-3.5 w-3.5" />
+                        </Link>
                         <button className="size-8 rounded-full hover:bg-foreground/5 text-foreground/55 hover:text-foreground inline-flex items-center justify-center transition-colors" onClick={() => openEdit(c)}>
                           <Pencil className="h-3.5 w-3.5" />
                         </button>
