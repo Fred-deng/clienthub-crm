@@ -21,11 +21,13 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { purchaseApi, supplierApi, productApi, employeeApi, contractApi } from "@/services/api";
+import { applyPurchaseReceive, revertPurchaseReceive, findOrCreateProductByName } from "@/services/inventory";
 import { usePagedList } from "@/hooks/usePagedList";
 import { fmtMoney } from "@/lib/format";
 import { splitPurchase, bizLabel, bizTone, type BizFilter } from "@/lib/biz";
 import { BizTabs } from "@/components/common/BizTabs";
-import type { PurchaseOrder, Supplier, Product, Employee, Contract } from "@/types";
+import { Checkbox } from "@/components/ui/checkbox";
+import type { PurchaseOrder, Supplier, Product, Employee, Contract, PurchaseItem } from "@/types";
 
 function GroupTitle({ children }: { children: ReactNode }) {
   return (
