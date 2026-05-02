@@ -139,7 +139,10 @@ export default function Purchases() {
       expectedAt: o.expectedAt,
       remark: o.remark || "",
     });
-    setItems(o.items);
+    setItems(o.items.map((it) => ({
+      ...it,
+      category: (it as any).category ?? (products.find((p) => p.id === it.productId)?.category ?? "other"),
+    })));
     setEditing(o);
     setOpen(true);
   };

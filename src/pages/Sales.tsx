@@ -154,7 +154,10 @@ export default function Sales() {
       licenseAttachments: o.licenseAttachments ?? [], invoiceAttachments: o.invoiceAttachments ?? [], otherAttachments: o.otherAttachments ?? [], invoices: o.invoices ?? [],
       status: o.status, ownerId: o.ownerId, createdAt: o.createdAt, received: o.received, remark: o.remark ?? "",
     });
-    setItems(o.items); setEditing(o); setOpen(true);
+    setItems(o.items.map((it) => ({
+      ...it,
+      category: it.category ?? (products.find((p) => p.id === it.productId)?.category ?? "other"),
+    }))); setEditing(o); setOpen(true);
   };
 
   const onSubmit = handleSubmit(async (v) => {
