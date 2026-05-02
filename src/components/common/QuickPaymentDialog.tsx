@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { paymentApi } from "@/services/api";
+import { createPaymentAndSync } from "@/services/payments";
 import { fmtMoney } from "@/lib/format";
 
 export type PaymentDir = "in" | "out";
@@ -53,7 +53,7 @@ export function QuickPaymentDialog({
     if (!amount || amount <= 0) return toast.error("请输入金额");
     setSaving(true);
     try {
-      await paymentApi.create({
+      await createPaymentAndSync({
         direction,
         refType,
         refId,
