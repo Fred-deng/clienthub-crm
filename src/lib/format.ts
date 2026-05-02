@@ -16,7 +16,6 @@ export const splitMoneyShort = (n: number): { num: string; unit: string } => {
 
 export const fmtInt = (n: number) => (n ?? 0).toLocaleString("zh-CN");
 
-export const customerTypeLabel = (t: string) => (t === "software" ? "软件" : "硬件");
 export const customerStageLabel = (s: string) => (s === "lead" ? "潜在客户" : "正式客户");
 
 export const statusLabels: Record<string, string> = {
