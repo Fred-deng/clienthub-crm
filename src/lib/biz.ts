@@ -55,8 +55,9 @@ export function splitOrderAmounts(
   }
   const sum = sw + hw || 1;
   // 用「明细比例」分摊到 totalAmount（合同金额可能不等于明细合计）
-  const swAmt = (sw / sum) * totalAmount;
-  const hwAmt = totalAmount - swAmt;
+  // 注意：先计算软件部分再用减法计算硬件部分，避免浮点漂移导致两者之和与 total 不等。
+  const swAmt = Math.round((sw / sum) * totalAmount * 100) / 100;
+  const hwAmt = Math.round((totalAmount - swAmt) * 100) / 100;
   let category: BizCategory = "mixed";
   if (sw === 0) category = "hardware";
   else if (hw === 0) category = "software";
