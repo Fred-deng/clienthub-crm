@@ -71,7 +71,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
         <KpiCard
           index={1}
-          label={biz === "all" ? "累计销售总额" : biz === "software" ? "软件销售总额" : "硬件销售总额"}
+          label={biz === "all" ? "本月销售总额" : biz === "software" ? "本月软件销售" : "本月硬件销售"}
           value={<Money n={view.monthRevenue} />}
           tone="primary"
           icon={<TrendingUp className="h-3.5 w-3.5" />}
