@@ -734,14 +734,15 @@ function MiniContactDialog({
 
 // —— 客户详情内：快速新增跟进记录对话框 ——
 function MiniFollowUpDialog({
-  open, onOpenChange, customer, contacts, employees, onCreated,
+  open, onOpenChange, customer, contacts, employees, onCreated, onDraft,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   customer: Customer;
   contacts: Contact[];
   employees: Employee[];
-  onCreated: () => void;
+  onCreated?: () => void;
+  onDraft?: (draft: Omit<FollowUp, "id">) => void;
 }) {
   const { register, handleSubmit, reset, setValue, watch } = useForm<Omit<FollowUp, "id">>({
     defaultValues: {
@@ -776,16 +777,22 @@ function MiniFollowUpDialog({
 
   const submit = handleSubmit(async (values) => {
     const ct = contacts.find((x) => x.id === values.contactId);
-    await followUpApi.create({
+    const payload = {
       ...values,
       customerId: customer.id,
       customerName: customer.name,
       customerStatus: customer.status,
       contactName: ct?.name ?? "",
-    });
-    toast.success("跟进记录已新增");
+    };
+    if (onDraft) {
+      onDraft(payload);
+      toast.success("已加入草稿，将在保存客户时一起创建");
+    } else {
+      await followUpApi.create(payload);
+      toast.success("跟进记录已新增");
+      onCreated?.();
+    }
     onOpenChange(false);
-    onCreated();
   });
 
   return (
