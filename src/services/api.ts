@@ -91,7 +91,7 @@ export const contactApi = buildCrud(contacts, {
 
 export const followUpApi = buildCrud(followUps, {
   idPrefix: "fu",
-  searchFields: ["code", "customerName", "subject", "content", "contactName"],
+  searchFields: ["code", "customerName", "subject", "content", "contactName", "oppStatus", "salesLead", "intentProduct"],
   filter: (it, q) => {
     if (q.customerId && q.customerId !== "all" && it.customerId !== q.customerId) return false;
     if (q.contactWay && q.contactWay !== "all" && it.contactWay !== q.contactWay) return false;
