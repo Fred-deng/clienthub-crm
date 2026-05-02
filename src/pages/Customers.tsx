@@ -76,6 +76,10 @@ export default function Customers() {
   const [open, setOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [customerContacts, setCustomerContacts] = useState<Contact[]>([]);
+  const [miniContactOpen, setMiniContactOpen] = useState(false);
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => { employeeApi.all().then(setEmployees); }, []);
 
@@ -84,24 +88,44 @@ export default function Customers() {
   const openCreate = () => {
     reset({ ...emptyCustomer, code: `CUS-${Date.now().toString().slice(-6)}` });
     setEditing(null);
+    setCustomerContacts([]);
     setOpen(true);
   };
-  const openEdit = (c: Customer) => {
+  const openEdit = async (c: Customer) => {
     reset({ ...emptyCustomer, ...c });
     setEditing(c);
     setOpen(true);
+    const list = await contactApi.list({ customerId: c.id, pageSize: 100 });
+    setCustomerContacts(list.list);
   };
+
+  // —— 跨页流程：从「联系人」过来新增客户 ——
+  useEffect(() => {
+    if (searchParams.get("createNew") === "1") {
+      openCreate();
+      // 不立即移除 createNew，留待保存时根据 returnTo 跳转
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const onSubmit = handleSubmit(async (values) => {
     if (editing) {
       await customerApi.update(editing.id, values);
       toast.success("客户已更新");
+      setOpen(false);
+      reload();
     } else {
-      await customerApi.create(values);
+      const created = await customerApi.create(values);
       toast.success("客户已创建");
+      setOpen(false);
+      reload();
+      // 如果是从联系人页跳转过来的，回跳并带上新建的客户ID
+      const returnTo = searchParams.get("returnTo");
+      if (returnTo) {
+        const sep = returnTo.includes("?") ? "&" : "?";
+        navigate(`${returnTo}${sep}newCustomerId=${created.id}`);
+      }
     }
-    setOpen(false);
-    reload();
   });
 
   const onDelete = async () => {
@@ -113,6 +137,12 @@ export default function Customers() {
   };
 
   const ownerName = (id: string) => employees.find(e => e.id === id)?.name ?? "—";
+
+  const reloadCustomerContacts = async () => {
+    if (!editing) return;
+    const list = await contactApi.list({ customerId: editing.id, pageSize: 100 });
+    setCustomerContacts(list.list);
+  };
 
   return (
     <>
