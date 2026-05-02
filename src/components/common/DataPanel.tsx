@@ -28,21 +28,21 @@ export function DataPanel({ title, subtitle, actions, children, className, bodyC
       )}
     >
       {(title || actions) && (
-        <div className="px-6 pt-5 pb-4 flex items-center justify-between gap-3 flex-wrap border-b border-foreground/[0.05]">
+        <div className="px-4 md:px-6 pt-4 md:pt-5 pb-3 md:pb-4 flex items-start md:items-center justify-between gap-3 flex-wrap border-b border-foreground/[0.05]">
           <div className="flex items-center gap-2.5 min-w-0">
             {accent && (
               <span className={cn("size-2 rounded-full shrink-0", accentMap[accent])} />
             )}
             <div className="min-w-0">
               {typeof title === "string" ? (
-                <h3 className="font-display font-bold text-[17px] tracking-tight leading-none">{title}</h3>
+                <h3 className="font-display font-bold text-[15px] md:text-[17px] tracking-tight leading-none">{title}</h3>
               ) : title}
               {subtitle && (
                 <p className="text-[10px] text-foreground/45 mt-1.5 font-mono uppercase tracking-[0.15em]">{subtitle}</p>
               )}
             </div>
           </div>
-          {actions}
+          {actions && <div className="w-full md:w-auto flex items-center gap-2 flex-wrap">{actions}</div>}
         </div>
       )}
       <div className={cn(bodyClassName)}>{children}</div>
