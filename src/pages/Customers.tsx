@@ -213,12 +213,13 @@ export default function Customers() {
                 onChange={(e) => setFilter({ keyword: e.target.value })}
               />
             </div>
-            <Select value={query.stage ?? "all"} onValueChange={(v) => setFilter({ stage: v })}>
-              <SelectTrigger className="h-9 w-28 text-xs rounded-full"><SelectValue /></SelectTrigger>
+            <Select value={query.status ?? "all"} onValueChange={(v) => setFilter({ status: v })}>
+              <SelectTrigger className="h-9 w-32 text-xs rounded-full"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">全部阶段</SelectItem>
-                <SelectItem value="lead">潜在客户</SelectItem>
-                <SelectItem value="formal">正式客户</SelectItem>
+                <SelectItem value="all">全部状态</SelectItem>
+                {Object.entries(customerStatusLabel).map(([v, l]) => (
+                  <SelectItem key={v} value={v}>{l}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
