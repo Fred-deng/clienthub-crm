@@ -115,7 +115,7 @@ export function AppSidebar() {
                             : "text-foreground/60 hover:text-foreground hover:bg-card font-medium")
                         }
                       >
-                        <NavLink to={item.url} className="flex items-center gap-3">
+                        <NavLink to={item.url} className="flex items-center gap-3 group-data-[collapsible=icon]:gap-0 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-full">
                           <item.icon className="size-4 shrink-0 hidden group-data-[collapsible=icon]:block" />
                           <span
                             className={
