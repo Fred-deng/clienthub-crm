@@ -1,9 +1,15 @@
+import { useState } from "react";
 import { Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { fmtMoney, productCategoryLabel } from "@/lib/format";
 import type { Product, ProductCategory } from "@/types";
+import { LineItemLogButton } from "./LineItemLogDialog";
+import {
+  logLineItemAdd, logLineItemUpdate, logLineItemDelete,
+  type LineItemLogModule,
+} from "@/services/lineItemLog";
 
 export interface LineItem {
   productId: string;       // 已存在产品的 id；若是新名称，留空，由保存时回填
@@ -19,16 +25,32 @@ interface Props {
   onChange: (items: LineItem[]) => void;
   /** 排除的分类，例如采购侧不需要 software */
   excludeCategories?: ProductCategory[];
+  /** 日志模块：purchase / sales。传入后会启用「明细日志」按钮 */
+  logModule?: LineItemLogModule;
+  /** 日志 scope：编辑既有订单时传订单 id；新建时传一个稳定的 draft session id */
+  logScope?: string;
+  /** UI 标题，默认根据 logModule 推导 */
+  title?: string;
 }
 
-export function LineItemsEditor({ items, products, onChange, excludeCategories = [] }: Props) {
+export function LineItemsEditor({
+  items, products, onChange,
+  excludeCategories = [],
+  logModule, logScope, title,
+}: Props) {
   const total = items.reduce((s, it) => s + it.qty * it.price, 0);
   const cats = (Object.keys(productCategoryLabel) as ProductCategory[]).filter(
     (c) => !excludeCategories.includes(c),
   );
   const datalistId = "li-product-names";
+  const [logTick, setLogTick] = useState(0);
+  const canLog = !!(logModule && logScope);
+
+  const headerTitle = title
+    ?? (logModule === "sales" ? "销售明细（不存在的名称将自动建档）" : "采购明细（不存在的名称将自动建档）");
 
   const update = (i: number, patch: Partial<LineItem>) => {
+    const before = { ...items[i] };
     const next = [...items];
     next[i] = { ...next[i], ...patch };
     // 名称变化时尝试匹配已存在产品
@@ -43,11 +65,29 @@ export function LineItemsEditor({ items, products, onChange, excludeCategories =
       }
     }
     onChange(next);
+    if (canLog) {
+      logLineItemUpdate(logModule!, logScope!, before, next[i]);
+      setLogTick((t) => t + 1);
+    }
   };
-  const remove = (i: number) => onChange(items.filter((_, idx) => idx !== i));
+
+  const remove = (i: number) => {
+    const removed = items[i];
+    onChange(items.filter((_, idx) => idx !== i));
+    if (canLog && removed) {
+      logLineItemDelete(logModule!, logScope!, removed);
+      setLogTick((t) => t + 1);
+    }
+  };
+
   const add = () => {
     const defaultCat = (cats[0] || "other") as ProductCategory;
-    onChange([...items, { productId: "", productName: "", category: defaultCat, qty: 1, price: 0 }]);
+    const row: LineItem = { productId: "", productName: "", category: defaultCat, qty: 1, price: 0 };
+    onChange([...items, row]);
+    if (canLog) {
+      logLineItemAdd(logModule!, logScope!, row);
+      setLogTick((t) => t + 1);
+    }
   };
 
   return (
@@ -56,10 +96,15 @@ export function LineItemsEditor({ items, products, onChange, excludeCategories =
         {products.map((p) => <option key={p.id} value={p.name}>{p.name}</option>)}
       </datalist>
       <div className="px-3 py-2 border-b border-border flex items-center justify-between">
-        <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">采购明细（不存在的名称将自动建档）</span>
-        <Button type="button" size="sm" variant="outline" className="h-7 text-xs" onClick={add}>
-          <Plus className="h-3 w-3 mr-1" />添加产品
-        </Button>
+        <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{headerTitle}</span>
+        <div className="flex items-center gap-2">
+          {canLog && (
+            <LineItemLogButton module={logModule!} scope={logScope!} refreshKey={logTick} />
+          )}
+          <Button type="button" size="sm" variant="outline" className="h-7 text-xs" onClick={add}>
+            <Plus className="h-3 w-3 mr-1" />添加产品
+          </Button>
+        </div>
       </div>
       <div className="grid grid-cols-12 gap-2 px-3 py-2 text-[11px] uppercase tracking-wider text-foreground/55 border-b border-border bg-muted/30">
         <div className="col-span-2">分类</div>

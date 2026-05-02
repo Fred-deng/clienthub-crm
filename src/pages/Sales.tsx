@@ -105,6 +105,7 @@ export default function Sales() {
   const [editing, setEditing] = useState<SalesOrder | null>(null);
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<LineItem[]>([]);
+  const [draftScope, setDraftScope] = useState<string>("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [logOpen, setLogOpen] = useState(false);
   const [logRefId, setLogRefId] = useState<string | undefined>(undefined);
@@ -143,7 +144,7 @@ export default function Sales() {
       contractAttachments: [], stampedContractAttachments: [], licenseAttachments: [], invoiceAttachments: [], otherAttachments: [], invoices: [],
       status: "pending", ownerId: "u3", createdAt: new Date().toISOString().slice(0, 10), received: 0, remark: "",
     });
-    setItems([]); setEditing(null); setOpen(true);
+    setItems([]); setEditing(null); setDraftScope(`draft-sal-${Date.now().toString(36)}`); setOpen(true);
   };
   const openEdit = (o: SalesOrder) => {
     reset({
@@ -411,7 +412,13 @@ export default function Sales() {
 
             <GroupTitle>销售明细</GroupTitle>
             <div className="col-span-12">
-              <LineItemsEditor items={items} products={products} onChange={setItems} />
+              <LineItemsEditor
+                items={items}
+                products={products}
+                onChange={setItems}
+                logModule="sales"
+                logScope={editing?.id || draftScope}
+              />
             </div>
 
             <GroupTitle>回款记录</GroupTitle>
