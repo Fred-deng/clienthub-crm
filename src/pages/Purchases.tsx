@@ -101,6 +101,7 @@ export default function Purchases() {
   const [editing, setEditing] = useState<PurchaseOrder | null>(null);
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<LineItem[]>([]);
+  const [draftScope, setDraftScope] = useState<string>("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [biz, setBiz] = useState<BizFilter>("all");
   const [quickPay, setQuickPay] = useState<PurchaseOrder | null>(null);
