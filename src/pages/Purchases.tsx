@@ -514,7 +514,14 @@ export default function Purchases() {
             {/* 采购明细（保留子表） */}
             <GroupTitle>采购明细</GroupTitle>
             <div className="col-span-12">
-              <LineItemsEditor items={items} products={products} onChange={setItems} excludeCategories={["software"]} />
+              <LineItemsEditor
+                items={items}
+                products={products}
+                onChange={setItems}
+                excludeCategories={["software"]}
+                logModule="purchase"
+                logScope={editing?.id || draftScope}
+              />
             </div>
 
             {/* 付款记录（子表，按 refType=purchase 过滤） */}
