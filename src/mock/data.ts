@@ -248,3 +248,42 @@ customers.forEach((c, ci) => {
     });
   }
 });
+
+// ---------- Follow-ups ----------
+const subjectPool = ["首次电话沟通", "需求调研", "产品演示", "方案讲解", "报价沟通", "合同细节确认", "售后回访", "项目进度跟进"];
+const contactWayPool = ["电话", "拜访", "微信", "邮件", "短信", "其他"] as const;
+const oppStatusPool = ["意向初探", "需求确认", "方案沟通", "报价中", "商务谈判", "已签约", "已流失"] as const;
+const intentProductPool = ["MES 制造执行系统", "WMS 仓储管理系统", "ERP 一体化系统", "BI 平台", "工控机 IPC-7200", "PDA-V3", "运维服务"];
+const salesLeadPool = ["官网注册", "电话咨询", "展会扫码", "客户介绍", "广告投放", "陌拜"];
+
+export const followUps: FollowUp[] = [];
+customers.forEach((c, ci) => {
+  const n = Random.integer(0, 3);
+  const cContacts = contacts.filter((x) => x.customerId === c.id);
+  for (let i = 0; i < n; i++) {
+    const ct = cContacts.length ? Random.pick(cContacts) : undefined;
+    followUps.push({
+      id: `fu-${ci}-${i}`,
+      code: `GJ-${pad(10001 + followUps.length)}`,
+      customerId: c.id,
+      customerName: c.name,
+      customerStatus: c.status,
+      contactId: ct?.id,
+      contactName: ct?.name,
+      ownerId: c.ownerId,
+      subject: Random.pick(subjectPool),
+      content: Random.cparagraph(1, 3),
+      contactWay: Random.pick(contactWayPool as any) as any,
+      salesLead: Random.pick(salesLeadPool),
+      oppStatus: Random.pick(oppStatusPool as any) as any,
+      contactDate: Random.date("yyyy-MM-dd"),
+      nextVisitAt: Random.date("yyyy-MM-dd"),
+      intentProduct: Random.pick(intentProductPool),
+      expectedAmount: Random.integer(10000, 800000),
+      expectedSignAt: Random.date("yyyy-MM-dd"),
+      attachment: "",
+      remark: "",
+      createdAt: Random.date("yyyy-MM-dd"),
+    });
+  }
+});
