@@ -21,11 +21,13 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { purchaseApi, supplierApi, productApi, employeeApi, contractApi } from "@/services/api";
+import { applyPurchaseReceive, revertPurchaseReceive, findOrCreateProductByName } from "@/services/inventory";
 import { usePagedList } from "@/hooks/usePagedList";
 import { fmtMoney } from "@/lib/format";
 import { splitPurchase, bizLabel, bizTone, type BizFilter } from "@/lib/biz";
 import { BizTabs } from "@/components/common/BizTabs";
-import type { PurchaseOrder, Supplier, Product, Employee, Contract } from "@/types";
+import { Checkbox } from "@/components/ui/checkbox";
+import type { PurchaseOrder, Supplier, Product, Employee, Contract, PurchaseItem } from "@/types";
 
 function GroupTitle({ children }: { children: ReactNode }) {
   return (
@@ -100,10 +102,12 @@ export default function Purchases() {
   const [biz, setBiz] = useState<BizFilter>("all");
   const [quickPay, setQuickPay] = useState<PurchaseOrder | null>(null);
   const [quickInv, setQuickInv] = useState<PurchaseOrder | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [bulkStatus, setBulkStatus] = useState<PurchaseOrder["status"] | "">("");
 
   useEffect(() => {
     supplierApi.all().then(setSuppliers);
-    productApi.all().then((p) => setProducts(p.filter((x) => x.category !== "software")));
+    productApi.all().then(setProducts);
     employeeApi.all().then(setEmployees);
     contractApi.all().then(setSalesContracts);
   }, []);
@@ -139,28 +143,99 @@ export default function Purchases() {
       expectedAt: o.expectedAt,
       remark: o.remark || "",
     });
-    setItems(o.items);
+    setItems(o.items.map((it) => ({
+      ...it,
+      category: (it as any).category ?? (products.find((p) => p.id === it.productId)?.category ?? "other"),
+    })));
     setEditing(o);
     setOpen(true);
   };
 
   const onSubmit = handleSubmit(async (v) => {
     const sup = suppliers.find((s) => s.id === v.supplierId);
-    const totalAmount = items.reduce((s, it) => s + it.qty * it.price, 0);
+    // 1) 行明细：缺产品 → 自动建档；统一回填 productId / category
+    const normalizedItems: PurchaseItem[] = items
+      .filter((it) => it.productName.trim() && it.qty > 0)
+      .map((it) => {
+        let prodId = it.productId;
+        let cat = it.category;
+        if (!prodId) {
+          const p = findOrCreateProductByName(it.productName, it.category, it.price, "采购订单");
+          prodId = p.id;
+          cat = p.category;
+        }
+        return { productId: prodId, productName: it.productName.trim(), category: cat, qty: it.qty, price: it.price };
+      });
+    const totalAmount = normalizedItems.reduce((s, it) => s + it.qty * it.price, 0);
     const payload: any = {
       ...v,
       contractAmount: Number(v.contractAmount) || 0,
       paid: Number(v.paid) || 0,
       supplierName: sup?.name ?? "-",
-      items,
+      items: normalizedItems,
       totalAmount,
       code: editing?.code ?? `CG-${Date.now().toString().slice(-6)}`,
     };
-    if (editing) await purchaseApi.update(editing.id, payload); else await purchaseApi.create(payload);
+
+    // 2) 库存联动：状态切换涉及 received 时加减
+    const prevStatus = editing?.status;
+    const nextStatus = payload.status as PurchaseOrder["status"];
+    if (editing) {
+      // 旧订单已入库 → 先用旧明细回滚
+      if (prevStatus === "received" && nextStatus !== "received") {
+        revertPurchaseReceive(editing, "采购订单", "状态变更撤销入库");
+      }
+      // 新订单将入库 → 用新明细入库
+      if (nextStatus === "received" && prevStatus !== "received") {
+        applyPurchaseReceive({ ...editing, ...payload }, "采购订单");
+      }
+      // 入库状态下明细变更 → 先回滚旧、再按新入库
+      if (prevStatus === "received" && nextStatus === "received") {
+        revertPurchaseReceive(editing, "采购订单", "明细变更回滚");
+        applyPurchaseReceive({ ...editing, ...payload }, "采购订单");
+      }
+      await purchaseApi.update(editing.id, payload);
+    } else {
+      const created = await purchaseApi.create(payload);
+      if (nextStatus === "received") applyPurchaseReceive(created, "采购订单");
+    }
     toast.success("已保存");
     setOpen(false);
     reload();
+    productApi.all().then(setProducts);
   });
+
+  const handleDelete = async (id: string) => {
+    const order = data.list.find((o) => o.id === id);
+    if (order && order.status === "received") {
+      revertPurchaseReceive(order, "采购订单", "订单删除回滚入库");
+    }
+    await purchaseApi.remove(id);
+    toast.success("已删除");
+    setDeletingId(null);
+    reload();
+    productApi.all().then(setProducts);
+  };
+
+  const applyBulkStatus = async () => {
+    if (!bulkStatus || selectedIds.length === 0) return;
+    for (const id of selectedIds) {
+      const order = data.list.find((o) => o.id === id);
+      if (!order || order.status === bulkStatus) continue;
+      if (order.status === "received" && bulkStatus !== "received") {
+        revertPurchaseReceive(order, "批量操作", "批量改状态回滚入库");
+      }
+      if (bulkStatus === "received" && order.status !== "received") {
+        applyPurchaseReceive(order, "批量操作");
+      }
+      await purchaseApi.update(id, { status: bulkStatus });
+    }
+    toast.success(`已将 ${selectedIds.length} 单更新为「${bulkStatus}」`);
+    setSelectedIds([]);
+    setBulkStatus("");
+    reload();
+    productApi.all().then(setProducts);
+  };
 
   const empName = (id?: string) => employees.find((e) => e.id === id)?.name ?? "—";
 
@@ -178,6 +253,22 @@ export default function Purchases() {
         accent="mustard"
         actions={
           <div className="flex items-center gap-2">
+            {selectedIds.length > 0 && (
+              <div className="flex items-center gap-1.5 px-2.5 h-9 rounded-full bg-warning/10 text-[12px]">
+                <span className="text-warning font-semibold">已选 {selectedIds.length}</span>
+                <Select value={bulkStatus} onValueChange={(v: any) => setBulkStatus(v)}>
+                  <SelectTrigger className="h-7 w-24 text-xs"><SelectValue placeholder="改状态" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="draft">草稿</SelectItem>
+                    <SelectItem value="ordered">已下单</SelectItem>
+                    <SelectItem value="received">已入库</SelectItem>
+                    <SelectItem value="cancelled">已取消</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button size="sm" className="h-7 text-xs" disabled={!bulkStatus} onClick={applyBulkStatus}>应用</Button>
+                <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setSelectedIds([])}>清空</Button>
+              </div>
+            )}
             <div className="relative">
               <Search className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-foreground/40" />
               <Input
@@ -203,6 +294,15 @@ export default function Purchases() {
           <table className="data-table">
             <thead>
               <tr>
+                <th className="w-10">
+                  <Checkbox
+                    checked={data.list.length > 0 && data.list.every((o) => selectedIds.includes(o.id))}
+                    onCheckedChange={(v) => {
+                      if (v) setSelectedIds(Array.from(new Set([...selectedIds, ...data.list.map((o) => o.id)])));
+                      else setSelectedIds(selectedIds.filter((id) => !data.list.find((o) => o.id === id)));
+                    }}
+                  />
+                </th>
                 <th>单号</th>
                 <th>合同/订单</th>
                 <th>供应商</th>
@@ -219,17 +319,24 @@ export default function Purchases() {
               </tr>
             </thead>
             <tbody>
-              {loading && <tr className="empty"><td colSpan={13} className="empty">加载中…</td></tr>}
+              {loading && <tr className="empty"><td colSpan={14} className="empty">加载中…</td></tr>}
               {!loading && data.list.length === 0 && (
-                <tr className="empty"><td colSpan={13} className="empty">暂无采购订单</td></tr>
+                <tr className="empty"><td colSpan={14} className="empty">暂无采购订单</td></tr>
               )}
               {data.list
                 .map((o) => ({ o, split: splitPurchase(o, products) }))
                 .filter(({ split }) => biz === "all" || (biz === "software" ? split.software > 0 : split.hardware > 0))
                 .map(({ o, split }) => {
                 const unpaid = o.totalAmount - o.paid;
+                const checked = selectedIds.includes(o.id);
                 return (
                   <tr key={o.id} className="clickable" onDoubleClick={() => openEdit(o)} title="双击查看详情">
+                    <td onDoubleClick={(e) => e.stopPropagation()}>
+                      <Checkbox
+                        checked={checked}
+                        onCheckedChange={(v) => setSelectedIds(v ? [...selectedIds, o.id] : selectedIds.filter((x) => x !== o.id))}
+                      />
+                    </td>
                     <td className="mono">{o.code}</td>
                     <td>
                       <div className="font-semibold truncate max-w-[200px]">{o.contractTitle || "—"}</div>
@@ -273,7 +380,7 @@ export default function Purchases() {
               return (
                 <tfoot>
                   <tr>
-                    <td colSpan={5} className="label">本页 {data.list.length} 单 / 共 {data.total} 单 · 合计</td>
+                    <td colSpan={6} className="label">本页 {data.list.length} 单 / 共 {data.total} 单 · 合计</td>
                     <td className="num">{fmtMoney(sumContract)}</td>
                     <td className="num">{fmtMoney(sumTotal)}</td>
                     <td className="num text-tomato">{fmtMoney(sumPaid)}</td>
@@ -386,7 +493,7 @@ export default function Purchases() {
             {/* 采购明细（保留子表） */}
             <GroupTitle>采购明细</GroupTitle>
             <div className="col-span-12">
-              <LineItemsEditor items={items} products={products} onChange={setItems} />
+              <LineItemsEditor items={items} products={products} onChange={setItems} excludeCategories={["software"]} />
             </div>
 
             {/* 付款记录（子表，按 refType=purchase 过滤） */}
@@ -437,7 +544,7 @@ export default function Purchases() {
         title="删除采购订单"
         description="删除后无法恢复。"
         onConfirm={async () => {
-          if (deletingId) { await purchaseApi.remove(deletingId); toast.success("已删除"); setDeletingId(null); reload(); }
+          if (deletingId) await handleDelete(deletingId);
         }}
       />
 

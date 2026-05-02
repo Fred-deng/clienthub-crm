@@ -195,8 +195,9 @@ export interface SupplierContact {
 
 export type PurchaseStatus = "draft" | "ordered" | "received" | "cancelled";
 export interface PurchaseItem {
-  productId: string;
+  productId: string;       // 若为新建产品，可在保存时回填
   productName: string;
+  category?: ProductCategory;
   qty: number;
   price: number;
 }
@@ -262,6 +263,7 @@ export type SalesMode = "普通销售" | "渠道销售" | "项目销售" | "服�
 export interface SalesItem {
   productId: string;
   productName: string;
+  category?: ProductCategory;
   qty: number;
   price: number;
 }
@@ -332,6 +334,24 @@ export interface Payment {
   method: "对公转账" | "现金" | "支票" | "支付宝" | "微信";
   paidAt: string;
   remark?: string;
+}
+
+// —— 库存变动日志 ——
+export type StockLogAction = "create" | "update" | "delete" | "in" | "out" | "adjust";
+export interface StockLog {
+  id: string;
+  productId: string;
+  productName: string;
+  action: StockLogAction;     // create=新建产品 update=信息修改 delete=删除 in=入库 out=出库 adjust=手工调整
+  delta: number;              // 数量变化（正/负，0 表示非数量变更）
+  beforeStock: number;
+  afterStock: number;
+  refType?: "purchase" | "sales" | "manual";
+  refId?: string;
+  refCode?: string;
+  operator?: string;
+  remark?: string;
+  createdAt: string;
 }
 
 export interface Employee {
