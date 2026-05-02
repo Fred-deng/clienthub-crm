@@ -69,14 +69,26 @@ export const statusTone: Record<string, string> = {
   delivered: "accent",
 };
 
-export const productCategoryLabel: Record<string, string> = {
-  software: "软件",
-  ipc: "工控机",
-  pda: "PDA",
-  mouse: "鼠标",
-  cable: "线缆",
-  power: "电源",
-  other: "其他",
-};
+// 产品分类标签：动态读取自 categoryStore（产品库存可手动增删）。
+// 该 Proxy 兼容旧用法（直接 productCategoryLabel[id] 取标签 / Object.entries 遍历）。
+import { categoryStore } from "@/services/categories";
+export const productCategoryLabel: Record<string, string> = new Proxy({} as Record<string, string>, {
+  get(_t, key: string) {
+    if (key === Symbol.toPrimitive as any) return undefined;
+    return categoryStore.labelOf(key) || key;
+  },
+  ownKeys() {
+    return categoryStore.getAll().map((c) => c.id);
+  },
+  getOwnPropertyDescriptor(_t, key: string) {
+    if (categoryStore.getAll().some((c) => c.id === key)) {
+      return { enumerable: true, configurable: true, writable: false, value: categoryStore.labelOf(key) };
+    }
+    return undefined;
+  },
+  has(_t, key: string) {
+    return categoryStore.getAll().some((c) => c.id === key);
+  },
+}) as Record<string, string>;
 
 export const currentMonth = () => new Date().toISOString().slice(0, 7);
