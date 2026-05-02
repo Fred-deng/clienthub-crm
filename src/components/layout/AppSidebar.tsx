@@ -7,7 +7,7 @@ import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter,
 } from "@/components/ui/sidebar";
-import { salesApi, purchaseApi } from "@/services/api";
+import { salesApi, purchaseApi, productApi } from "@/services/api";
 
 const groups = [
   {
@@ -60,11 +60,13 @@ export function AppSidebar() {
   const { pathname } = useLocation();
   const isActive = (url: string) => (url === "/" ? pathname === "/" : pathname.startsWith(url));
   const [pending, setPending] = useState(0);
+  const [lowStockCount, setLowStockCount] = useState(0);
   useEffect(() => {
-    Promise.all([salesApi.all(), purchaseApi.all()]).then(([sales, purs]) => {
+    Promise.all([salesApi.all(), purchaseApi.all(), productApi.all()]).then(([sales, purs, prods]) => {
       const a = sales.filter((o) => o.status !== "cancelled" && (o.contractAmount ?? o.totalAmount) - (o.received || 0) > 0).length;
       const b = purs.filter((o) => o.status !== "cancelled" && o.status !== "draft" && (o.contractAmount || o.totalAmount) - (o.paid || 0) > 0).length;
       setPending(a + b);
+      setLowStockCount(prods.filter((p) => p.category !== "software" && p.stock <= p.safetyStock).length);
     });
   }, [pathname]);
 
