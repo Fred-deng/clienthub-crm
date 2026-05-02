@@ -77,6 +77,7 @@ export default function Suppliers() {
     reset({ ...empty, code: `SUP-${Date.now().toString().slice(-6)}` });
     setEditing(null);
     setSupplierContacts([]);
+    setDraftContacts([]);
     setOpen(true);
   };
   const openEdit = async (s: Supplier) => {
