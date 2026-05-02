@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,6 +48,12 @@ export function LineItemsEditor({
 
   // 记录每个输入框获取焦点时的「编辑前」整行快照，用于 blur 时一次性 diff，避免逐字符重复记录日志
   const focusSnapshotRef = useRef<Record<string, LineItem>>({});
+  const pendingAddRef = useRef<Record<number, boolean>>({});
+
+  useEffect(() => {
+    pendingAddRef.current = {};
+    focusSnapshotRef.current = {};
+  }, [logScope]);
 
   const headerTitle = title
     ?? (logModule === "sales" ? "销售明细（不存在的名称将自动建档）" : "采购明细（不存在的名称将自动建档）");
@@ -75,8 +81,7 @@ export function LineItemsEditor({
     const next = [...items];
     next[i] = { ...next[i], ...patch };
     onChange(next);
-    if (canLog) {
-      logLineItemUpdate(logModule!, logScope!, before, next[i]);
+    if (canLog && logLineItemUpdate(logModule!, logScope!, before, next[i])) {
       setLogTick((t) => t + 1);
     }
   };
@@ -92,19 +97,23 @@ export function LineItemsEditor({
     delete focusSnapshotRef.current[key];
     const after = items[i];
     if (!before || !after) return;
-    if (before[field] === after[field]
-        && before.productId === after.productId
-        && before.category === after.category
-        && before.price === after.price) return;
-    logLineItemUpdate(logModule!, logScope!, before, after);
-    setLogTick((t) => t + 1);
+    if (logLineItemUpdate(logModule!, logScope!, before, after)) {
+      setLogTick((t) => t + 1);
+    }
   };
 
   const remove = (i: number) => {
     const removed = items[i];
+    const wasPendingAdd = !!pendingAddRef.current[i];
     onChange(items.filter((_, idx) => idx !== i));
-    if (canLog && removed) {
-      logLineItemDelete(logModule!, logScope!, removed);
+    const nextPending: Record<number, boolean> = {};
+    Object.entries(pendingAddRef.current).forEach(([idx, pending]) => {
+      const n = Number(idx);
+      if (n < i) nextPending[n] = pending;
+      if (n > i) nextPending[n - 1] = pending;
+    });
+    pendingAddRef.current = nextPending;
+    if (canLog && removed && !wasPendingAdd && logLineItemDelete(logModule!, logScope!, removed)) {
       setLogTick((t) => t + 1);
     }
   };
@@ -113,10 +122,7 @@ export function LineItemsEditor({
     const defaultCat = (cats[0] || "other") as ProductCategory;
     const row: LineItem = { productId: "", productName: "", category: defaultCat, qty: 1, price: 0 };
     onChange([...items, row]);
-    if (canLog) {
-      logLineItemAdd(logModule!, logScope!, row);
-      setLogTick((t) => t + 1);
-    }
+    if (canLog) pendingAddRef.current[items.length] = true;
   };
 
   return (
