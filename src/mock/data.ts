@@ -1,7 +1,7 @@
 // Mock 数据生成，使用 mockjs。所有数据在内存中，提供 CRUD 能力。
 import Mock from "mockjs";
 import type {
-  Customer, Product, Supplier, PurchaseOrder, Contract, SalesOrder, Payment, Employee,
+  Customer, Product, Supplier, PurchaseOrder, Contract, SalesOrder, Payment, Employee, Contact,
 } from "@/types";
 
 const Random = Mock.Random;
