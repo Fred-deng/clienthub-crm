@@ -56,10 +56,11 @@ function Field({ label, required, span = 4, children }: { label: string; require
     3: "col-span-12 md:col-span-6 lg:col-span-3",
     4: "col-span-12 md:col-span-6 lg:col-span-4",
     6: "col-span-12 md:col-span-6",
+    8: "col-span-12 md:col-span-8",
     12: "col-span-12",
   };
   return (
-    <div className={m[span]}>
+    <div className={m[span] || m[4]}>
       <Label className="text-xs text-foreground/70 mb-1.5 block">
         {label}{required && <span className="text-tomato ml-0.5">*</span>}
       </Label>
@@ -392,7 +393,7 @@ export default function FollowUps() {
                 </SelectContent>
               </Select>
             </Field>
-            <Field label="主题" required span={8}>
+            <Field label="主题" required span={12}>
               <Input placeholder="本次跟进主题" {...register("subject", { required: true })} />
             </Field>
 
