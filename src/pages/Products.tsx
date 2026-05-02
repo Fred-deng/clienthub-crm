@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { productApi } from "@/services/api";
+import { productApi, salesApi, purchaseApi } from "@/services/api";
 import { adjustStock, logProductChange } from "@/services/inventory";
 import { usePagedList } from "@/hooks/usePagedList";
 import { fmtMoney } from "@/lib/format";
@@ -78,6 +78,15 @@ export default function Products() {
   const onDelete = async () => {
     if (!deletingId) return;
     const p = data.list.find((x) => x.id === deletingId);
+    // 校验关联
+    const [sales, purs] = await Promise.all([salesApi.all(), purchaseApi.all()]);
+    const inSales = sales.some((o) => o.items.some((it) => it.productId === deletingId));
+    const inPur = purs.some((o) => o.items.some((it) => it.productId === deletingId));
+    if (inSales || inPur) {
+      toast.error(`该产品已被${inSales ? "销售" : ""}${inSales && inPur ? "/" : ""}${inPur ? "采购" : ""}订单引用，无法删除。`);
+      setDeletingId(null);
+      return;
+    }
     if (p) logProductChange(p, "delete", "删除产品");
     await productApi.remove(deletingId);
     toast.success("已删除"); setDeletingId(null); reload();
