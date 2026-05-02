@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { DataPanel } from "@/components/common/DataPanel";
 import { PaginationBar } from "@/components/common/PaginationBar";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
+import { AttachmentField } from "@/components/common/AttachmentField";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -289,16 +290,9 @@ export default function Suppliers() {
 
             {/* 备注与附件 */}
             <GroupTitle>备注与附件</GroupTitle>
-            <Field label="备注" span={8}><Textarea rows={3} placeholder="补充说明" {...register("remark")} /></Field>
-            <Field label="附件" span={4}>
-              <div className="rounded-lg border border-dashed border-foreground/20 bg-foreground/[0.02] aspect-square max-h-32 flex items-center justify-center text-foreground/35 hover:text-foreground/60 hover:border-foreground/30 transition cursor-pointer relative">
-                <Plus className="h-6 w-6" />
-                <Input
-                  placeholder="附件链接或文件名"
-                  className="absolute bottom-1 left-1 right-1 h-7 text-[11px] bg-background"
-                  {...register("attachment")}
-                />
-              </div>
+            <Field label="备注" span={12}><Textarea rows={3} placeholder="补充说明" {...register("remark")} /></Field>
+            <Field label="附件" span={12}>
+              <AttachmentField singleValue={watch("attachment") || ""} onSingleChange={(v) => setValue("attachment", v)} hint="供应商相关合同 / 资质 / 其他文件" />
             </Field>
 
             {editing && (

@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { DataPanel } from "@/components/common/DataPanel";
 import { PaginationBar } from "@/components/common/PaginationBar";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
+import { AttachmentField } from "@/components/common/AttachmentField";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -427,8 +428,10 @@ export default function FollowUps() {
             <Field label="预计签单时间"><Input type="date" {...register("expectedSignAt")} /></Field>
 
             <GroupTitle tone="mustard">附件信息</GroupTitle>
-            <Field label="附件" span={6}><Input placeholder="附件链接或文件名" {...register("attachment")} /></Field>
-            <Field label="备注" span={6}><Textarea rows={2} {...register("remark")} /></Field>
+            <Field label="备注" span={12}><Textarea rows={2} {...register("remark")} /></Field>
+            <Field label="附件" span={12}>
+              <AttachmentField singleValue={watch("attachment") || ""} onSingleChange={(v) => setValue("attachment", v)} hint="拜访照片 / 沟通纪要 / 报价单等" />
+            </Field>
 
             <GroupTitle tone="cobalt">系统信息</GroupTitle>
             <Field label="跟进记录编号"><Input {...register("code")} /></Field>
