@@ -20,12 +20,12 @@ import {
 } from "@/components/ui/select";
 import { customerApi, contactApi, followUpApi, employeeApi } from "@/services/api";
 import { usePagedList } from "@/hooks/usePagedList";
-import { fmtMoney, customerStageLabel, customerTypeLabel } from "@/lib/format";
+import { fmtMoney, customerStageLabel } from "@/lib/format";
 import type { Customer, Contact, FollowUp, Employee } from "@/types";
 import { useEffect, ReactNode } from "react";
 
 const emptyCustomer: Omit<Customer, "id"> = {
-  code: "", name: "", taxNo: "", type: "software", status: "potential", region: "",
+  code: "", name: "", taxNo: "", status: "potential", region: "",
   stage: "lead", level: "B",
   contact: "", phone: "", email: "",
   registeredAddress: "", businessScope: "", address: "",
@@ -209,14 +209,6 @@ export default function Customers() {
                 onChange={(e) => setFilter({ keyword: e.target.value })}
               />
             </div>
-            <Select value={query.type ?? "all"} onValueChange={(v) => setFilter({ type: v })}>
-              <SelectTrigger className="h-9 w-28 text-xs rounded-full"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">全部类型</SelectItem>
-                <SelectItem value="software">软件客户</SelectItem>
-                <SelectItem value="hardware">硬件客户</SelectItem>
-              </SelectContent>
-            </Select>
             <Select value={query.stage ?? "all"} onValueChange={(v) => setFilter({ stage: v })}>
               <SelectTrigger className="h-9 w-28 text-xs rounded-full"><SelectValue /></SelectTrigger>
               <SelectContent>
