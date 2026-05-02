@@ -290,7 +290,7 @@ export default function Sales() {
               return (
                 <tfoot>
                   <tr>
-                    <td colSpan={5} className="label">本页 {data.list.length} 单 / 共 {data.total} 单 · 合计</td>
+                    <td colSpan={6} className="label">本页 {data.list.length} 单 / 共 {data.total} 单 · 合计</td>
                     <td className="num">{fmtMoney(sumContract)}</td>
                     <td className="num text-mint">{fmtMoney(sumReceived)}</td>
                     <td className="num text-cobalt">{fmtMoney(sumInvoice)}</td>
