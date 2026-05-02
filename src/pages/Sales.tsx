@@ -105,6 +105,8 @@ export default function Sales() {
   const [items, setItems] = useState<LineItem[]>([]);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [biz, setBiz] = useState<BizFilter>("all");
+  const [quickPay, setQuickPay] = useState<SalesOrder | null>(null);
+  const [quickInv, setQuickInv] = useState<SalesOrder | null>(null);
 
   useEffect(() => {
     customerApi.all().then((cs) => setCustomers(cs.filter((c) => c.stage === "formal")));
