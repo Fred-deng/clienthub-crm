@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
@@ -83,6 +84,12 @@ export default function Customers() {
   const [draftFollowUps, setDraftFollowUps] = useState<Omit<FollowUp, "id">[]>([]);
   const [miniContactOpen, setMiniContactOpen] = useState(false);
   const [miniFollowUpOpen, setMiniFollowUpOpen] = useState(false);
+  // 批量选择
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [bulkSeaOpen, setBulkSeaOpen] = useState(false);
+  const [bulkStatusOpen, setBulkStatusOpen] = useState(false);
+  const [bulkSeaValue, setBulkSeaValue] = useState<"公海" | "私海">("私海");
+  const [bulkStatusValue, setBulkStatusValue] = useState<string>("active");
   
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -161,6 +168,40 @@ export default function Customers() {
     toast.success("客户已删除");
     setDeletingId(null);
     reload();
+  };
+
+  // —— 批量更新公海/私海 ——
+  const applyBulkSea = async () => {
+    if (!selectedIds.length) return;
+    await Promise.all(selectedIds.map((id) => customerApi.update(id, { seaStatus: bulkSeaValue } as any)));
+    toast.success(`已将 ${selectedIds.length} 位客户标记为「${bulkSeaValue}」`);
+    setBulkSeaOpen(false);
+    setSelectedIds([]);
+    reload();
+  };
+  // —— 批量更新客户状态 ——
+  const applyBulkStatus = async () => {
+    if (!selectedIds.length) return;
+    await Promise.all(selectedIds.map((id) => customerApi.update(id, {
+      status: bulkStatusValue as any,
+      stage: deriveCustomerStage(bulkStatusValue),
+    } as any)));
+    toast.success(`已将 ${selectedIds.length} 位客户状态改为「${customerStatusLabel[bulkStatusValue] || bulkStatusValue}」`);
+    setBulkStatusOpen(false);
+    setSelectedIds([]);
+    reload();
+  };
+
+  const pageIds = data.list.map((c) => c.id);
+  const allOnPageSelected = pageIds.length > 0 && pageIds.every((id) => selectedIds.includes(id));
+  const someOnPageSelected = pageIds.some((id) => selectedIds.includes(id));
+  const togglePage = (checked: boolean) => {
+    setSelectedIds((prev) =>
+      checked ? Array.from(new Set([...prev, ...pageIds])) : prev.filter((id) => !pageIds.includes(id))
+    );
+  };
+  const toggleOne = (id: string, checked: boolean) => {
+    setSelectedIds((prev) => (checked ? [...prev, id] : prev.filter((x) => x !== id)));
   };
 
   const ownerName = (id: string) => employees.find(e => e.id === id)?.name ?? "—";
@@ -249,10 +290,38 @@ export default function Customers() {
             );
           })}
         </div>
+        {/* 批量操作工具条 */}
+        {selectedIds.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 px-4 py-2.5 bg-mustard/10 border-b border-mustard/30">
+            <span className="text-xs font-semibold text-foreground">
+              已选 <span className="text-tomato">{selectedIds.length}</span> 位客户
+            </span>
+            <div className="flex-1" />
+            <Button size="sm" variant="outline" onClick={() => { setBulkSeaValue("公海"); setBulkSeaOpen(true); }}>
+              转入公海
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => { setBulkSeaValue("私海"); setBulkSeaOpen(true); }}>
+              转入私海
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => setBulkStatusOpen(true)}>
+              修改客户状态
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setSelectedIds([])}>
+              取消选择
+            </Button>
+          </div>
+        )}
         <div className="overflow-x-auto">
           <table className="data-table">
             <thead>
               <tr>
+                <th className="w-10">
+                  <Checkbox
+                    checked={allOnPageSelected ? true : someOnPageSelected ? "indeterminate" : false}
+                    onCheckedChange={(v) => togglePage(!!v)}
+                    aria-label="全选当页"
+                  />
+                </th>
                 <th>编号</th>
                 <th>客户</th>
                 <th>状态</th>
@@ -266,13 +335,21 @@ export default function Customers() {
               </tr>
             </thead>
             <tbody>
-              {loading && <tr className="empty"><td colSpan={10} className="empty">加载中…</td></tr>}
+              {loading && <tr className="empty"><td colSpan={11} className="empty">加载中…</td></tr>}
               {!loading && data.list.length === 0 && (
-                <tr className="empty"><td colSpan={10} className="empty">暂无客户数据</td></tr>
+                <tr className="empty"><td colSpan={11} className="empty">暂无客户数据</td></tr>
               )}
               {data.list.map((c) => {
+                const checked = selectedIds.includes(c.id);
                 return (
                   <tr key={c.id} className="clickable" onDoubleClick={() => openEdit(c)} title="双击查看详情">
+                    <td onDoubleClick={(e) => e.stopPropagation()}>
+                      <Checkbox
+                        checked={checked}
+                        onCheckedChange={(v) => toggleOne(c.id, !!v)}
+                        aria-label={`选择 ${c.name}`}
+                      />
+                    </td>
                     <td className="mono">{c.code}</td>
                     <td>
                       <div className="flex items-center gap-2.5">
@@ -331,7 +408,7 @@ export default function Customers() {
             {data.list.length > 0 && (
               <tfoot>
                 <tr>
-                  <td colSpan={9} className="label">本页合计 · {data.list.length} 条 / 共 {data.total} 条</td>
+                  <td colSpan={10} className="label">本页合计 · {data.list.length} 条 / 共 {data.total} 条</td>
                   <td className="num">{fmtMoney(data.list.reduce((s, c) => s + (c.receivable || 0), 0))}</td>
                   <td />
                 </tr>
@@ -661,6 +738,56 @@ export default function Customers() {
         description="删除后无法恢复，与该客户关联的合同/订单不会被自动清理。"
         onConfirm={onDelete}
       />
+
+      {/* 批量：转入公海/私海 */}
+      <Dialog open={bulkSeaOpen} onOpenChange={setBulkSeaOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>批量调整公海 / 私海</DialogTitle>
+          </DialogHeader>
+          <div className="text-sm text-foreground/80 space-y-3 py-2">
+            <div>已选 <span className="font-bold text-tomato">{selectedIds.length}</span> 位客户,将统一标记为:</div>
+            <Select value={bulkSeaValue} onValueChange={(v: any) => setBulkSeaValue(v)}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="公海">公海</SelectItem>
+                <SelectItem value="私海">私海</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkSeaOpen(false)}>取消</Button>
+            <Button onClick={applyBulkSea}>确认</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* 批量：修改客户状态 */}
+      <Dialog open={bulkStatusOpen} onOpenChange={setBulkStatusOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>批量修改客户状态</DialogTitle>
+          </DialogHeader>
+          <div className="text-sm text-foreground/80 space-y-3 py-2">
+            <div>已选 <span className="font-bold text-tomato">{selectedIds.length}</span> 位客户,将统一改为:</div>
+            <Select value={bulkStatusValue} onValueChange={(v) => setBulkStatusValue(v)}>
+              <SelectTrigger><SelectValue placeholder="请选择状态" /></SelectTrigger>
+              <SelectContent>
+                {Object.entries(customerStatusLabel).map(([v, l]) => (
+                  <SelectItem key={v} value={v}>{l}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="text-[11px] text-foreground/50">
+              提示:潜在 / 意向中 会自动归为「潜在客户」,其余为「正式客户」。
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkStatusOpen(false)}>取消</Button>
+            <Button onClick={applyBulkStatus}>确认</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
