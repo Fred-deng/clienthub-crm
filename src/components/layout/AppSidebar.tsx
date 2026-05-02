@@ -72,16 +72,16 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-r-0">
-      <SidebarHeader className="px-6 pt-7 pb-4">
-        <div className="flex items-center gap-3">
+      <SidebarHeader className="px-6 pt-7 pb-4 group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:pt-4">
+        <div className="flex items-center gap-3 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0">
           <div className="relative shrink-0">
-            <div className="size-10 rounded-xl bg-foreground flex items-stretch justify-center font-display font-black overflow-hidden shadow-[2px_2px_0_0_hsl(var(--tomato))]">
+            <div className="size-10 rounded-xl bg-foreground flex items-stretch justify-center font-display font-black overflow-hidden shadow-[2px_2px_0_0_hsl(var(--tomato))] group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:shadow-none">
               <span className="flex-1 flex items-center justify-center text-[15px] leading-none bg-tomato text-[hsl(var(--paper))]">J</span>
               <span className="flex-1 flex items-center justify-center text-[15px] leading-none text-mustard">M</span>
             </div>
-            <span className="absolute -right-1 -bottom-1 size-2.5 rounded-full bg-mint ring-2 ring-sidebar" />
+            <span className="absolute -right-1 -bottom-1 size-2.5 rounded-full bg-mint ring-2 ring-sidebar group-data-[collapsible=icon]:hidden" />
           </div>
-          <div className="leading-none min-w-0">
+          <div className="leading-none min-w-0 group-data-[collapsible=icon]:hidden">
             <div className="font-display font-bold text-[17px] tracking-tight whitespace-nowrap">
               集马<span className="text-tomato">·</span>科技
             </div>
@@ -92,10 +92,10 @@ export function AppSidebar() {
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="px-3 mt-2">
+      <SidebarContent className="px-3 mt-2 group-data-[collapsible=icon]:px-1 group-data-[collapsible=icon]:mt-0">
         {groups.map((g) => (
-          <SidebarGroup key={g.label} className="mb-1">
-            <div className="px-3 pt-3 pb-1.5 text-[9px] font-bold tracking-[0.3em] uppercase text-foreground/35 font-mono">
+          <SidebarGroup key={g.label} className="mb-1 group-data-[collapsible=icon]:mb-0">
+            <div className="px-3 pt-3 pb-1.5 text-[9px] font-bold tracking-[0.3em] uppercase text-foreground/35 font-mono group-data-[collapsible=icon]:hidden">
               · {g.label}
             </div>
             <SidebarGroupContent>
@@ -107,29 +107,31 @@ export function AppSidebar() {
                       <SidebarMenuButton
                         asChild
                         isActive={active}
+                        tooltip={item.title}
                         className={
-                          "rounded-xl h-9 px-3 transition-all " +
+                          "rounded-xl h-9 px-3 transition-all group-data-[collapsible=icon]:!size-9 group-data-[collapsible=icon]:!p-0 group-data-[collapsible=icon]:justify-center " +
                           (active
                             ? "bg-card font-bold text-foreground shadow-[2px_2px_0_0_hsl(var(--foreground)/0.08)] border border-foreground/8"
                             : "text-foreground/55 hover:text-foreground hover:bg-card/60 font-medium")
                         }
                       >
                         <NavLink to={item.url} className="flex items-center gap-3">
+                          <item.icon className="size-4 shrink-0 hidden group-data-[collapsible=icon]:block" />
                           <span
                             className={
-                              "size-1.5 rounded-full transition-all shrink-0 " +
+                              "size-1.5 rounded-full transition-all shrink-0 group-data-[collapsible=icon]:hidden " +
                               dotMap[item.dot] +
                               (active ? " ring-4 ring-current/0 scale-150" : " opacity-70")
                             }
                           />
-                          <span className="text-[13px] tracking-tight">{item.title}</span>
+                          <span className="text-[13px] tracking-tight group-data-[collapsible=icon]:hidden">{item.title}</span>
                           {item.url === "/products" && lowStockCount > 0 && (
-                            <span className="ml-auto inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-tomato text-[hsl(var(--paper))] text-[10px] font-bold leading-none">
+                            <span className="ml-auto inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-tomato text-[hsl(var(--paper))] text-[10px] font-bold leading-none group-data-[collapsible=icon]:hidden">
                               {lowStockCount}
                             </span>
                           )}
                           {active && item.url !== "/products" && (
-                            <span className="ml-auto font-mono text-[9px] text-foreground/40">
+                            <span className="ml-auto font-mono text-[9px] text-foreground/40 group-data-[collapsible=icon]:hidden">
                               ●
                             </span>
                           )}
@@ -144,8 +146,8 @@ export function AppSidebar() {
         ))}
       </SidebarContent>
 
-      <SidebarFooter className="p-4">
-        <div className="relative rounded-2xl p-5 bg-cobalt text-secondary-foreground flex flex-col gap-3 overflow-hidden">
+      <SidebarFooter className="p-4 group-data-[collapsible=icon]:p-2">
+        <div className="relative rounded-2xl p-5 bg-cobalt text-secondary-foreground flex flex-col gap-3 overflow-hidden group-data-[collapsible=icon]:hidden">
           <div className="absolute -right-10 -top-10 size-32 rounded-full bg-mustard/15 blur-2xl" />
           <div className="absolute -left-6 -bottom-6 size-20 rounded-full bg-tomato/20 blur-2xl" />
           <div className="flex items-center gap-2 text-[9px] opacity-80 font-bold tracking-[0.28em] uppercase relative">
@@ -158,6 +160,16 @@ export function AppSidebar() {
           <button className="py-2 rounded-full bg-[hsl(var(--paper))] text-foreground font-bold text-[11px] hover:bg-mustard transition-colors relative tracking-wide">
             前往核对 →
           </button>
+        </div>
+        <div className="hidden group-data-[collapsible=icon]:flex items-center justify-center">
+          <div className="relative size-9 rounded-xl bg-cobalt flex items-center justify-center" title={`${pending} 笔账款待结清`}>
+            <Wallet className="size-4 text-[hsl(var(--paper))]" />
+            {pending > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-1 rounded-full bg-tomato text-[hsl(var(--paper))] text-[9px] font-bold leading-none flex items-center justify-center">
+                {pending}
+              </span>
+            )}
+          </div>
         </div>
       </SidebarFooter>
     </Sidebar>
