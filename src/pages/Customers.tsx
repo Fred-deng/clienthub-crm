@@ -43,17 +43,9 @@ const emptyCustomer: Omit<Customer, "id"> = {
   createdAt: new Date().toISOString().slice(0, 10), remark: "",
 };
 
-// —— 分组小标题（参考截图：深色 chip + 长分割线） ——
-function GroupTitle({ children }: { children: ReactNode }) {
-  return (
-    <div className="col-span-12 flex items-center gap-3 mt-2 first:mt-0">
-      <span className="inline-flex items-center px-3 h-7 rounded-md bg-foreground text-background text-xs font-semibold tracking-wide">
-        {children}
-      </span>
-      <div className="flex-1 h-px bg-foreground/10" />
-    </div>
-  );
-}
+// —— 分组小标题（可折叠） ——
+import { CollapsibleGroup } from "@/components/common/CollapsibleGroup";
+
 
 function Field({ label, required, span = 4, children }: { label: string; required?: boolean; span?: number; children: ReactNode }) {
   const spanClass: Record<number, string> = {
