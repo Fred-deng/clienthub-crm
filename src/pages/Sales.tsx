@@ -35,15 +35,9 @@ import { splitSales, bizLabel, bizTone, type BizFilter } from "@/lib/biz";
 import { BizTabs } from "@/components/common/BizTabs";
 import type { SalesOrder, Customer, Product, Employee } from "@/types";
 
+import { CollapsibleGroupTitle } from "@/components/common/CollapsibleGroup";
 function GroupTitle({ children }: { children: ReactNode }) {
-  return (
-    <div className="col-span-12 flex items-center gap-3 mt-2 first:mt-0">
-      <span className="inline-flex items-center px-3 h-7 rounded-md bg-foreground text-background text-xs font-semibold tracking-wide">
-        {children}
-      </span>
-      <div className="flex-1 h-px bg-foreground/10" />
-    </div>
-  );
+  return <CollapsibleGroupTitle storageKey="sales">{children}</CollapsibleGroupTitle>;
 }
 function Field({ label, required, span = 4, children }: { label: string; required?: boolean; span?: number; children: ReactNode }) {
   const m: Record<number, string> = {
@@ -562,7 +556,7 @@ export default function Sales() {
             <Field label="其他附件" span={4}><AttachmentField value={watch("otherAttachments") || []} onChange={(v) => setValue("otherAttachments", v)} /></Field>
             <Field label="备注" span={4}><Textarea rows={3} {...register("remark")} /></Field>
 
-            <DialogFooter className="col-span-12 mt-4">
+            <DialogFooter data-group-skip="1" className="col-span-12 mt-4">
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>取消</Button>
               <Button type="submit">{editing ? "保存" : "创建合同"}</Button>
             </DialogFooter>

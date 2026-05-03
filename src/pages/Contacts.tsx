@@ -30,15 +30,9 @@ const empty: Omit<Contact, "id"> = {
   createdAt: new Date().toISOString().slice(0, 10),
 };
 
+import { CollapsibleGroupTitle } from "@/components/common/CollapsibleGroup";
 function GroupTitle({ children }: { children: ReactNode }) {
-  return (
-    <div className="col-span-12 flex items-center gap-3 mt-2 first:mt-0">
-      <span className="inline-flex items-center px-3 h-7 rounded-md bg-foreground text-background text-xs font-semibold tracking-wide">
-        {children}
-      </span>
-      <div className="flex-1 h-px bg-foreground/10" />
-    </div>
-  );
+  return <CollapsibleGroupTitle storageKey="contacts">{children}</CollapsibleGroupTitle>;
 }
 function Field({ label, required, span = 4, children }: { label: string; required?: boolean; span?: number; children: ReactNode }) {
   const m: Record<number, string> = {
@@ -353,7 +347,7 @@ export default function Contacts() {
             <Field label="联系人编号"><Input {...register("code")} /></Field>
             <Field label="客户名称"><Input value={watch("customerName")} disabled /></Field>
 
-            <DialogFooter className="col-span-12 mt-4">
+            <DialogFooter data-group-skip="1" className="col-span-12 mt-4">
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>取消</Button>
               <Button type="submit">{editing ? "保存修改" : "创建联系人"}</Button>
             </DialogFooter>
