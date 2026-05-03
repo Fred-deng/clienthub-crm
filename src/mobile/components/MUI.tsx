@@ -356,6 +356,65 @@ export function MFilterBar({ children, onReset }: { children: ReactNode; onReset
   );
 }
 
+// ---------- 可搜索的抽屉式选择器（用于长列表） ----------
+export function MPickerChip({
+  value, onChange, options, allLabel = "全部", placeholder = "选择", title = "选择", className,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  options: { value: string; label: string; sub?: string }[];
+  allLabel?: string;
+  placeholder?: string;
+  title?: string;
+  className?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [kw, setKw] = useState("");
+  const current = value === "all" ? allLabel : (options.find(o => o.value === value)?.label || placeholder);
+  const filtered = options.filter(o => !kw || o.label.toLowerCase().includes(kw.toLowerCase()) || (o.sub || "").toLowerCase().includes(kw.toLowerCase()));
+  return (
+    <>
+      <button onClick={() => setOpen(true)}
+        className={cn("shrink-0 h-8 px-3 rounded-full bg-card border border-foreground/10 text-xs inline-flex items-center gap-1 max-w-[55vw]", className)}>
+        <span className="truncate">{current}</span>
+        <ChevronDown className="h-3 w-3 shrink-0 text-foreground/45" />
+      </button>
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetContent side="bottom" className="rounded-t-2xl p-0 max-h-[80vh]">
+          <SheetHeader className="px-4 pt-4 pb-2"><SheetTitle className="text-base">{title}</SheetTitle></SheetHeader>
+          <div className="px-4 pb-2">
+            <div className="relative">
+              <Search className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-foreground/40" />
+              <input value={kw} onChange={e => setKw(e.target.value)} placeholder="搜索…"
+                className="w-full h-9 pl-9 pr-3 rounded-full bg-foreground/[0.06] text-sm outline-none" autoFocus />
+            </div>
+          </div>
+          <div className="overflow-y-auto px-2 pb-6" style={{ maxHeight: "60vh" }}>
+            <button onClick={() => { onChange("all"); setOpen(false); setKw(""); }}
+              className={cn("w-full text-left px-3 py-2.5 rounded-lg text-sm flex items-center justify-between",
+                value === "all" ? "bg-foreground/[0.08] font-semibold" : "hover:bg-foreground/[0.04]")}>
+              <span>{allLabel}</span>
+              {value === "all" && <Check className="h-4 w-4" />}
+            </button>
+            {filtered.map(o => (
+              <button key={o.value} onClick={() => { onChange(o.value); setOpen(false); setKw(""); }}
+                className={cn("w-full text-left px-3 py-2.5 rounded-lg text-sm flex items-center justify-between",
+                  value === o.value ? "bg-foreground/[0.08] font-semibold" : "hover:bg-foreground/[0.04]")}>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate">{o.label}</div>
+                  {o.sub && <div className="text-[11px] text-foreground/50 truncate">{o.sub}</div>}
+                </div>
+                {value === o.value && <Check className="h-4 w-4 shrink-0" />}
+              </button>
+            ))}
+            {filtered.length === 0 && <div className="text-center py-6 text-xs text-foreground/45">无匹配结果</div>}
+          </div>
+        </SheetContent>
+      </Sheet>
+    </>
+  );
+}
+
 // ---------- 状态步骤条（订单状态流转） ----------
 export function MStatusFlow({ steps, current }: { steps: { value: string; label: string }[]; current: string }) {
   const idx = steps.findIndex((s) => s.value === current);
