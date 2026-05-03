@@ -3,7 +3,7 @@ import { useState } from "react";
 import {
   LayoutDashboard, Users, ShoppingCart, Wallet, Menu as MenuIcon,
   UserSquare2, MessageSquareText, Package, Truck, FileBox,
-  ArrowDownToLine, ArrowUpFromLine, Scale, X, ChevronRight, Bell, Receipt,
+  ArrowDownToLine, ArrowUpFromLine, Scale, X, ChevronRight, ChevronDown, Bell, Receipt,
 } from "lucide-react";
 import { useCurrentUser } from "@/context/CurrentUserContext";
 import { cn } from "@/lib/utils";
@@ -44,6 +44,16 @@ function Drawer({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { current, all, setCurrent } = useCurrentUser();
   const nav = useNavigate();
   const loc = useLocation();
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>(() => {
+    try { return JSON.parse(localStorage.getItem("jm.mdrawer.collapsedGroups") || "{}"); } catch { return {}; }
+  });
+  const toggleGroup = (label: string) => {
+    setCollapsed((prev) => {
+      const next = { ...prev, [label]: !prev[label] };
+      try { localStorage.setItem("jm.mdrawer.collapsedGroups", JSON.stringify(next)); } catch {}
+      return next;
+    });
+  };
   return (
     <>
       <div
@@ -93,10 +103,19 @@ function Drawer({ open, onClose }: { open: boolean; onClose: () => void }) {
           </div>
         </div>
         <nav className="p-2">
-          {drawerItems.map((g) => (
+          {drawerItems.map((g) => {
+            const isCollapsed = !!collapsed[g.group];
+            return (
             <div key={g.group} className="mb-3">
-              <div className="text-[10px] font-mono uppercase tracking-wider text-foreground/45 px-3 py-2">· {g.group}</div>
-              {g.items.map((it) => {
+              <button
+                type="button"
+                onClick={() => toggleGroup(g.group)}
+                className="w-full flex items-center justify-between text-[10px] font-mono uppercase tracking-wider text-foreground/45 hover:text-foreground/70 px-3 py-2 transition-colors"
+              >
+                <span>· {g.group}</span>
+                <ChevronDown className={cn("h-3 w-3 transition-transform", isCollapsed && "-rotate-90")} />
+              </button>
+              {!isCollapsed && g.items.map((it) => {
                 const active = it.end ? loc.pathname === it.to : loc.pathname.startsWith(it.to);
                 return (
                   <button
@@ -112,7 +131,8 @@ function Drawer({ open, onClose }: { open: boolean; onClose: () => void }) {
                 );
               })}
             </div>
-          ))}
+            );
+          })}
         </nav>
       </aside>
     </>

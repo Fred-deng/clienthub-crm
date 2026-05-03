@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
-  LayoutDashboard, Users, Package, ShoppingCart, FileText, Receipt, Wallet, Truck, Contact as ContactIcon, ClipboardList, ArrowDownLeft, ArrowUpRight,
+  LayoutDashboard, Users, Package, ShoppingCart, FileText, Receipt, Wallet, Truck, Contact as ContactIcon, ClipboardList, ArrowDownLeft, ArrowUpRight, ChevronDown,
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent,
@@ -55,6 +55,16 @@ export function AppSidebar() {
   const isActive = (url: string) => (url === "/" ? pathname === "/" : pathname.startsWith(url));
   const [pending, setPending] = useState(0);
   const [lowStockCount, setLowStockCount] = useState(0);
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>(() => {
+    try { return JSON.parse(localStorage.getItem("jm.sidebar.collapsedGroups") || "{}"); } catch { return {}; }
+  });
+  const toggleGroup = (label: string) => {
+    setCollapsed((prev) => {
+      const next = { ...prev, [label]: !prev[label] };
+      try { localStorage.setItem("jm.sidebar.collapsedGroups", JSON.stringify(next)); } catch {}
+      return next;
+    });
+  };
   useEffect(() => {
     Promise.all([salesApi.all(), purchaseApi.all(), productApi.all()]).then(([sales, purs, prods]) => {
       const a = sales.filter((o) => o.status !== "cancelled" && (o.contractAmount ?? o.totalAmount) - (o.received || 0) > 0).length;
@@ -87,11 +97,19 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent className="px-3 mt-2 group-data-[collapsible=icon]:px-1 group-data-[collapsible=icon]:mt-0">
-        {groups.map((g) => (
+        {groups.map((g) => {
+          const isCollapsed = !!collapsed[g.label];
+          return (
           <SidebarGroup key={g.label} className="mb-1 group-data-[collapsible=icon]:mb-0">
-            <div className="px-3 pt-3 pb-1.5 text-[9px] font-bold tracking-[0.3em] uppercase text-foreground/35 font-mono group-data-[collapsible=icon]:hidden">
-              · {g.label}
-            </div>
+            <button
+              type="button"
+              onClick={() => toggleGroup(g.label)}
+              className="w-full px-3 pt-3 pb-1.5 flex items-center justify-between text-[9px] font-bold tracking-[0.3em] uppercase text-foreground/35 hover:text-foreground/60 font-mono group-data-[collapsible=icon]:hidden transition-colors"
+            >
+              <span>· {g.label}</span>
+              <ChevronDown className={"size-3 transition-transform " + (isCollapsed ? "-rotate-90" : "")} />
+            </button>
+            {!isCollapsed && (
             <SidebarGroupContent>
               <SidebarMenu className="gap-0.5">
                 {g.items.map((item) => {
@@ -134,8 +152,10 @@ export function AppSidebar() {
                 })}
               </SidebarMenu>
             </SidebarGroupContent>
+            )}
           </SidebarGroup>
-        ))}
+          );
+        })}
       </SidebarContent>
 
       <SidebarFooter className="p-4 group-data-[collapsible=icon]:p-2">
