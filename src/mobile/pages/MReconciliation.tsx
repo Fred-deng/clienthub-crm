@@ -89,7 +89,7 @@ export default function MReconciliation() {
       </div>
       <MSearchBar value={keyword} onChange={setKeyword} placeholder="搜索对手方/单号" />
       <MChipFilter value={filter} onChange={setFilter as any} options={[{ value: "outstanding", label: "仅未结清" }, { value: "all", label: "全部" }]} />
-
+      <MDateRange value={range} onChange={setRange} />
       <div className="px-4 pb-4 space-y-2">
         {groups.length === 0 ? (
           <div className="text-center py-12">
