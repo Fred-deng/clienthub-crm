@@ -121,6 +121,23 @@ export default function Sales() {
   const [quickInv, setQuickInv] = useState<SalesOrder | null>(null);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState<string>("");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [bulkStatus, setBulkStatus] = useState<string>("");
+
+  const applyBulkStatus = async () => {
+    if (!bulkStatus || selectedIds.length === 0) return;
+    const op = readCurrentOperator();
+    for (const id of selectedIds) {
+      const order = data.list.find((o) => o.id === id);
+      if (!order || order.status === bulkStatus) continue;
+      const merged = { ...order, status: bulkStatus as any } as SalesOrder;
+      syncSalesStock(order, merged, op);
+      logOrderUpdate("sales", order, { status: bulkStatus });
+      await salesApi.update(id, { status: bulkStatus } as any);
+    }
+    toast.success(`已将 ${selectedIds.length} 单更新为「${statusLabels[bulkStatus] || bulkStatus}」`);
+    setSelectedIds([]); setBulkStatus(""); reload();
+  };
 
   useEffect(() => {
     customerApi.all().then((cs) => setCustomers(cs.filter((c) => c.stage === "formal")));
