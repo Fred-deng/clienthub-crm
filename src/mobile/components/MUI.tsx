@@ -14,7 +14,7 @@ export function MPageHeader({
 }: { title: string; subtitle?: string; back?: boolean; action?: ReactNode; sticky?: boolean }) {
   const nav = useNavigate();
   return (
-    <div className={cn("bg-background z-20 px-4 py-3 border-b border-foreground/5", sticky && "sticky top-12")}>
+    <div className={cn("bg-background z-20 px-4 pt-2 pb-2.5 border-b border-foreground/5", sticky && "sticky top-12")}>
       <div className="flex items-center gap-2">
         {back && (
           <button onClick={() => nav(-1)} className="size-9 -ml-2 rounded-full hover:bg-foreground/5 flex items-center justify-center">
