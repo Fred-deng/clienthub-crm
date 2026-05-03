@@ -3,7 +3,7 @@ import { useState } from "react";
 import {
   LayoutDashboard, Users, ShoppingCart, Wallet, Menu as MenuIcon,
   UserSquare2, MessageSquareText, Package, Truck, FileBox,
-  ArrowDownToLine, ArrowUpFromLine, Scale, X, ChevronRight, Bell, Receipt,
+  ArrowDownToLine, ArrowUpFromLine, Scale, X, ChevronRight, ChevronDown, Bell, Receipt,
 } from "lucide-react";
 import { useCurrentUser } from "@/context/CurrentUserContext";
 import { cn } from "@/lib/utils";
