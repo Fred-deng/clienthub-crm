@@ -260,21 +260,6 @@ export default function Sales() {
       <DataPanel
         title={<h3 className="text-xs font-bold uppercase tracking-[0.2em]">合同列表</h3>}
         actions={
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <Input placeholder="搜索合同号/客户/明细产品" className="pl-8 h-8 w-64 text-xs" onChange={(e) => setFilter({ keyword: e.target.value })} />
-            </div>
-            <Select value={query.status ?? "all"} onValueChange={(v) => setFilter({ status: v })}>
-              <SelectTrigger className="h-8 w-28 text-xs"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">全部状态</SelectItem>
-                <SelectItem value="pending">待发货</SelectItem>
-                <SelectItem value="shipped">运输中</SelectItem>
-                <SelectItem value="delivered">已送达</SelectItem>
-                <SelectItem value="cancelled">已取消</SelectItem>
-              </SelectContent>
-            </Select>
         actions={
           <div className="flex items-center gap-2">
             {selectedIds.length > 0 && (
