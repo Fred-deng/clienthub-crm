@@ -100,7 +100,7 @@ export default function MPurchases() {
       buyerId: "", status: "draft", expectedAt: "", createdAt: today(), remark: "",
       invoices: [], contractAttachments: [],
     });
-    setItems([]); setEditing(null); setOpen(true);
+    setItems([]); setEditing(null); setDraftScope(`draft-pur-${Date.now().toString(36)}`); setOpen(true);
   };
 
   const openEdit = async (o: PurchaseOrder) => {
@@ -141,16 +141,17 @@ export default function MPurchases() {
       code: editing?.code ?? `CG-${Date.now().toString().slice(-6)}`,
     };
     const op = current.name;
+    const reasonRemark = (editing && editing.status !== "cancelled" && payload.status === "cancelled" && cancelReason) ? `订单取消原因：${cancelReason}` : undefined;
     if (editing) {
       const merged = { ...editing, ...payload } as PurchaseOrder;
       syncPurchaseStock(editing, merged, op);
-      logOrderUpdate("purchase", editing, payload);
+      logOrderUpdate("purchase", editing, payload, reasonRemark);
       await purchaseApi.update(editing.id, payload);
     } else {
       const created = await purchaseApi.create(payload);
       syncPurchaseStock(null, created, op);
     }
-    toast.success("已保存"); setOpen(false); reload(); productApi.all().then(setProducts);
+    setCancelReason(""); toast.success("已保存"); setOpen(false); reload(); productApi.all().then(setProducts);
   });
 
   const handleDelete = async () => {
@@ -188,6 +189,14 @@ export default function MPurchases() {
     });
     toast.success("付款已登记");
     setQuickPay(null); setQuickPayAmt(0); setQuickPayRemark(""); reload();
+  };
+
+  const submitQuickInv = async () => {
+    if (!quickInv || quickInvAmt <= 0) return toast.error("请输入价税合计");
+    const rec = { id: `inv-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, invoiceNo: quickInvNo, invoiceType: quickInvType, invoiceDate: today(), amount: quickInvAmt, taxRate: quickInvTaxRate, taxAmount: Number(((quickInvAmt * quickInvTaxRate) / (100 + quickInvTaxRate)).toFixed(2)), buyerOrSeller: quickInv.supplierName, status: quickInvStatus, remark: quickInvRemark };
+    await purchaseApi.update(quickInv.id, { invoices: [...(quickInv.invoices || []), rec] } as any);
+    toast.success("发票已新增");
+    setQuickInv(null); setQuickInvAmt(0); setQuickInvNo(""); setQuickInvRemark(""); reload();
   };
 
   const applyBulkStatus = async () => {
