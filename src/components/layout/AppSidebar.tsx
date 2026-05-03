@@ -55,6 +55,16 @@ export function AppSidebar() {
   const isActive = (url: string) => (url === "/" ? pathname === "/" : pathname.startsWith(url));
   const [pending, setPending] = useState(0);
   const [lowStockCount, setLowStockCount] = useState(0);
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>(() => {
+    try { return JSON.parse(localStorage.getItem("jm.sidebar.collapsedGroups") || "{}"); } catch { return {}; }
+  });
+  const toggleGroup = (label: string) => {
+    setCollapsed((prev) => {
+      const next = { ...prev, [label]: !prev[label] };
+      try { localStorage.setItem("jm.sidebar.collapsedGroups", JSON.stringify(next)); } catch {}
+      return next;
+    });
+  };
   useEffect(() => {
     Promise.all([salesApi.all(), purchaseApi.all(), productApi.all()]).then(([sales, purs, prods]) => {
       const a = sales.filter((o) => o.status !== "cancelled" && (o.contractAmount ?? o.totalAmount) - (o.received || 0) > 0).length;
