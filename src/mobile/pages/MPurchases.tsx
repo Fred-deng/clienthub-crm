@@ -2,7 +2,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { Trash2, History, ArrowUpRight, FileText } from "lucide-react";
+import { Trash2, History, ArrowUpRight, FileText, Receipt } from "lucide-react";
 import { purchaseApi, supplierApi, productApi, employeeApi, contractApi, paymentApi } from "@/services/api";
 import { syncPurchaseStock, applyPurchaseReceive, revertPurchaseReceive, findOrCreateProductByName } from "@/services/inventory";
 import { logOrderUpdate, logOrderDelete, orderLogs } from "@/services/orderLog";
@@ -15,7 +15,7 @@ import { splitPurchase, bizLabel, type BizFilter } from "@/lib/biz";
 import {
   MPageHeader, MSearchBar, MCard, MList, MTag, MFab, MSheet, MField, MInput, MTextarea,
   MSelect, MSwitch, MButton, MRow, MConfirm, MGroupTitle, MAccordion, MChipFilter, MDateRange,
-  MLineItemsEditor, MInvoiceList, MLogList, MBulkBar, MIconBtn, MLoadMore, MFilterBar
+  MLineItemsEditor, MInvoiceList, MLogList, MBulkBar, MIconBtn, MLoadMore, MFilterBar, MAttachmentList
 } from "@/mobile/components/MUI";
 import type { PurchaseOrder, Supplier, Product, Employee, PurchaseItem, Contract, Payment } from "@/types";
 
@@ -60,7 +60,17 @@ export default function MPurchases() {
   const [quickPayAmt, setQuickPayAmt] = useState(0);
   const [quickPayMethod, setQuickPayMethod] = useState<Payment["method"]>("对公转账");
   const [quickPayRemark, setQuickPayRemark] = useState("");
+  const [quickInv, setQuickInv] = useState<PurchaseOrder | null>(null);
+  const [quickInvAmt, setQuickInvAmt] = useState(0);
+  const [quickInvNo, setQuickInvNo] = useState("");
+  const [quickInvType, setQuickInvType] = useState("增值税专用发票");
+  const [quickInvTaxRate, setQuickInvTaxRate] = useState(13);
+  const [quickInvStatus, setQuickInvStatus] = useState("已收到");
+  const [quickInvRemark, setQuickInvRemark] = useState("");
   const [orderPayments, setOrderPayments] = useState<Payment[]>([]);
+  const [draftScope, setDraftScope] = useState("");
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
   const { current } = useCurrentUser();
 
   useEffect(() => {
