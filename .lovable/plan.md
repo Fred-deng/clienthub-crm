@@ -1,49 +1,50 @@
 
-# 移动端数据逻辑全面校验报告
+# 移动端 UI 显示问题全面审查
 
-已系统对比 12 个移动端页面与 PC 端的数据获取、聚合公式、关联表合并、过滤逻辑。
+通过 iPhone 14 Pro 视口（390×844）对 12 个移动端页面进行实测截图，发现以下显示问题：
 
-## ✅ 数据逻辑完全一致（11 个页面）
+## 🔴 必须修复的遮挡问题
 
-| 页面 | 已核对的关键逻辑 |
-|---|---|
-| MDashboard | 单一 `statsApi.dashboard()` 数据源，BizFilter 切换字段 |
-| MProducts | 低库存判定 `stock <= safetyStock && category !== "software"` |
-| MCustomers | `deriveCustomerStage(status)` 同步 stage、批量改状态联动 |
-| MSuppliers | 分类 normalize、应付聚合 `payByS` |
-| MContacts / MFollowUps | 按 customerId 预过滤 + 客户端搜索 |
-| MSales / MPurchases | `splitSales/splitPurchase` biz 拆分、`contractAmount ?? totalAmount` 回退 |
-| MPayments | `splitPayment + matchFilter` 与 PC 同公式 |
-| MReceivables | 按 customer 聚合、`oldest = min(createdAt)`、aging 计算、客户 level 联表 |
-| MPayables | 按 supplier 聚合、`category` 联表、aging |
+### 1. 列表卡片右下角操作图标被 FAB 按钮遮挡
+**触发页面**：MSales、MPurchases、MPayments、MCustomers（含选择圆圈）、MFollowUps、MContacts、MProducts、MReceivables、MPayables
+- 现象：卡片底部一行的"登记付款/发票/日志/删除"4 个 IconBtn 被右下角红色 FAB（"+ 新建/登记付款"）覆盖；客户卡片的右上选择圆圈也被遮挡
+- 根因：FAB 定位 `bottom-20 right-4`，列表 `MList` 仅有 `pb-4`，最后一张卡片的右下区域必落在 FAB 圆角范围内
+- 修复：`MList` 增加底部内边距 `pb-32`（约 128px），让最后几行卡片高过 FAB 区域；同时 FAB 与卡片 z 层级保持
 
-## 🟡 需要修复的问题（仅 1 处）
+### 2. 顶部 KPI 卡片被吸顶 Header 遮挡
+**触发页面**：MReceivables、MPayables、MCustomers、MPayments
+- 现象：滚动后或首屏，"合同总额/已开票"等 KPI 上半截被 `MPageHeader` 吸顶遮挡，看到的是"…73.5 万"截断字
+- 根因：MPageHeader 是 `sticky top-12 z-20`，KPI 区在它正下方但 Header 透明背景透出错位；`MReceivables/MPayables/MPayments` 的 `<MPageHeader>` 无 sticky 关闭参数
+- 修复：将 KPI 密集页面的 MPageHeader 设为 `sticky={false}`（与 MReconciliation 一致），或给 KPI 容器加 `relative z-0`
 
-### MReconciliation — 切换"应收/应付"tab 时未清空登记付款 Sheet 状态
-**现象**：用户在"应收"tab 打开某客户的"登记回款"Sheet 后未提交，直接切换到"应付"，`pay` state 仍指向应收 Row，UI 显示与 tab 不匹配。
+### 3. MProducts 分类筛选 chip 行最右侧被截断
+- 现象："线缆" chip 右侧贴边；MChipFilter 容器是 `overflow-x-auto` 但视觉上看不到滚动提示
+- 修复：MChipFilter 的滚动容器右侧加 `pr-4` 让最后一项有呼吸空间
 
-**修复**：在两个 tab 切换按钮的 onClick 中追加 `setPay(null)`。
+## 🟡 体验改善项
 
-```tsx
-<button onClick={() => { setTab("in"); setPay(null); }} ...>
-<button onClick={() => { setTab("out"); setPay(null); }} ...>
-```
+### 4. MPayments 顶部 KPI 在 360px 屏仍可能换行折叠
+- 截图显示"¥327.4万 / ¥31.5万 / ¥295.7万"已经折成两行
+- 修复：KPI 卡片 padding 从 `p-3.5` 减为 `px-3 py-2.5`，字号从 `text-xl` 改为 `text-lg`
 
-## ℹ️ 设计上一致、非 bug 的项（不修）
+### 5. CustomerStats 移动端 chip 区第二行第一颗"全部 48"在 KPI 收起时贴住 Header
+- 修复：CustomerStats `mobile` 变体顶部加 `pt-1`
 
-| 现象 | 说明 |
-|---|---|
-| MReceivables/MPayables 显示订单上的客户名/供应商名快照 | PC 端同样：业务历史保留原则，改名不回溯 |
-| MSales/MPurchases 卡片大数字显示 `totalAmount` 而非 `contractAmount` | PC 列表同字段；已付/未付才用 contractAmount |
-| MReconciliation KPI 不受"仅未结清/搜索"影响、只受日期影响 | `all` 已应用日期过滤，与 PC `kpiSource = all.filter(inRange)` 同源 |
-| MProducts 低库存判定用 raw category key | PC 同逻辑；自定义新分类也会进入低库存判定 |
-| MFollowUps/MContacts 切客户重新 fetch | PC 用 usePagedList 同样触发重新加载 |
-| MPayments totals 受 biz/方向/日期/搜索全部影响 | PC 同源 `enriched` |
+### 6. MFab 标签"+ 新建"在某些页面（如 MPayables）实际是"登记付款"，宽度 `px-5` 在小屏占比偏大
+- 修复：FAB 改为 `px-4` + 文字 `text-[13px]`
+
+### 7. 卡片底部操作行被 FAB 遮挡时"删除"危险动作可能误触 FAB
+- 修复：列表底部增加"已到底"占位（同 #1），并保证 IconBtn 行与 FAB 不重叠
 
 ## 变更清单
 
 | 文件 | 改动 |
 |---|---|
-| `src/mobile/pages/MReconciliation.tsx` | tab 切换按钮 onClick 追加 `setPay(null)`（2 处） |
+| `src/mobile/components/MUI.tsx` | `MList` 默认 `pb-32`；`MChipFilter` 容器右侧 `pr-4`；`MFab` padding/字号收紧；`MKpi` 紧凑化 |
+| `src/mobile/pages/MReceivables.tsx` | `MPageHeader` 加 `sticky={false}` |
+| `src/mobile/pages/MPayables.tsx` | `MPageHeader` 加 `sticky={false}` |
+| `src/mobile/pages/MPayments.tsx` | `MPageHeader` 加 `sticky={false}`；KPI grid 加 `min-w-0` |
+| `src/mobile/pages/MCustomers.tsx` | `MPageHeader` 加 `sticky={false}` |
+| `src/components/common/CustomerStats.tsx` | mobile 变体顶部 padding 增加 |
 
-仅 1 行级别的微改，预计 1 个工具调用完成。
+预计 6 个文件、~10 处改动。
