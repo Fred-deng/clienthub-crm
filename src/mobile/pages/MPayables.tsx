@@ -66,6 +66,7 @@ export default function MPayables() {
       <MChipFilter value={biz} onChange={(v) => setBiz(v as any)} options={[{ value: "all", label: "全部" }, { value: "software", label: "软件" }, { value: "hardware", label: "硬件" }] as any} />
       <MChipFilter value={filter} onChange={setFilter as any} options={[{ value: "outstanding", label: "仅看未付" }, { value: "all", label: "全部" }, { value: "settled", label: "已结清" }]} />
       <MSearchBar value={keyword} onChange={setKeyword} placeholder="搜索供应商" />
+      <MDateRange value={range} onChange={setRange} />
 
       <MList empty={filtered.length === 0}>
         {filtered.map(r => {
