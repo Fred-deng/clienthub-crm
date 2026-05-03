@@ -8,7 +8,7 @@ import {
 } from "../components/MUI";
 import { paymentApi, salesApi, purchaseApi, productApi } from "@/services/api";
 import { createPaymentAndSync, removePaymentAndSync } from "@/services/payments";
-import { fmtMoney } from "@/lib/format";
+import { fmtMoney, fmtMoneyShort } from "@/lib/format";
 import { exportCsv } from "@/lib/csv";
 import { splitPayment, pickByFilter, matchFilter, bizLabel, type BizFilter } from "@/lib/biz";
 import type { Payment, SalesOrder, PurchaseOrder, Product } from "@/types";
