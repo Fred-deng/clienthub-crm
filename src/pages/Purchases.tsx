@@ -300,8 +300,8 @@ export default function Purchases() {
             <div className="relative">
               <Search className="h-3.5 w-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-foreground/40" />
               <Input
-                placeholder="搜索单号 / 供应商 / 合同名"
-                className="pl-9 h-9 w-60 text-xs rounded-full"
+                placeholder="搜索单号 / 供应商 / 合同名 / 明细产品"
+                className="pl-9 h-9 w-72 text-xs rounded-full"
                 onChange={(e) => setFilter({ keyword: e.target.value })}
               />
             </div>
