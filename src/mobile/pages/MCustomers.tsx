@@ -176,9 +176,9 @@ export default function MCustomers() {
 
       <MFab onClick={openCreate} />
       <MBulkBar count={selected.length} onCancel={() => setSelected([])}>
-        <MIconBtn icon={<span className="text-[10px] font-bold px-1">公海</span>} onClick={() => bulkSea("公海")} />
-        <MIconBtn icon={<span className="text-[10px] font-bold px-1">私海</span>} onClick={() => bulkSea("私海")} />
-        <MIconBtn icon={<span className="text-[10px] font-bold px-1">状态</span>} onClick={() => setBulkStatusOpen(true)} />
+        <button onClick={() => bulkSea("公海")} className="px-2.5 h-7 rounded-full bg-[hsl(var(--paper))]/15 text-[11px] font-semibold whitespace-nowrap">转公海</button>
+        <button onClick={() => bulkSea("私海")} className="px-2.5 h-7 rounded-full bg-[hsl(var(--paper))]/15 text-[11px] font-semibold whitespace-nowrap">转私海</button>
+        <button onClick={() => setBulkStatusOpen(true)} className="px-2.5 h-7 rounded-full bg-mustard text-foreground text-[11px] font-bold whitespace-nowrap">改状态</button>
       </MBulkBar>
 
       <MSheet open={open} onOpenChange={setOpen} size="full" title={editing ? "编辑客户" : "新增客户"}
