@@ -26,6 +26,7 @@ export default function MPayments() {
   const [range, setRange] = useState({ from: "", to: "" });
   const [open, setOpen] = useState(false);
   const [delId, setDelId] = useState<string | null>(null);
+  const [viewing, setViewing] = useState<Payment | null>(null);
   const [form, setForm] = useState({ direction: "in" as "in" | "out", refId: "", amount: 0, method: "对公转账", paidAt: today(), remark: "" });
 
   const reload = async () => setList(await paymentApi.all());
