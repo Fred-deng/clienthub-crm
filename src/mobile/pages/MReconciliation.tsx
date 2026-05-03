@@ -40,7 +40,8 @@ export default function MReconciliation() {
     return { id: o.id, code: o.code, partyId: o.supplierId, partyName: o.supplierName, contract: c, paid: o.paid || 0, outstanding: c - (o.paid || 0), createdAt: o.createdAt, status: o.status, dir: "out" as const, refType: "purchase" as const };
   }), [purs]);
 
-  const all = tab === "in" ? inRows : outRows;
+  const rng = { from: range.from || undefined, to: range.to || undefined };
+  const all = (tab === "in" ? inRows : outRows).filter(r => inRange(r.createdAt, rng));
   const filtered = all.filter(r => {
     if (filter === "outstanding" && r.outstanding <= 0) return false;
     if (keyword) { const k = keyword.toLowerCase(); if (!r.partyName.toLowerCase().includes(k) && !r.code.toLowerCase().includes(k)) return false; }
