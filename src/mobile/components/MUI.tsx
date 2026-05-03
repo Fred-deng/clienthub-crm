@@ -118,7 +118,7 @@ export function MFab({ onClick, label = "新建", icon }: { onClick: () => void;
   return (
     <button
       onClick={onClick}
-      className="fixed right-4 bottom-20 z-30 h-13 px-5 py-3 rounded-full bg-tomato text-[hsl(var(--paper))] shadow-lg shadow-tomato/30 flex items-center gap-1.5 font-semibold text-sm active:scale-95 transition-transform"
+      className="fixed right-4 bottom-20 z-30 h-12 px-4 py-2.5 rounded-full bg-tomato text-[hsl(var(--paper))] shadow-lg shadow-tomato/30 flex items-center gap-1.5 font-semibold text-[13px] active:scale-95 transition-transform"
       style={{ marginBottom: "env(safe-area-inset-bottom)" }}
     >
       {icon ?? <Plus className="h-4 w-4" />}
