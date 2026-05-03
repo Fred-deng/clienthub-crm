@@ -152,8 +152,10 @@ export function AppSidebar() {
                 })}
               </SidebarMenu>
             </SidebarGroupContent>
+            )}
           </SidebarGroup>
-        ))}
+          );
+        })}
       </SidebarContent>
 
       <SidebarFooter className="p-4 group-data-[collapsible=icon]:p-2">
