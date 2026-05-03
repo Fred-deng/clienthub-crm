@@ -15,7 +15,7 @@ import { splitSales, bizLabel, type BizFilter } from "@/lib/biz";
 import {
   MPageHeader, MSearchBar, MCard, MList, MTag, MFab, MSheet, MField, MInput, MTextarea,
   MSelect, MSwitch, MButton, MRow, MConfirm, MGroupTitle, MAccordion, MChipFilter, MDateRange,
-  MLineItemsEditor, MInvoiceList, MLogList, MBulkBar, MIconBtn, MLoadMore, MFilterBar
+  MLineItemsEditor, MInvoiceList, MLogList, MBulkBar, MIconBtn, MLoadMore, MFilterBar, MAttachmentList
 } from "@/mobile/components/MUI";
 import type { SalesOrder, Customer, Product, Employee, Payment } from "@/types";
 
@@ -33,6 +33,7 @@ type FormValues = {
   signedAt: string; contractExpireAt: string; accountManagerId: string; assistantIds: string[];
   isSettled: boolean; isPartyA: boolean;
   serviceFee: number; outsourceFee: number; salesFee: number; productStdCost: number;
+  contractAttachments: string[]; stampedContractAttachments: string[]; licenseAttachments: string[]; invoiceAttachments: string[]; otherAttachments: string[];
   invoices: any[]; status: string; ownerId: string; createdAt: string; received: number; remark: string;
 };
 
@@ -67,10 +68,19 @@ export default function MSales() {
   const [quickPayAmt, setQuickPayAmt] = useState(0);
   const [quickPayMethod, setQuickPayMethod] = useState<Payment["method"]>("对公转账");
   const [quickPayRemark, setQuickPayRemark] = useState("");
+  const [quickInv, setQuickInv] = useState<SalesOrder | null>(null);
+  const [quickInvAmt, setQuickInvAmt] = useState(0);
+  const [quickInvNo, setQuickInvNo] = useState("");
+  const [quickInvType, setQuickInvType] = useState("增值税专用发票");
+  const [quickInvTaxRate, setQuickInvTaxRate] = useState(13);
+  const [quickInvStatus, setQuickInvStatus] = useState("已开具");
+  const [quickInvRemark, setQuickInvRemark] = useState("");
   const [orderPayments, setOrderPayments] = useState<Payment[]>([]);
   const [bulkStatusOpen, setBulkStatusOpen] = useState(false);
   const [bulkStatus, setBulkStatus] = useState<string>("shipped");
-  const [filterOpen, setFilterOpen] = useState(false);
+  const [draftScope, setDraftScope] = useState("");
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
 
   useEffect(() => {
     customerApi.all().then((cs) => setCustomers(cs.filter((c) => c.stage === "formal")));
