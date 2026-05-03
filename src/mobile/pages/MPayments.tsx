@@ -109,7 +109,7 @@ export default function MPayments() {
           const amt = pickByFilter(split, biz);
           const inDir = p.direction === "in";
           return (
-            <MCard key={p.id}>
+            <MCard key={p.id} onClick={() => setViewing(p)}>
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5 flex-wrap">
