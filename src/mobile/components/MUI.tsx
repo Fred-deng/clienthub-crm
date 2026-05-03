@@ -217,10 +217,10 @@ export function MKpi({ label, value, sub, accent = "default" }: { label: string;
     default: "text-foreground", tomato: "text-tomato", mint: "text-mint", mustard: "text-mustard", cobalt: "text-cobalt",
   };
   return (
-    <div className="bg-card rounded-2xl p-3.5 border border-foreground/8">
-      <div className="text-[10px] font-mono uppercase tracking-wider text-foreground/50 mb-1">{label}</div>
-      <div className={cn("text-xl font-display font-black tabular-nums", accentMap[accent])}>{value}</div>
-      {sub && <div className="text-[11px] text-foreground/50 mt-1">{sub}</div>}
+    <div className="bg-card rounded-2xl px-3 py-2.5 border border-foreground/8 min-w-0">
+      <div className="text-[10px] font-mono uppercase tracking-wider text-foreground/50 mb-1 truncate">{label}</div>
+      <div className={cn("text-lg font-display font-black tabular-nums truncate", accentMap[accent])}>{value}</div>
+      {sub && <div className="text-[11px] text-foreground/50 mt-1 truncate">{sub}</div>}
     </div>
   );
 }
