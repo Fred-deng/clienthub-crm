@@ -84,8 +84,10 @@ export default function MReconciliation() {
         </button>
       </div>
       <div className="px-4 pb-3 grid grid-cols-2 gap-2">
+        <MKpi label={tab === "in" ? "合同总额" : "采购总额"} value={fmtMoneyShort(totals.contract)} accent="cobalt" />
         <MKpi label={tab === "in" ? "已回款" : "已付款"} value={fmtMoneyShort(totals.paid)} accent="mint" />
-        <MKpi label={tab === "in" ? "未收" : "未付"} value={fmtMoneyShort(totals.outstanding)} accent="tomato" sub={`已结清 ${totals.settled} 笔`} />
+        <MKpi label={tab === "in" ? "未收账款" : "未付账款"} value={fmtMoneyShort(totals.outstanding)} accent="tomato" />
+        <MKpi label="已结清" value={`${totals.settled} 笔`} accent="mint" />
       </div>
       <MSearchBar value={keyword} onChange={setKeyword} placeholder="搜索对手方/单号" />
       <MChipFilter value={filter} onChange={setFilter as any} options={[{ value: "outstanding", label: "仅未结清" }, { value: "all", label: "全部" }]} />

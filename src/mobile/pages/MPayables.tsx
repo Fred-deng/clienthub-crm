@@ -127,7 +127,7 @@ export default function MPayables() {
         })}
       </MList>
 
-      <MFab icon={<ArrowUpRight className="h-5 w-5" />} onClick={openCreate} />
+      <MFab icon={<ArrowUpRight className="h-5 w-5" />} label="登记付款" onClick={openCreate} />
 
       <MSheet open={open} onOpenChange={setOpen} title="登记供应商付款"
         footer={<div className="flex gap-2"><MButton variant="ghost" onClick={() => setOpen(false)} className="flex-1">取消</MButton><MButton onClick={submit} className="flex-1">记录</MButton></div>}>
