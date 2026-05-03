@@ -551,12 +551,6 @@ export default function Purchases() {
               />
             </div>
 
-            {/* 附件资料 */}
-            <GroupTitle>附件资料</GroupTitle>
-            <Field label="采购合同附件" span={12}>
-              <AttachmentField value={watch("contractAttachments") || []} onChange={(v) => setValue("contractAttachments", v)} />
-            </Field>
-
             {/* 发票管理（子表）：供应商开给我方 */}
             <GroupTitle>发票管理（供应商开票）</GroupTitle>
             <div className="col-span-12">
@@ -567,6 +561,12 @@ export default function Purchases() {
                 defaultParty={suppliers.find((s) => s.id === watch("supplierId"))?.name}
               />
             </div>
+
+            {/* 附件资料 */}
+            <GroupTitle>附件资料</GroupTitle>
+            <Field label="采购合同附件" span={12}>
+              <AttachmentField value={watch("contractAttachments") || []} onChange={(v) => setValue("contractAttachments", v)} />
+            </Field>
 
             {/* 备注 */}
             <GroupTitle>备注</GroupTitle>
