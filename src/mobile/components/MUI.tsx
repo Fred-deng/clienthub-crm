@@ -34,7 +34,7 @@ export function MPageHeader({
 // ---------- 搜索栏 ----------
 export function MSearchBar({ value, onChange, placeholder = "搜索…", trailing }: { value: string; onChange: (v: string) => void; placeholder?: string; trailing?: ReactNode }) {
   return (
-    <div className="px-4 pt-2 pb-3 flex items-center gap-2">
+    <div className="px-4 pt-1 pb-2 flex items-center gap-2">
       <div className="flex-1 flex items-center gap-2 h-10 rounded-full bg-foreground/[0.04] px-3.5 border border-foreground/8">
         <Search className="h-4 w-4 text-foreground/40" />
         <input
