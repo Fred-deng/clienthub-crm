@@ -15,7 +15,7 @@ import { splitSales, bizLabel, type BizFilter } from "@/lib/biz";
 import {
   MPageHeader, MSearchBar, MCard, MList, MTag, MFab, MSheet, MField, MInput, MTextarea,
   MSelect, MSwitch, MButton, MRow, MConfirm, MGroupTitle, MAccordion, MChipFilter, MDateRange,
-  MLineItemsEditor, MInvoiceList, MLogList, MBulkBar, MIconBtn, MLoadMore, MFilterBar
+  MLineItemsEditor, MInvoiceList, MLogList, MBulkBar, MIconBtn, MLoadMore, MFilterBar, MAttachmentList
 } from "@/mobile/components/MUI";
 import type { SalesOrder, Customer, Product, Employee, Payment } from "@/types";
 
@@ -33,6 +33,7 @@ type FormValues = {
   signedAt: string; contractExpireAt: string; accountManagerId: string; assistantIds: string[];
   isSettled: boolean; isPartyA: boolean;
   serviceFee: number; outsourceFee: number; salesFee: number; productStdCost: number;
+  contractAttachments: string[]; stampedContractAttachments: string[]; licenseAttachments: string[]; invoiceAttachments: string[]; otherAttachments: string[];
   invoices: any[]; status: string; ownerId: string; createdAt: string; received: number; remark: string;
 };
 
@@ -67,10 +68,19 @@ export default function MSales() {
   const [quickPayAmt, setQuickPayAmt] = useState(0);
   const [quickPayMethod, setQuickPayMethod] = useState<Payment["method"]>("对公转账");
   const [quickPayRemark, setQuickPayRemark] = useState("");
+  const [quickInv, setQuickInv] = useState<SalesOrder | null>(null);
+  const [quickInvAmt, setQuickInvAmt] = useState(0);
+  const [quickInvNo, setQuickInvNo] = useState("");
+  const [quickInvType, setQuickInvType] = useState("增值税专用发票");
+  const [quickInvTaxRate, setQuickInvTaxRate] = useState(13);
+  const [quickInvStatus, setQuickInvStatus] = useState("已开具");
+  const [quickInvRemark, setQuickInvRemark] = useState("");
   const [orderPayments, setOrderPayments] = useState<Payment[]>([]);
   const [bulkStatusOpen, setBulkStatusOpen] = useState(false);
   const [bulkStatus, setBulkStatus] = useState<string>("shipped");
-  const [filterOpen, setFilterOpen] = useState(false);
+  const [draftScope, setDraftScope] = useState("");
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
 
   useEffect(() => {
     customerApi.all().then((cs) => setCustomers(cs.filter((c) => c.stage === "formal")));
@@ -86,6 +96,7 @@ export default function MSales() {
       signedAt: "", contractExpireAt: "", accountManagerId: "", assistantIds: [],
       isSettled: false, isPartyA: false,
       serviceFee: 0, outsourceFee: 0, salesFee: 0, productStdCost: 0,
+      contractAttachments: [], stampedContractAttachments: [], licenseAttachments: [], invoiceAttachments: [], otherAttachments: [],
       invoices: [], status: "pending", ownerId: "u3", createdAt: today(), received: 0, remark: "",
     },
   });
@@ -99,9 +110,10 @@ export default function MSales() {
       signedAt: "", contractExpireAt: "", accountManagerId: "u3", assistantIds: [],
       isSettled: false, isPartyA: false,
       serviceFee: 0, outsourceFee: 0, salesFee: 0, productStdCost: 0,
+      contractAttachments: [], stampedContractAttachments: [], licenseAttachments: [], invoiceAttachments: [], otherAttachments: [],
       invoices: [], status: "pending", ownerId: "u3", createdAt: today(), received: 0, remark: "",
     });
-    setItems([]); setEditing(null); setOpen(true);
+    setItems([]); setEditing(null); setDraftScope(`draft-sal-${Date.now().toString(36)}`); setOpen(true);
   };
 
   const openEdit = async (o: SalesOrder) => {
@@ -114,6 +126,7 @@ export default function MSales() {
       accountManagerId: o.accountManagerId ?? o.ownerId, assistantIds: o.assistantIds ?? [],
       isSettled: !!o.isSettled, isPartyA: !!o.isPartyA,
       serviceFee: o.serviceFee ?? 0, outsourceFee: o.outsourceFee ?? 0, salesFee: o.salesFee ?? 0, productStdCost: o.productStdCost ?? 0,
+      contractAttachments: o.contractAttachments ?? [], stampedContractAttachments: o.stampedContractAttachments ?? [], licenseAttachments: o.licenseAttachments ?? [], invoiceAttachments: o.invoiceAttachments ?? [], otherAttachments: o.otherAttachments ?? [],
       invoices: o.invoices ?? [], status: o.status, ownerId: o.ownerId, createdAt: o.createdAt, received: o.received, remark: o.remark ?? "",
     });
     setItems(o.items.map((it) => ({
@@ -137,16 +150,17 @@ export default function MSales() {
       salesFee: Number(v.salesFee) || 0, productStdCost: Number(v.productStdCost) || 0,
     };
     const op = readCurrentOperator();
+    const reasonRemark = (editing && editing.status !== "cancelled" && payload.status === "cancelled" && cancelReason) ? `订单取消原因：${cancelReason}` : undefined;
     if (editing) {
       const merged = { ...editing, ...payload } as SalesOrder;
       syncSalesStock(editing, merged, op);
-      logOrderUpdate("sales", editing, payload);
+      logOrderUpdate("sales", editing, payload, reasonRemark);
       await salesApi.update(editing.id, payload);
     } else {
       const created = await salesApi.create(payload);
       syncSalesStock(null, created, op);
     }
-    toast.success("已保存"); setOpen(false); reload();
+    setCancelReason(""); toast.success("已保存"); setOpen(false); reload();
   });
 
   const handleDelete = async () => {
@@ -185,6 +199,14 @@ export default function MSales() {
     });
     toast.success("回款已登记");
     setQuickPay(null); setQuickPayAmt(0); setQuickPayRemark(""); reload();
+  };
+
+  const submitQuickInv = async () => {
+    if (!quickInv || quickInvAmt <= 0) return toast.error("请输入价税合计");
+    const rec = { id: `inv-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, invoiceNo: quickInvNo, invoiceType: quickInvType, invoiceDate: today(), amount: quickInvAmt, taxRate: quickInvTaxRate, taxAmount: Number(((quickInvAmt * quickInvTaxRate) / (100 + quickInvTaxRate)).toFixed(2)), buyerOrSeller: quickInv.customerName, status: quickInvStatus, remark: quickInvRemark };
+    await salesApi.update(quickInv.id, { invoices: [...(quickInv.invoices || []), rec] } as any);
+    toast.success("发票已新增");
+    setQuickInv(null); setQuickInvAmt(0); setQuickInvNo(""); setQuickInvRemark(""); reload();
   };
 
   const applyBulkStatus = async () => {
@@ -234,7 +256,7 @@ export default function MSales() {
         onChange={(v) => setFilter({ keyword: v })}
         placeholder="搜索合同号 / 客户"
         trailing={
-          <button onClick={() => setFilterOpen(true)} className="size-10 rounded-full bg-foreground/[0.06] flex items-center justify-center">
+          <button onClick={() => { setLogRefId(undefined); setLogOpen(true); }} className="size-10 rounded-full bg-foreground/[0.06] flex items-center justify-center" title="全部日志">
             <FileText className="h-4 w-4" />
           </button>
         }
@@ -309,6 +331,7 @@ export default function MSales() {
                 <span className="font-mono text-[10px] text-foreground/45">{o.code} · {o.signedAt ?? o.createdAt}</span>
                 <div className="flex gap-1">
                   <MIconBtn icon={<ArrowDownLeft className="h-3.5 w-3.5" />} variant="primary" title="登记回款" onClick={() => { setQuickPay(o); setQuickPayAmt(unpaid); }} />
+                  <MIconBtn icon={<Receipt className="h-3.5 w-3.5" />} title="新增发票" onClick={() => { setQuickInv(o); setQuickInvAmt(unpaid || (o.contractAmount ?? o.totalAmount)); }} />
                   <MIconBtn icon={<History className="h-3.5 w-3.5" />} title="日志" onClick={() => { setLogRefId(o.id); setLogOpen(true); }} />
                   <MIconBtn icon={<Trash2 className="h-3.5 w-3.5" />} variant="danger" title="删除" onClick={() => setDeletingId(o.id)} />
                 </div>
@@ -423,12 +446,13 @@ export default function MSales() {
         </div>
 
         <MGroupTitle>销售明细</MGroupTitle>
-        <MLineItemsEditor items={items} products={products} onChange={setItems} mode="sales" />
+        <MLineItemsEditor items={items} products={products} onChange={setItems} mode="sales" logModule="sales" logScope={editing?.id || draftScope} />
 
         <MGroupTitle>订单执行</MGroupTitle>
         <div className="grid grid-cols-2 gap-3">
           <MField label="订单状态">
-            <MSelect value={watch("status")} onChange={(v) => setValue("status", v)} options={STATUS_FLOW} />
+            <MSelect value={watch("status")} onChange={(v) => { if (v === "cancelled" && watch("status") !== "cancelled" && editing) { setCancelOpen(true); return; } setValue("status", v); }} options={STATUS_FLOW} />
+            {watch("status") === "cancelled" && cancelReason && <div className="text-[11px] text-tomato mt-1">取消原因：{cancelReason}</div>}
           </MField>
           <MField label="下单日"><MInput type="date" {...register("createdAt")} /></MField>
         </div>
@@ -472,6 +496,12 @@ export default function MSales() {
         )}
 
         <MGroupTitle>备注</MGroupTitle>
+        <MAccordion title="附件资料" badge={<MTag variant="muted">{(watch("contractAttachments") || []).length + (watch("stampedContractAttachments") || []).length + (watch("invoiceAttachments") || []).length + (watch("otherAttachments") || []).length}</MTag>}>
+          <MField label="合同附件"><MAttachmentList value={watch("contractAttachments") || []} onChange={(v) => setValue("contractAttachments", v)} /></MField>
+          <MField label="盖章合同扫描件"><MAttachmentList value={watch("stampedContractAttachments") || []} onChange={(v) => setValue("stampedContractAttachments", v)} /></MField>
+          <MField label="开票资料"><MAttachmentList value={watch("invoiceAttachments") || []} onChange={(v) => setValue("invoiceAttachments", v)} /></MField>
+          <MField label="其他附件"><MAttachmentList value={watch("otherAttachments") || []} onChange={(v) => setValue("otherAttachments", v)} /></MField>
+        </MAccordion>
         <MField label="备注"><MTextarea rows={3} {...register("remark")} /></MField>
 
         <div className="text-center text-[11px] text-foreground/45 mt-4 pb-2">
@@ -521,6 +551,21 @@ export default function MSales() {
         )}
       </MSheet>
 
+      <MSheet open={!!quickInv} onOpenChange={(v) => !v && setQuickInv(null)} title={`新增发票 · ${quickInv?.code || ""}`}
+        footer={<div className="flex gap-2"><MButton variant="ghost" onClick={() => setQuickInv(null)} className="flex-1">取消</MButton><MButton onClick={submitQuickInv} className="flex-[2]" disabled={quickInvAmt <= 0}>新增发票</MButton></div>}
+      >
+        {quickInv && <>
+          <MRow label="购买方" value={quickInv.customerName} />
+          <div className="mt-4 space-y-3">
+            <MField label="发票号码"><MInput value={quickInvNo} onChange={(e) => setQuickInvNo(e.target.value)} /></MField>
+            <MField label="发票类型"><MSelect value={quickInvType} onChange={setQuickInvType} options={["增值税专用发票", "增值税普通发票", "电子普通发票", "电子专用发票", "其他"].map((v) => ({ value: v, label: v }))} /></MField>
+            <div className="grid grid-cols-2 gap-3"><MField label="状态"><MSelect value={quickInvStatus} onChange={setQuickInvStatus} options={["已开具", "待开具", "红冲"].map((v) => ({ value: v, label: v }))} /></MField><MField label="税率"><MSelect value={String(quickInvTaxRate)} onChange={(v) => setQuickInvTaxRate(Number(v))} options={[0,1,3,6,9,13].map((v) => ({ value: String(v), label: `${v}%` }))} /></MField></div>
+            <MField label="价税合计" required><MInput type="number" step="0.01" value={quickInvAmt} onChange={(e) => setQuickInvAmt(Number(e.target.value))} /></MField>
+            <MField label="备注"><MTextarea rows={2} value={quickInvRemark} onChange={(e) => setQuickInvRemark(e.target.value)} /></MField>
+          </div>
+        </>}
+      </MSheet>
+
       {/* ========== 批量改状态 Sheet ========== */}
       <MSheet
         open={bulkStatusOpen}
@@ -537,6 +582,10 @@ export default function MSales() {
       {/* ========== 操作日志 Sheet ========== */}
       <MSheet open={logOpen} onOpenChange={setLogOpen} title={logRefId ? `订单日志` : "全部销售日志"} size="full">
         <MLogList logs={logRefId ? allSalesLogs.filter((l) => l.refId === logRefId) : allSalesLogs} />
+      </MSheet>
+      <MSheet open={cancelOpen} onOpenChange={setCancelOpen} title="取消订单原因">
+        <MField label="原因" required><MTextarea rows={4} value={cancelReason} onChange={(e) => setCancelReason(e.target.value)} placeholder="请输入取消原因" /></MField>
+        <div className="flex gap-2"><MButton variant="ghost" onClick={() => setCancelOpen(false)} className="flex-1">返回</MButton><MButton onClick={() => { if (!cancelReason.trim()) return toast.error("请输入取消原因"); setValue("status", "cancelled"); setCancelOpen(false); }} className="flex-1">确认取消</MButton></div>
       </MSheet>
     </>
   );

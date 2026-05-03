@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Plus, Pencil, Trash2, Star, Download, Phone, Mail } from "lucide-react";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   MPageHeader, MSearchBar, MCard, MList, MTag, MFab, MSheet, MField, MInput, MTextarea,
   MSelect, MSwitch, MButton, MRow, MConfirm, MGroupTitle, MAccordion, MChipFilter, MFilterBar,
@@ -46,6 +46,9 @@ export default function MCustomers() {
   const [followUpsCt, setFollowUpsCt] = useState<FollowUp[]>([]);
   const [delId, setDelId] = useState<string | null>(null);
   const [selected, setSelected] = useState<string[]>([]);
+  const [bulkStatusOpen, setBulkStatusOpen] = useState(false);
+  const [bulkStatusValue, setBulkStatusValue] = useState("active");
+  const [searchParams] = useSearchParams();
 
   const reload = async () => setList(await customerApi.all());
   useEffect(() => {
@@ -53,6 +56,7 @@ export default function MCustomers() {
     employeeApi.all().then(setEmployees);
     salesApi.all().then(setAllSales);
   }, []);
+  useEffect(() => { if (searchParams.get("createNew") === "1") openCreate(); }, []);
 
   const recvByCust = useMemo(() => {
     const m = new Map<string, number>();
@@ -120,6 +124,11 @@ export default function MCustomers() {
     await Promise.all(selected.map(id => customerApi.update(id, { seaStatus: v } as any)));
     toast.success(`已转${v} ${selected.length} 位`); setSelected([]); reload();
   };
+  const bulkStatus = async () => {
+    await Promise.all(selected.map(id => customerApi.update(id, { status: bulkStatusValue as any, stage: deriveCustomerStage(bulkStatusValue) } as any)));
+    toast.success(`已将 ${selected.length} 位客户状态改为「${(customerStatusLabel as any)[bulkStatusValue] || bulkStatusValue}」`);
+    setBulkStatusOpen(false); setSelected([]); reload();
+  };
 
   return (
     <>
@@ -167,6 +176,7 @@ export default function MCustomers() {
       <MBulkBar count={selected.length} onCancel={() => setSelected([])}>
         <MIconBtn icon={<span className="text-[10px] font-bold px-1">公海</span>} onClick={() => bulkSea("公海")} />
         <MIconBtn icon={<span className="text-[10px] font-bold px-1">私海</span>} onClick={() => bulkSea("私海")} />
+        <MIconBtn icon={<span className="text-[10px] font-bold px-1">状态</span>} onClick={() => setBulkStatusOpen(true)} />
       </MBulkBar>
 
       <MSheet open={open} onOpenChange={setOpen} size="full" title={editing ? "编辑客户" : "新增客户"}
@@ -274,6 +284,11 @@ export default function MCustomers() {
       </MSheet>
 
       <MConfirm open={!!delId} onOpenChange={v => !v && setDelId(null)} title="删除客户" description="删除后无法恢复" onConfirm={onDelete} danger confirmText="删除" />
+      <MSheet open={bulkStatusOpen} onOpenChange={setBulkStatusOpen} title={`批量改客户状态 (${selected.length} 位)`}
+        footer={<MButton onClick={bulkStatus} className="w-full">确认应用</MButton>}
+      >
+        <MField label="目标状态"><MSelect value={bulkStatusValue} onChange={setBulkStatusValue} options={Object.entries(customerStatusLabel).map(([value, label]) => ({ value, label }))} /></MField>
+      </MSheet>
     </>
   );
 }

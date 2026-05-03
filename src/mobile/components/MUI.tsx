@@ -1,10 +1,12 @@
 // 移动端通用 UI 组件库（扩展版：覆盖 PC 端全部交互所需的移动控件）
 import { ReactNode, useState, useEffect, useRef } from "react";
-import { ArrowLeft, Plus, Search, X, ChevronRight, ChevronDown, Trash2, Pencil, History, Check } from "lucide-react";
+import { ArrowLeft, Plus, Search, X, ChevronRight, ChevronDown, Trash2, Pencil, History, Check, Upload, Link2, FileText, Image as ImageIcon, FileArchive, FileSpreadsheet, FileType2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { logLineItemAdd, logLineItemDelete, logLineItemUpdate, listLineItemLogs, type LineItemLogModule } from "@/services/lineItemLog";
+import { fmtMoney, productCategoryLabel } from "@/lib/format";
 
 // ---------- 页面顶部 ----------
 export function MPageHeader({
@@ -376,14 +378,24 @@ export function MIconBtn({ icon, onClick, variant = "default", title }: { icon: 
 // ---------- 行项目编辑器（采购/销售明细） ----------
 export interface MLineItem { productId: string; productName: string; category?: string; qty: number; price: number; }
 
-export function MLineItemsEditor({ items, products, onChange, mode = "sales" }: {
+export function MLineItemsEditor({ items, products, onChange, mode = "sales", logModule, logScope }: {
   items: MLineItem[];
   products: { id: string; name: string; category?: string; price: number; cost: number; unit?: string }[];
   onChange: (items: MLineItem[]) => void;
   mode?: "sales" | "purchase";
+  logModule?: LineItemLogModule;
+  logScope?: string;
 }) {
+  const canLog = !!(logModule && logScope);
+  const [lineLogsOpen, setLineLogsOpen] = useState(false);
+  const [logTick, setLogTick] = useState(0);
+  const [focusSnapshot, setFocusSnapshot] = useState<Record<string, MLineItem>>({});
   const total = items.reduce((s, it) => s + (Number(it.qty) || 0) * (Number(it.price) || 0), 0);
+  const writeUpdateLog = (before: MLineItem, after: MLineItem) => {
+    if (canLog && logLineItemUpdate(logModule!, logScope!, before as any, after as any)) setLogTick((t) => t + 1);
+  };
   const update = (i: number, patch: Partial<MLineItem>) => {
+    const before = { ...items[i] };
     const next = [...items];
     next[i] = { ...next[i], ...patch };
     if (patch.productName !== undefined) {
@@ -397,21 +409,39 @@ export function MLineItemsEditor({ items, products, onChange, mode = "sales" }: 
       }
     }
     onChange(next);
+    if (patch.category !== undefined) writeUpdateLog(before, next[i]);
   };
   const add = () => {
     const p = products[0];
-    if (!p) return onChange([...items, { productId: "", productName: "", category: "other", qty: 1, price: 0 }]);
-    onChange([...items, { productId: p.id, productName: p.name, category: p.category as any, qty: 1, price: mode === "purchase" ? (p.cost || p.price) : p.price }]);
+    const row = !p ? { productId: "", productName: "", category: "other", qty: 1, price: 0 } : { productId: p.id, productName: p.name, category: p.category as any, qty: 1, price: mode === "purchase" ? (p.cost || p.price) : p.price };
+    onChange([...items, row]);
+    if (canLog) { logLineItemAdd(logModule!, logScope!, row as any); setLogTick((t) => t + 1); }
   };
-  const remove = (i: number) => onChange(items.filter((_, x) => x !== i));
+  const remove = (i: number) => {
+    const removed = items[i];
+    onChange(items.filter((_, x) => x !== i));
+    if (canLog && removed) { logLineItemDelete(logModule!, logScope!, removed as any); setLogTick((t) => t + 1); }
+  };
+  const capture = (i: number, field: keyof MLineItem) => setFocusSnapshot((m) => ({ ...m, [`${i}:${field}`]: { ...items[i] } }));
+  const flush = (i: number, field: keyof MLineItem) => {
+    const key = `${i}:${field}`;
+    const before = focusSnapshot[key];
+    const after = items[i];
+    if (before && after) writeUpdateLog(before, after);
+    setFocusSnapshot((m) => { const n = { ...m }; delete n[key]; return n; });
+  };
+  const lineLogs = canLog ? (logTick >= 0 ? listLineItemLogs(logModule!, logScope!) : []) : [];
 
   return (
     <div className="rounded-2xl border border-foreground/10 bg-foreground/[0.02] overflow-hidden">
       <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-foreground/8">
         <span className="text-[11px] font-semibold text-foreground/65">明细 {items.length} 项 · 合计 <span className="font-mono text-foreground">¥{total.toLocaleString()}</span></span>
-        <button type="button" onClick={add} className="px-3 h-7 rounded-full bg-foreground text-[hsl(var(--paper))] text-[11px] font-semibold inline-flex items-center gap-1">
-          <Plus className="h-3 w-3" />添加
-        </button>
+        <div className="flex items-center gap-1.5">
+          {canLog && <button type="button" onClick={() => setLineLogsOpen(true)} className="px-2.5 h-7 rounded-full bg-foreground/[0.06] text-[11px] font-semibold inline-flex items-center gap-1"><History className="h-3 w-3" />日志{lineLogs.length ? ` ${lineLogs.length}` : ""}</button>}
+          <button type="button" onClick={add} className="px-3 h-7 rounded-full bg-foreground text-[hsl(var(--paper))] text-[11px] font-semibold inline-flex items-center gap-1">
+            <Plus className="h-3 w-3" />添加
+          </button>
+        </div>
       </div>
       {items.length === 0 ? (
         <div className="text-center py-6 text-[12px] text-foreground/40">点击右上角添加产品明细</div>
@@ -425,7 +455,9 @@ export function MLineItemsEditor({ items, products, onChange, mode = "sales" }: 
                   <input
                     list="m-li-products"
                     value={it.productName}
+                    onFocus={() => capture(i, "productName")}
                     onChange={(e) => update(i, { productName: e.target.value })}
+                    onBlur={() => flush(i, "productName")}
                     placeholder="输入或选择产品名称"
                     className="flex-1 h-9 px-2.5 rounded-lg bg-card border border-foreground/10 text-[13px]"
                   />
@@ -437,11 +469,11 @@ export function MLineItemsEditor({ items, products, onChange, mode = "sales" }: 
                 <div className="grid grid-cols-3 gap-2">
                   <label className="block">
                     <div className="text-[10px] text-foreground/50 mb-0.5">数量</div>
-                    <input type="number" inputMode="decimal" value={it.qty} onChange={(e) => update(i, { qty: Number(e.target.value) })} className="w-full h-9 px-2 rounded-lg bg-card border border-foreground/10 text-[13px] font-mono text-right" />
+                    <input type="number" inputMode="decimal" value={it.qty} onFocus={() => capture(i, "qty")} onChange={(e) => update(i, { qty: Number(e.target.value) })} onBlur={() => flush(i, "qty")} className="w-full h-9 px-2 rounded-lg bg-card border border-foreground/10 text-[13px] font-mono text-right" />
                   </label>
                   <label className="block">
                     <div className="text-[10px] text-foreground/50 mb-0.5">单价</div>
-                    <input type="number" inputMode="decimal" step="0.01" value={it.price} onChange={(e) => update(i, { price: Number(e.target.value) })} className="w-full h-9 px-2 rounded-lg bg-card border border-foreground/10 text-[13px] font-mono text-right" />
+                    <input type="number" inputMode="decimal" step="0.01" value={it.price} onFocus={() => capture(i, "price")} onChange={(e) => update(i, { price: Number(e.target.value) })} onBlur={() => flush(i, "price")} className="w-full h-9 px-2 rounded-lg bg-card border border-foreground/10 text-[13px] font-mono text-right" />
                   </label>
                   <label className="block">
                     <div className="text-[10px] text-foreground/50 mb-0.5">小计</div>
@@ -456,8 +488,22 @@ export function MLineItemsEditor({ items, products, onChange, mode = "sales" }: 
       <datalist id="m-li-products">
         {products.map((p) => <option key={p.id} value={p.name} />)}
       </datalist>
+      {canLog && <MSheet open={lineLogsOpen} onOpenChange={setLineLogsOpen} title={`明细日志 (${listLineItemLogs(logModule!, logScope!).length})`}>
+        <MLineItemLogList logs={listLineItemLogs(logModule!, logScope!)} />
+      </MSheet>}
     </div>
   );
+}
+
+export function MLineItemLogList({ logs }: { logs: ReturnType<typeof listLineItemLogs> }) {
+  if (!logs.length) return <div className="text-center py-6 text-[12px] text-foreground/40">暂无明细日志</div>;
+  const tone: Record<string, string> = { add: "bg-mint/25 text-foreground", update: "bg-cobalt/12 text-cobalt", delete: "bg-tomato/15 text-tomato" };
+  const label: Record<string, string> = { add: "新增", update: "修改", delete: "删除" };
+  return <div className="space-y-2">{logs.map((l) => <div key={l.id} className="rounded-xl border border-foreground/8 bg-card p-3 text-[12px]">
+    <div className="flex items-center gap-2 flex-wrap mb-1.5"><span className={cn("px-2 h-5 rounded-full text-[10px] font-semibold", tone[l.action])}>{label[l.action]}</span><span className="font-semibold">{l.productName}</span><span className="ml-auto font-mono text-[10px] text-foreground/45">{l.createdAt}</span><span className="text-foreground/55">· {l.operator}</span></div>
+    {l.changes?.map((c, i) => <div key={i} className="flex items-center gap-2 py-0.5"><span className="text-foreground/55 shrink-0">{c.field}</span><span className="line-through text-tomato/70 truncate flex-1">{String(c.before ?? "—")}</span><span className="text-foreground/35">→</span><span className="font-semibold truncate flex-1 text-right">{String(c.after ?? "—")}</span></div>)}
+    {l.snapshot && <div className="grid grid-cols-2 gap-1 text-foreground/65"><span>分类：{l.snapshot.category && l.snapshot.category in productCategoryLabel ? productCategoryLabel[l.snapshot.category as keyof typeof productCategoryLabel] : l.snapshot.category}</span><span>数量：{l.snapshot.qty}</span><span>单价：{fmtMoney(l.snapshot.price ?? 0)}</span><span>小计：{fmtMoney((l.snapshot.qty ?? 0) * (l.snapshot.price ?? 0))}</span></div>}
+  </div>)}</div>;
 }
 
 // ---------- 发票子表 ----------
@@ -541,6 +587,31 @@ export function MInvoiceList({ value, onChange, direction, defaultParty }: { val
       </div>
     </div>
   );
+}
+
+export function MAttachmentList({ value, onChange }: { value: string[]; onChange: (v: string[]) => void }) {
+  const [linkOpen, setLinkOpen] = useState(false);
+  const [draft, setDraft] = useState("");
+  const fileRef = useRef<HTMLInputElement>(null);
+  const iconFor = (name: string) => {
+    const ext = name.split(".").pop()?.toLowerCase() || "";
+    if (["png", "jpg", "jpeg", "gif", "webp", "svg"].includes(ext)) return ImageIcon;
+    if (["zip", "rar", "7z"].includes(ext)) return FileArchive;
+    if (["xls", "xlsx", "csv"].includes(ext)) return FileSpreadsheet;
+    if (["pdf", "doc", "docx", "txt"].includes(ext)) return FileType2;
+    return FileText;
+  };
+  const append = (name: string) => { const v = name.trim(); if (v) onChange([...(value || []), v]); };
+  const pick = (files: FileList | null) => { if (!files) return; Array.from(files).forEach((f) => append(f.name)); if (fileRef.current) fileRef.current.value = ""; };
+  return <div className="rounded-2xl border border-foreground/10 bg-foreground/[0.02] p-3 space-y-2">
+    {(value || []).length === 0 && !linkOpen && <button type="button" onClick={() => fileRef.current?.click()} className="w-full py-5 rounded-xl border-2 border-dashed border-foreground/15 flex flex-col items-center gap-2 text-foreground/55"><Upload className="h-4 w-4" /><span className="text-[12px] font-semibold">点击选择文件</span></button>}
+    {(value || []).map((f, i) => { const Icon = iconFor(f); return <div key={`${f}-${i}`} className="flex items-center gap-2 p-2 rounded-lg bg-card border border-foreground/10">
+      <span className="size-8 rounded-md bg-cobalt/10 text-cobalt flex items-center justify-center"><Icon className="h-4 w-4" /></span><span className="flex-1 min-w-0 truncate text-[12px] font-semibold">{f}</span><button type="button" onClick={() => onChange(value.filter((_, idx) => idx !== i))} className="size-7 rounded-md bg-destructive/10 text-destructive flex items-center justify-center"><Trash2 className="h-3.5 w-3.5" /></button>
+    </div>; })}
+    {linkOpen && <div className="flex gap-2"><input autoFocus value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="附件链接或文件名" className="flex-1 h-9 px-2 rounded-lg bg-card border border-foreground/10 text-[12px]" /><button type="button" onClick={() => { append(draft); setDraft(""); setLinkOpen(false); }} className="px-3 rounded-lg bg-foreground text-[hsl(var(--paper))] text-[12px]">确定</button></div>}
+    <div className="grid grid-cols-2 gap-2"><button type="button" onClick={() => fileRef.current?.click()} className="h-8 rounded-full bg-foreground/[0.06] text-[11px] font-semibold"><Plus className="inline h-3 w-3 mr-1" />添加文件</button><button type="button" onClick={() => setLinkOpen(true)} className="h-8 rounded-full bg-foreground/[0.06] text-[11px] font-semibold"><Link2 className="inline h-3 w-3 mr-1" />粘贴链接</button></div>
+    <input ref={fileRef} type="file" multiple className="hidden" onChange={(e) => pick(e.target.files)} />
+  </div>;
 }
 
 // ---------- 操作日志查看（移动版） ----------
