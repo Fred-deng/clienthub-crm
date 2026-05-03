@@ -436,9 +436,12 @@ export function MLineItemsEditor({ items, products, onChange, mode = "sales", lo
     <div className="rounded-2xl border border-foreground/10 bg-foreground/[0.02] overflow-hidden">
       <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-foreground/8">
         <span className="text-[11px] font-semibold text-foreground/65">明细 {items.length} 项 · 合计 <span className="font-mono text-foreground">¥{total.toLocaleString()}</span></span>
-        <button type="button" onClick={add} className="px-3 h-7 rounded-full bg-foreground text-[hsl(var(--paper))] text-[11px] font-semibold inline-flex items-center gap-1">
-          <Plus className="h-3 w-3" />添加
-        </button>
+        <div className="flex items-center gap-1.5">
+          {canLog && <button type="button" onClick={() => setLineLogsOpen(true)} className="px-2.5 h-7 rounded-full bg-foreground/[0.06] text-[11px] font-semibold inline-flex items-center gap-1"><History className="h-3 w-3" />日志{lineLogs.length ? ` ${lineLogs.length}` : ""}</button>}
+          <button type="button" onClick={add} className="px-3 h-7 rounded-full bg-foreground text-[hsl(var(--paper))] text-[11px] font-semibold inline-flex items-center gap-1">
+            <Plus className="h-3 w-3" />添加
+          </button>
+        </div>
       </div>
       {items.length === 0 ? (
         <div className="text-center py-6 text-[12px] text-foreground/40">点击右上角添加产品明细</div>
@@ -452,7 +455,9 @@ export function MLineItemsEditor({ items, products, onChange, mode = "sales", lo
                   <input
                     list="m-li-products"
                     value={it.productName}
+                    onFocus={() => capture(i, "productName")}
                     onChange={(e) => update(i, { productName: e.target.value })}
+                    onBlur={() => flush(i, "productName")}
                     placeholder="输入或选择产品名称"
                     className="flex-1 h-9 px-2.5 rounded-lg bg-card border border-foreground/10 text-[13px]"
                   />
@@ -464,11 +469,11 @@ export function MLineItemsEditor({ items, products, onChange, mode = "sales", lo
                 <div className="grid grid-cols-3 gap-2">
                   <label className="block">
                     <div className="text-[10px] text-foreground/50 mb-0.5">数量</div>
-                    <input type="number" inputMode="decimal" value={it.qty} onChange={(e) => update(i, { qty: Number(e.target.value) })} className="w-full h-9 px-2 rounded-lg bg-card border border-foreground/10 text-[13px] font-mono text-right" />
+                    <input type="number" inputMode="decimal" value={it.qty} onFocus={() => capture(i, "qty")} onChange={(e) => update(i, { qty: Number(e.target.value) })} onBlur={() => flush(i, "qty")} className="w-full h-9 px-2 rounded-lg bg-card border border-foreground/10 text-[13px] font-mono text-right" />
                   </label>
                   <label className="block">
                     <div className="text-[10px] text-foreground/50 mb-0.5">单价</div>
-                    <input type="number" inputMode="decimal" step="0.01" value={it.price} onChange={(e) => update(i, { price: Number(e.target.value) })} className="w-full h-9 px-2 rounded-lg bg-card border border-foreground/10 text-[13px] font-mono text-right" />
+                    <input type="number" inputMode="decimal" step="0.01" value={it.price} onFocus={() => capture(i, "price")} onChange={(e) => update(i, { price: Number(e.target.value) })} onBlur={() => flush(i, "price")} className="w-full h-9 px-2 rounded-lg bg-card border border-foreground/10 text-[13px] font-mono text-right" />
                   </label>
                   <label className="block">
                     <div className="text-[10px] text-foreground/50 mb-0.5">小计</div>
@@ -483,8 +488,22 @@ export function MLineItemsEditor({ items, products, onChange, mode = "sales", lo
       <datalist id="m-li-products">
         {products.map((p) => <option key={p.id} value={p.name} />)}
       </datalist>
+      {canLog && <MSheet open={lineLogsOpen} onOpenChange={setLineLogsOpen} title={`明细日志 (${listLineItemLogs(logModule!, logScope!).length})`}>
+        <MLineItemLogList logs={listLineItemLogs(logModule!, logScope!)} />
+      </MSheet>}
     </div>
   );
+}
+
+export function MLineItemLogList({ logs }: { logs: ReturnType<typeof listLineItemLogs> }) {
+  if (!logs.length) return <div className="text-center py-6 text-[12px] text-foreground/40">暂无明细日志</div>;
+  const tone: Record<string, string> = { add: "bg-mint/25 text-foreground", update: "bg-cobalt/12 text-cobalt", delete: "bg-tomato/15 text-tomato" };
+  const label: Record<string, string> = { add: "新增", update: "修改", delete: "删除" };
+  return <div className="space-y-2">{logs.map((l) => <div key={l.id} className="rounded-xl border border-foreground/8 bg-card p-3 text-[12px]">
+    <div className="flex items-center gap-2 flex-wrap mb-1.5"><span className={cn("px-2 h-5 rounded-full text-[10px] font-semibold", tone[l.action])}>{label[l.action]}</span><span className="font-semibold">{l.productName}</span><span className="ml-auto font-mono text-[10px] text-foreground/45">{l.createdAt}</span><span className="text-foreground/55">· {l.operator}</span></div>
+    {l.changes?.map((c, i) => <div key={i} className="flex items-center gap-2 py-0.5"><span className="text-foreground/55 shrink-0">{c.field}</span><span className="line-through text-tomato/70 truncate flex-1">{String(c.before ?? "—")}</span><span className="text-foreground/35">→</span><span className="font-semibold truncate flex-1 text-right">{String(c.after ?? "—")}</span></div>)}
+    {l.snapshot && <div className="grid grid-cols-2 gap-1 text-foreground/65"><span>分类：{l.snapshot.category && l.snapshot.category in productCategoryLabel ? productCategoryLabel[l.snapshot.category as keyof typeof productCategoryLabel] : l.snapshot.category}</span><span>数量：{l.snapshot.qty}</span><span>单价：{fmtMoney(l.snapshot.price ?? 0)}</span><span>小计：{fmtMoney((l.snapshot.qty ?? 0) * (l.snapshot.price ?? 0))}</span></div>}
+  </div>)}</div>;
 }
 
 // ---------- 发票子表 ----------
