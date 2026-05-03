@@ -260,7 +260,6 @@ export default function Sales() {
       <DataPanel
         title={<h3 className="text-xs font-bold uppercase tracking-[0.2em]">合同列表</h3>}
         actions={
-        actions={
           <div className="flex items-center gap-2">
             {selectedIds.length > 0 && (
               <div className="flex items-center gap-1.5 px-2.5 h-9 rounded-full bg-warning/10 text-[12px]">
