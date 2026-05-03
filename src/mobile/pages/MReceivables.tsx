@@ -67,6 +67,7 @@ export default function MReceivables() {
       <MChipFilter value={filter} onChange={setFilter as any}
         options={[{ value: "outstanding", label: "仅看未收" }, { value: "all", label: "全部" }, { value: "settled", label: "已结清" }]} />
       <MSearchBar value={keyword} onChange={setKeyword} placeholder="搜索客户" />
+      <MDateRange value={range} onChange={setRange} />
 
       <MList empty={filtered.length === 0}>
         {filtered.map(r => {
