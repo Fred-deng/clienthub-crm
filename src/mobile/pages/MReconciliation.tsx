@@ -24,6 +24,7 @@ export default function MReconciliation() {
   const [tab, setTab] = useState<Dir>("in");
   const [keyword, setKeyword] = useState("");
   const [filter, setFilter] = useState<"outstanding" | "all">("outstanding");
+  const [range, setRange] = useState({ from: "", to: "" });
   const [pay, setPay] = useState<Row | null>(null);
   const [payForm, setPayForm] = useState({ amount: 0, method: "对公转账", paidAt: today(), remark: "" });
 
