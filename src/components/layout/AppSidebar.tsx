@@ -97,11 +97,19 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent className="px-3 mt-2 group-data-[collapsible=icon]:px-1 group-data-[collapsible=icon]:mt-0">
-        {groups.map((g) => (
+        {groups.map((g) => {
+          const isCollapsed = !!collapsed[g.label];
+          return (
           <SidebarGroup key={g.label} className="mb-1 group-data-[collapsible=icon]:mb-0">
-            <div className="px-3 pt-3 pb-1.5 text-[9px] font-bold tracking-[0.3em] uppercase text-foreground/35 font-mono group-data-[collapsible=icon]:hidden">
-              · {g.label}
-            </div>
+            <button
+              type="button"
+              onClick={() => toggleGroup(g.label)}
+              className="w-full px-3 pt-3 pb-1.5 flex items-center justify-between text-[9px] font-bold tracking-[0.3em] uppercase text-foreground/35 hover:text-foreground/60 font-mono group-data-[collapsible=icon]:hidden transition-colors"
+            >
+              <span>· {g.label}</span>
+              <ChevronDown className={"size-3 transition-transform " + (isCollapsed ? "-rotate-90" : "")} />
+            </button>
+            {!isCollapsed && (
             <SidebarGroupContent>
               <SidebarMenu className="gap-0.5">
                 {g.items.map((item) => {
