@@ -96,7 +96,8 @@ export default function Customers() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [allSales, setAllSales] = useState<SalesOrder[]>([]);
-  useEffect(() => { employeeApi.all().then(setEmployees); salesApi.all().then(setAllSales); }, []);
+  const [allCustomers, setAllCustomers] = useState<Customer[]>([]);
+  useEffect(() => { employeeApi.all().then(setEmployees); salesApi.all().then(setAllSales); customerApi.all().then(setAllCustomers); }, [data]);
 
   // 动态应收：按客户聚合「合同金额(优先) - 已回款」（排除已取消订单）
   const receivableByCustomer = useMemo(() => {
