@@ -328,7 +328,7 @@ export default function MSales() {
                   {unpaid > 0 && <div className="text-[10px] text-tomato font-mono">未 {fmtMoney(unpaid)}</div>}
                 </div>
               </div>
-              <div className="flex items-center justify-between mt-2 pt-2 border-t border-foreground/5">
+              <div className="flex items-center justify-between mt-2 pt-2 border-t border-foreground/5 pl-8">
                 <span className="font-mono text-[10px] text-foreground/45">{o.code} · {o.signedAt ?? o.createdAt}</span>
                 <div className="flex gap-1">
                   <MIconBtn icon={<ArrowDownLeft className="h-3.5 w-3.5" />} variant="primary" title="登记回款" onClick={() => { setQuickPay(o); setQuickPayAmt(unpaid); }} />
