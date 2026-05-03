@@ -266,9 +266,10 @@ export default function MPurchases() {
               onClick={() => openEdit(o)}
               selected={selectedIds.includes(o.id)}
               onSelectChange={(s) => setSelectedIds(s ? [...selectedIds, o.id] : selectedIds.filter((x) => x !== o.id))}
+              selectPosition="bottom"
             >
               <div className="flex items-start justify-between gap-2 mb-1.5">
-                <div className="min-w-0 flex-1 pr-7">
+                <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5 flex-wrap mb-1">
                     <MTag variant={statusVariant(o.status)}>{statusLabels[o.status] || o.status}</MTag>
                     <MTag variant={split.category === "software" ? "cobalt" : split.category === "hardware" ? "mint" : "mustard"}>
