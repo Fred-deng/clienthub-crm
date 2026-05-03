@@ -43,8 +43,9 @@ const emptyCustomer: Omit<Customer, "id"> = {
   createdAt: new Date().toISOString().slice(0, 10), remark: "",
 };
 
-// —— 分组小标题（可折叠） ——
-import { CollapsibleGroup } from "@/components/common/CollapsibleGroup";
+// —— 分组小标题（可折叠 chip + 长分割线） ——
+import { CollapsibleGroup as GroupTitle } from "@/components/common/CollapsibleGroup";
+
 
 
 function Field({ label, required, span = 4, children }: { label: string; required?: boolean; span?: number; children: ReactNode }) {
