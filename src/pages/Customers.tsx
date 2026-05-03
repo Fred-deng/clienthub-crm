@@ -20,6 +20,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { customerApi, contactApi, followUpApi, employeeApi, salesApi, productApi } from "@/services/api";
+import { CustomerStats } from "@/components/common/CustomerStats";
 import { exportCsv } from "@/lib/csv";
 import { usePagedList } from "@/hooks/usePagedList";
 import { fmtMoney, customerStageLabel, customerStatusLabel, customerStatusTone, deriveCustomerStage } from "@/lib/format";
