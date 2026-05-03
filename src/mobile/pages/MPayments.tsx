@@ -87,7 +87,7 @@ export default function MPayments() {
 
   return (
     <>
-      <MPageHeader title="财务收支" subtitle={`${enriched.length} 笔 · 净 ${fmtMoneyShort(totals.in - totals.out)}`}
+      <MPageHeader sticky={false} title="财务收支" subtitle={`${enriched.length} 笔 · 净 ${fmtMoneyShort(totals.in - totals.out)}`}
         action={<button onClick={exportAll} className="size-9 rounded-full bg-foreground/[0.06] flex items-center justify-center"><Download className="h-4 w-4" /></button>} />
       <div className="px-4 pb-3 grid grid-cols-3 gap-2">
         <MKpi label="回款" value={fmtMoneyShort(totals.in)} accent="mint" />
