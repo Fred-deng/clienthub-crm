@@ -4,8 +4,9 @@ import { ArrowDownLeft, ArrowUpRight, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   MPageHeader, MSearchBar, MCard, MList, MTag, MKpi, MChipFilter, MSheet, MField, MInput,
-  MTextarea, MSelect, MButton, MAccordion, MFilterBar,
+  MTextarea, MSelect, MButton, MAccordion, MFilterBar, MDateRange,
 } from "../components/MUI";
+import { inRange } from "@/components/common/DateRangeFilter";
 import { salesApi, purchaseApi } from "@/services/api";
 import { createPaymentAndSync } from "@/services/payments";
 import { fmtMoney, fmtMoneyShort } from "@/lib/format";
@@ -23,6 +24,7 @@ export default function MReconciliation() {
   const [tab, setTab] = useState<Dir>("in");
   const [keyword, setKeyword] = useState("");
   const [filter, setFilter] = useState<"outstanding" | "all">("outstanding");
+  const [range, setRange] = useState({ from: "", to: "" });
   const [pay, setPay] = useState<Row | null>(null);
   const [payForm, setPayForm] = useState({ amount: 0, method: "对公转账", paidAt: today(), remark: "" });
 
@@ -38,7 +40,8 @@ export default function MReconciliation() {
     return { id: o.id, code: o.code, partyId: o.supplierId, partyName: o.supplierName, contract: c, paid: o.paid || 0, outstanding: c - (o.paid || 0), createdAt: o.createdAt, status: o.status, dir: "out" as const, refType: "purchase" as const };
   }), [purs]);
 
-  const all = tab === "in" ? inRows : outRows;
+  const rng = { from: range.from || undefined, to: range.to || undefined };
+  const all = (tab === "in" ? inRows : outRows).filter(r => inRange(r.createdAt, rng));
   const filtered = all.filter(r => {
     if (filter === "outstanding" && r.outstanding <= 0) return false;
     if (keyword) { const k = keyword.toLowerCase(); if (!r.partyName.toLowerCase().includes(k) && !r.code.toLowerCase().includes(k)) return false; }
@@ -86,7 +89,7 @@ export default function MReconciliation() {
       </div>
       <MSearchBar value={keyword} onChange={setKeyword} placeholder="搜索对手方/单号" />
       <MChipFilter value={filter} onChange={setFilter as any} options={[{ value: "outstanding", label: "仅未结清" }, { value: "all", label: "全部" }]} />
-
+      <MDateRange value={range} onChange={setRange} />
       <div className="px-4 pb-4 space-y-2">
         {groups.length === 0 ? (
           <div className="text-center py-12">

@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { useSearchParams } from "react-router-dom";
 import {
   MPageHeader, MSearchBar, MCard, MList, MTag, MFab, MSheet, MField, MInput, MTextarea,
-  MSelect, MSwitch, MButton, MConfirm, MGroupTitle,
+  MSelect, MSwitch, MButton, MConfirm, MGroupTitle, MFilterBar,
 } from "../components/MUI";
 import { contactApi, customerApi, employeeApi } from "@/services/api";
 import type { Contact, Customer, Employee } from "@/types";
@@ -76,6 +76,12 @@ export default function MContacts() {
       <MPageHeader title="联系人" subtitle={currCust ? `当前客户：${currCust.name}` : `共 ${filtered.length} 位`}
         action={customerId !== "all" ? <button onClick={() => setSp({})} className="text-[11px] px-3 h-8 rounded-full bg-foreground/[0.06]">查看全部</button> : undefined} />
       <MSearchBar value={keyword} onChange={setKeyword} placeholder="搜索姓名/手机/客户" />
+      <MFilterBar onReset={() => { setSp({}); setKeyword(""); }}>
+        <select value={customerId} onChange={e => { const v = e.target.value; if (v === "all") setSp({}); else setSp({ customerId: v }); }} className="shrink-0 h-8 px-3 rounded-full bg-card border border-foreground/10 text-xs max-w-[60vw]">
+          <option value="all">全部客户</option>
+          {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+        </select>
+      </MFilterBar>
 
       <MList empty={filtered.length === 0}>
         {filtered.map(c => (

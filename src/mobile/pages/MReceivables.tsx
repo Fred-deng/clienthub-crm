@@ -1,9 +1,10 @@
 // 应收账款（移动端）— 1:1 复刻 PC Receivables
 import { useEffect, useMemo, useState } from "react";
-import { MPageHeader, MSearchBar, MCard, MList, MTag, MKpi, MChipFilter } from "../components/MUI";
+import { MPageHeader, MSearchBar, MCard, MList, MTag, MKpi, MChipFilter, MDateRange } from "../components/MUI";
 import { salesApi, customerApi, productApi } from "@/services/api";
 import { fmtMoney, fmtMoneyShort } from "@/lib/format";
 import { splitSales, splitSalesReceived, type BizFilter } from "@/lib/biz";
+import { inRange } from "@/components/common/DateRangeFilter";
 import type { SalesOrder, Customer, Product } from "@/types";
 
 interface Row { customerId: string; customerName: string; orderCount: number; contractAmount: number; received: number; outstanding: number; oldest: string; level?: string; swContract: number; hwContract: number; swReceived: number; hwReceived: number; swOut: number; hwOut: number; }
@@ -15,12 +16,13 @@ export default function MReceivables() {
   const [keyword, setKeyword] = useState("");
   const [biz, setBiz] = useState<BizFilter>("all");
   const [filter, setFilter] = useState<"all" | "outstanding" | "settled">("outstanding");
+  const [range, setRange] = useState({ from: "", to: "" });
 
   useEffect(() => { salesApi.all().then(setOrders); customerApi.all().then(setCustomers); productApi.all().then(setProducts); }, []);
 
   const rows: Row[] = useMemo(() => {
     const map = new Map<string, Row>();
-    orders.filter(o => o.status !== "cancelled").forEach(o => {
+    orders.filter(o => o.status !== "cancelled" && inRange(o.createdAt, { from: range.from || undefined, to: range.to || undefined })).forEach(o => {
       const c = o.contractAmount ?? o.totalAmount;
       const sCon = splitSales(o, products); const sRec = splitSalesReceived(o, products);
       const r = map.get(o.customerId) || { customerId: o.customerId, customerName: o.customerName, orderCount: 0, contractAmount: 0, received: 0, outstanding: 0, oldest: o.createdAt, swContract: 0, hwContract: 0, swReceived: 0, hwReceived: 0, swOut: 0, hwOut: 0 };
@@ -34,7 +36,7 @@ export default function MReceivables() {
     });
     customers.forEach(c => { const r = map.get(c.id); if (r) r.level = c.level; });
     return Array.from(map.values()).sort((a, b) => b.outstanding - a.outstanding);
-  }, [orders, customers, products]);
+  }, [orders, customers, products, range]);
 
   const view = (r: Row) => biz === "software" ? { contract: r.swContract, received: r.swReceived, outstanding: r.swOut } : biz === "hardware" ? { contract: r.hwContract, received: r.hwReceived, outstanding: r.hwOut } : { contract: r.contractAmount, received: r.received, outstanding: r.outstanding };
 
@@ -65,6 +67,7 @@ export default function MReceivables() {
       <MChipFilter value={filter} onChange={setFilter as any}
         options={[{ value: "outstanding", label: "仅看未收" }, { value: "all", label: "全部" }, { value: "settled", label: "已结清" }]} />
       <MSearchBar value={keyword} onChange={setKeyword} placeholder="搜索客户" />
+      <MDateRange value={range} onChange={setRange} />
 
       <MList empty={filtered.length === 0}>
         {filtered.map(r => {
