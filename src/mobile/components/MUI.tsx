@@ -55,7 +55,7 @@ export function MSearchBar({ value, onChange, placeholder = "搜索…", trailin
 }
 
 // ---------- 卡片 ----------
-export function MCard({ children, onClick, className, selected, onSelectChange }: { children: ReactNode; onClick?: () => void; className?: string; selected?: boolean; onSelectChange?: (s: boolean) => void }) {
+export function MCard({ children, onClick, className, selected, onSelectChange, selectPosition = "top" }: { children: ReactNode; onClick?: () => void; className?: string; selected?: boolean; onSelectChange?: (s: boolean) => void; selectPosition?: "top" | "bottom" }) {
   return (
     <div
       onClick={onClick}
@@ -66,7 +66,7 @@ export function MCard({ children, onClick, className, selected, onSelectChange }
         className
       )}
     >
-      {onSelectChange && (
+      {onSelectChange && selectPosition === "top" && (
         <button
           onClick={(e) => { e.stopPropagation(); onSelectChange(!selected); }}
           className={cn("absolute top-2.5 right-2.5 size-5 rounded-full border-2 flex items-center justify-center transition-colors z-10",
@@ -76,6 +76,16 @@ export function MCard({ children, onClick, className, selected, onSelectChange }
         </button>
       )}
       {children}
+      {onSelectChange && selectPosition === "bottom" && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onSelectChange(!selected); }}
+          className={cn("absolute bottom-3 left-3 size-6 rounded-full border-2 flex items-center justify-center transition-colors z-10",
+            selected ? "bg-tomato border-tomato" : "border-foreground/25 bg-card")}
+          aria-label="选择"
+        >
+          {selected && <Check className="h-3.5 w-3.5 text-[hsl(var(--paper))]" />}
+        </button>
+      )}
     </div>
   );
 }
