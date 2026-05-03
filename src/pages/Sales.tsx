@@ -275,6 +275,38 @@ export default function Sales() {
                 <SelectItem value="cancelled">已取消</SelectItem>
               </SelectContent>
             </Select>
+        actions={
+          <div className="flex items-center gap-2">
+            {selectedIds.length > 0 && (
+              <div className="flex items-center gap-1.5 px-2.5 h-9 rounded-full bg-warning/10 text-[12px]">
+                <span className="text-warning font-semibold">已选 {selectedIds.length}</span>
+                <Select value={bulkStatus} onValueChange={setBulkStatus}>
+                  <SelectTrigger className="h-7 w-24 text-xs"><SelectValue placeholder="改状态" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pending">待发货</SelectItem>
+                    <SelectItem value="shipped">运输中</SelectItem>
+                    <SelectItem value="delivered">已送达</SelectItem>
+                    <SelectItem value="cancelled">已取消</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button size="sm" className="h-7 text-xs" disabled={!bulkStatus} onClick={applyBulkStatus}>应用</Button>
+                <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setSelectedIds([])}>清空</Button>
+              </div>
+            )}
+            <div className="relative">
+              <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Input placeholder="搜索合同号/客户/明细产品" className="pl-8 h-8 w-64 text-xs" onChange={(e) => setFilter({ keyword: e.target.value })} />
+            </div>
+            <Select value={query.status ?? "all"} onValueChange={(v) => setFilter({ status: v })}>
+              <SelectTrigger className="h-8 w-28 text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">全部状态</SelectItem>
+                <SelectItem value="pending">待发货</SelectItem>
+                <SelectItem value="shipped">运输中</SelectItem>
+                <SelectItem value="delivered">已送达</SelectItem>
+                <SelectItem value="cancelled">已取消</SelectItem>
+              </SelectContent>
+            </Select>
             <DateRangeFilter
               value={{ from: query.dateFrom, to: query.dateTo }}
               onChange={(v) => setFilter({ dateFrom: v.from, dateTo: v.to })}
