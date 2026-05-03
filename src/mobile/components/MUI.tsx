@@ -329,7 +329,7 @@ export function MDateRange({ value, onChange }: { value: { from: string; to: str
 // ---------- 横向滚动 chip 过滤器 ----------
 export function MChipFilter<T extends string>({ value, onChange, options }: { value: T; onChange: (v: T) => void; options: { value: T; label: string }[] }) {
   return (
-    <div className="px-4 pb-3 -mx-1 flex gap-1.5 overflow-x-auto no-scrollbar">
+    <div className="px-4 pb-3 -mx-1 pr-5 flex gap-1.5 overflow-x-auto no-scrollbar">
       {options.map((o) => (
         <button
           key={o.value}
