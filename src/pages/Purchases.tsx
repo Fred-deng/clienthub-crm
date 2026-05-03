@@ -35,15 +35,9 @@ import { BizTabs } from "@/components/common/BizTabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { PurchaseOrder, Supplier, Product, Employee, Contract, PurchaseItem } from "@/types";
 
+import { CollapsibleGroupTitle } from "@/components/common/CollapsibleGroup";
 function GroupTitle({ children }: { children: ReactNode }) {
-  return (
-    <div className="col-span-12 flex items-center gap-3 mt-2 first:mt-0">
-      <span className="inline-flex items-center px-3 h-7 rounded-md bg-foreground text-background text-xs font-semibold tracking-wide">
-        {children}
-      </span>
-      <div className="flex-1 h-px bg-foreground/10" />
-    </div>
-  );
+  return <CollapsibleGroupTitle storageKey="purchases">{children}</CollapsibleGroupTitle>;
 }
 function Field({ label, required, span = 4, children }: { label: string; required?: boolean; span?: number; children: ReactNode }) {
   const m: Record<number, string> = {
