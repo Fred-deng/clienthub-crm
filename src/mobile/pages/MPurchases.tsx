@@ -289,6 +289,7 @@ export default function MPurchases() {
                 <span className="font-mono text-[10px] text-foreground/45">{o.code} · {o.appliedAt}</span>
                 <div className="flex gap-1">
                   <MIconBtn icon={<ArrowUpRight className="h-3.5 w-3.5" />} variant="primary" title="登记付款" onClick={() => { setQuickPay(o); setQuickPayAmt(unpaid); }} />
+                  <MIconBtn icon={<Receipt className="h-3.5 w-3.5" />} title="新增发票" onClick={() => { setQuickInv(o); setQuickInvAmt(unpaid || (o.contractAmount ?? o.totalAmount)); }} />
                   <MIconBtn icon={<History className="h-3.5 w-3.5" />} title="日志" onClick={() => { setLogRefId(o.id); setLogOpen(true); }} />
                   <MIconBtn icon={<Trash2 className="h-3.5 w-3.5" />} variant="danger" title="删除" onClick={() => setDeletingId(o.id)} />
                 </div>
@@ -349,13 +350,13 @@ export default function MPurchases() {
         <MGroupTitle>采购执行</MGroupTitle>
         <div className="grid grid-cols-2 gap-3">
           <MField label="采购经理"><MSelect value={watch("buyerId")} onChange={(v) => setValue("buyerId", v)} options={employeeOpts} placeholder="选择" /></MField>
-          <MField label="订单状态"><MSelect value={watch("status")} onChange={(v) => setValue("status", v as any)} options={STATUS_OPTS} /></MField>
+          <MField label="订单状态"><MSelect value={watch("status")} onChange={(v) => { if (v === "cancelled" && watch("status") !== "cancelled" && editing) { setCancelOpen(true); return; } setValue("status", v as any); }} options={STATUS_OPTS} />{watch("status") === "cancelled" && cancelReason && <div className="text-[11px] text-tomato mt-1">取消原因：{cancelReason}</div>}</MField>
           <MField label="预计入库"><MInput type="date" {...register("expectedAt")} /></MField>
           <MField label="下单日期"><MInput type="date" {...register("createdAt")} /></MField>
         </div>
 
         <MGroupTitle>采购明细</MGroupTitle>
-        <MLineItemsEditor items={items} products={products.filter((p) => p.category !== "software")} onChange={setItems} mode="purchase" />
+        <MLineItemsEditor items={items} products={products.filter((p) => p.category !== "software")} onChange={setItems} mode="purchase" logModule="purchase" logScope={editing?.id || draftScope} />
 
         {editing && (
           <>
@@ -388,6 +389,9 @@ export default function MPurchases() {
         )}
 
         <MGroupTitle>备注</MGroupTitle>
+        <MAccordion title="附件资料" badge={<MTag variant="muted">{(watch("contractAttachments") || []).length}</MTag>}>
+          <MField label="采购合同附件"><MAttachmentList value={watch("contractAttachments") || []} onChange={(v) => setValue("contractAttachments", v)} /></MField>
+        </MAccordion>
         <MField label="备注"><MTextarea rows={3} {...register("remark")} /></MField>
         <div className="text-center text-[11px] text-foreground/45 mt-4 pb-2">明细合计 <span className="font-mono font-bold text-foreground">¥{itemsTotal.toLocaleString()}</span></div>
       </MSheet>
