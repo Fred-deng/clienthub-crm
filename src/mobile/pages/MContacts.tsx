@@ -77,10 +77,9 @@ export default function MContacts() {
         action={customerId !== "all" ? <button onClick={() => setSp({})} className="text-[11px] px-3 h-8 rounded-full bg-foreground/[0.06]">查看全部</button> : undefined} />
       <MSearchBar value={keyword} onChange={setKeyword} placeholder="搜索姓名/手机/客户" />
       <MFilterBar onReset={() => { setSp({}); setKeyword(""); }}>
-        <select value={customerId} onChange={e => { const v = e.target.value; if (v === "all") setSp({}); else setSp({ customerId: v }); }} className="shrink-0 h-8 px-3 rounded-full bg-card border border-foreground/10 text-xs max-w-[60vw]">
-          <option value="all">全部客户</option>
-          {customers.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </select>
+        <MPickerChip value={customerId} onChange={v => { if (v === "all") setSp({}); else setSp({ customerId: v }); }}
+          options={customers.map(c => ({ value: c.id, label: c.name, sub: c.code }))}
+          allLabel="全部客户" title="选择客户" />
       </MFilterBar>
 
       <MList empty={filtered.length === 0}>
