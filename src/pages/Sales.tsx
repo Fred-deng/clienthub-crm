@@ -20,6 +20,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { DateRangeFilter } from "@/components/common/DateRangeFilter";
 import { salesApi, customerApi, productApi, employeeApi } from "@/services/api";
 import { logOrderUpdate, logOrderDelete } from "@/services/orderLog";
