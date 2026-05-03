@@ -44,7 +44,10 @@ const emptyCustomer: Omit<Customer, "id"> = {
 };
 
 // —— 分组小标题（可折叠 chip + 长分割线） ——
-import { CollapsibleGroup as GroupTitle } from "@/components/common/CollapsibleGroup";
+import { CollapsibleGroupTitle } from "@/components/common/CollapsibleGroup";
+function GroupTitle({ children }: { children: ReactNode }) {
+  return <CollapsibleGroupTitle storageKey="customers">{children}</CollapsibleGroupTitle>;
+}
 
 
 
