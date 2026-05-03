@@ -326,14 +326,18 @@ export default function Sales() {
               </tr>
             </thead>
             <tbody>
-              {loading && <tr className="empty"><td colSpan={12} className="empty">加载中…</td></tr>}
+              {loading && <tr className="empty"><td colSpan={13} className="empty">加载中…</td></tr>}
               {data.list
                 .map((o) => ({ o, split: splitSales(o, products) }))
                 .filter(({ split }) => biz === "all" || (biz === "software" ? split.software > 0 : split.hardware > 0))
                 .map(({ o, split }) => {
                 const owner = employees.find((e) => e.id === (o.accountManagerId || o.ownerId));
+                const checked = selectedIds.includes(o.id);
                 return (
                   <tr key={o.id} className="clickable" onDoubleClick={() => openEdit(o)} title="双击查看详情">
+                    <td onDoubleClick={(e) => e.stopPropagation()}>
+                      <Checkbox checked={checked} onCheckedChange={(v) => setSelectedIds(v ? [...selectedIds, o.id] : selectedIds.filter((x) => x !== o.id))} />
+                    </td>
                     <td className="mono">{o.code}</td>
                     <td className="bold"><span className="block max-w-[200px] truncate">{o.contractTitle ?? "—"}</span></td>
                     <td><span className="block max-w-[180px] truncate">{o.customerName}</span></td>
