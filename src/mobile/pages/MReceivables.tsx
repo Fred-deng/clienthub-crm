@@ -1,13 +1,21 @@
 // 应收账款（移动端）— 1:1 复刻 PC Receivables
 import { useEffect, useMemo, useState } from "react";
-import { MPageHeader, MSearchBar, MCard, MList, MTag, MKpi, MChipFilter, MDateRange } from "../components/MUI";
+import { ArrowDownLeft } from "lucide-react";
+import { toast } from "sonner";
+import {
+  MPageHeader, MSearchBar, MCard, MList, MTag, MKpi, MChipFilter, MDateRange,
+  MFab, MSheet, MField, MInput, MTextarea, MSelect, MButton, MGroupTitle,
+} from "../components/MUI";
 import { salesApi, customerApi, productApi } from "@/services/api";
+import { createPaymentAndSync } from "@/services/payments";
 import { fmtMoney, fmtMoneyShort } from "@/lib/format";
 import { splitSales, splitSalesReceived, type BizFilter } from "@/lib/biz";
 import { inRange } from "@/components/common/DateRangeFilter";
 import type { SalesOrder, Customer, Product } from "@/types";
 
-interface Row { customerId: string; customerName: string; orderCount: number; contractAmount: number; received: number; outstanding: number; oldest: string; level?: string; swContract: number; hwContract: number; swReceived: number; hwReceived: number; swOut: number; hwOut: number; }
+interface Row { customerId: string; customerName: string; orderCount: number; contractAmount: number; invoiced: number; received: number; outstanding: number; oldest: string; level?: string; swContract: number; hwContract: number; swReceived: number; hwReceived: number; swOut: number; hwOut: number; }
+
+const today = () => new Date().toISOString().slice(0, 10);
 
 export default function MReceivables() {
   const [orders, setOrders] = useState<SalesOrder[]>([]);
@@ -17,16 +25,20 @@ export default function MReceivables() {
   const [biz, setBiz] = useState<BizFilter>("all");
   const [filter, setFilter] = useState<"all" | "outstanding" | "settled">("outstanding");
   const [range, setRange] = useState({ from: "", to: "" });
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState({ refId: "", amount: 0, method: "对公转账", paidAt: today(), remark: "" });
 
-  useEffect(() => { salesApi.all().then(setOrders); customerApi.all().then(setCustomers); productApi.all().then(setProducts); }, []);
+  const reload = () => salesApi.all().then(setOrders);
+  useEffect(() => { reload(); customerApi.all().then(setCustomers); productApi.all().then(setProducts); }, []);
 
   const rows: Row[] = useMemo(() => {
     const map = new Map<string, Row>();
     orders.filter(o => o.status !== "cancelled" && inRange(o.createdAt, { from: range.from || undefined, to: range.to || undefined })).forEach(o => {
       const c = o.contractAmount ?? o.totalAmount;
+      const invoiced = (o.invoices || []).reduce((s, r) => s + (r.amount || 0), 0);
       const sCon = splitSales(o, products); const sRec = splitSalesReceived(o, products);
-      const r = map.get(o.customerId) || { customerId: o.customerId, customerName: o.customerName, orderCount: 0, contractAmount: 0, received: 0, outstanding: 0, oldest: o.createdAt, swContract: 0, hwContract: 0, swReceived: 0, hwReceived: 0, swOut: 0, hwOut: 0 };
-      r.orderCount += 1; r.contractAmount += c; r.received += o.received;
+      const r = map.get(o.customerId) || { customerId: o.customerId, customerName: o.customerName, orderCount: 0, contractAmount: 0, invoiced: 0, received: 0, outstanding: 0, oldest: o.createdAt, swContract: 0, hwContract: 0, swReceived: 0, hwReceived: 0, swOut: 0, hwOut: 0 };
+      r.orderCount += 1; r.contractAmount += c; r.invoiced += invoiced; r.received += o.received;
       r.swContract += sCon.software; r.hwContract += sCon.hardware;
       r.swReceived += sRec.software; r.hwReceived += sRec.hardware;
       r.outstanding = r.contractAmount - r.received;
@@ -49,18 +61,39 @@ export default function MReceivables() {
     return true;
   });
 
-  const totals = filtered.reduce((s, r) => { const v = view(r); return { contract: s.contract + v.contract, received: s.received + v.received, outstanding: s.outstanding + v.outstanding }; }, { contract: 0, received: 0, outstanding: 0 });
+  const totals = filtered.reduce((s, r) => { const v = view(r); return { contract: s.contract + v.contract, invoiced: s.invoiced + r.invoiced, received: s.received + v.received, outstanding: s.outstanding + v.outstanding }; }, { contract: 0, invoiced: 0, received: 0, outstanding: 0 });
 
-  const today = new Date();
-  const aging = (d: string) => Math.max(0, Math.floor((today.getTime() - new Date(d).getTime()) / 86400000));
+  const today2 = new Date();
+  const aging = (d: string) => Math.max(0, Math.floor((today2.getTime() - new Date(d).getTime()) / 86400000));
+
+  const openCreate = () => { setForm({ refId: "", amount: 0, method: "对公转账", paidAt: today(), remark: "" }); setOpen(true); };
+
+  const submit = async () => {
+    const ref = orders.find(o => o.id === form.refId);
+    if (!ref) return toast.error("请选择关联销售订单");
+    const amount = Number(form.amount);
+    if (!amount || amount <= 0) return toast.error("金额必须大于 0");
+    const total = (ref.contractAmount ?? ref.totalAmount) || 0;
+    const remain = Math.max(total - (ref.received || 0), 0);
+    if (amount > remain + 0.001) {
+      if (!window.confirm(`本次 ${fmtMoney(amount)} 超过未收余额 ${fmtMoney(remain)}，将出现负余额，是否继续？`)) return;
+    }
+    await createPaymentAndSync({
+      direction: "in", refType: "sales", refId: ref.id, refCode: ref.code,
+      partyName: ref.customerName, amount, method: form.method, paidAt: form.paidAt, remark: form.remark,
+      code: `RC-${Date.now().toString().slice(-6)}`,
+    } as any);
+    toast.success("已记录回款"); setOpen(false); reload();
+  };
 
   return (
     <>
       <MPageHeader title="应收账款" subtitle={`${filtered.length} 客户`} />
-      <div className="px-4 pb-3 grid grid-cols-3 gap-2">
+      <div className="px-4 pb-3 grid grid-cols-2 gap-2">
         <MKpi label="合同总额" value={fmtMoneyShort(totals.contract)} accent="cobalt" />
+        <MKpi label="已开票" value={fmtMoneyShort(totals.invoiced)} accent="mint" />
         <MKpi label="已回款" value={fmtMoneyShort(totals.received)} accent="mint" />
-        <MKpi label="未收" value={fmtMoneyShort(totals.outstanding)} accent="tomato" />
+        <MKpi label="未收账款" value={fmtMoneyShort(totals.outstanding)} accent="tomato" />
       </div>
       <MChipFilter value={biz} onChange={(v) => setBiz(v as any)}
         options={[{ value: "all", label: "全部" }, { value: "software", label: "软件" }, { value: "hardware", label: "硬件" }] as any} />
@@ -83,7 +116,7 @@ export default function MReceivables() {
                     <MTag variant={ageTone as any}>账龄 {days}d</MTag>
                   </div>
                   <div className="text-[11px] text-foreground/50 mt-0.5 font-mono">{r.orderCount} 单 · 最早 {r.oldest}</div>
-                  <div className="text-[12px] mt-1.5 font-mono">合同 <span className="font-bold">{fmtMoney(v.contract)}</span> · 已回 <span className="text-mint font-bold">{fmtMoney(v.received)}</span></div>
+                  <div className="text-[12px] mt-1.5 font-mono">合同 <span className="font-bold">{fmtMoney(v.contract)}</span> · 开票 <span className="text-cobalt font-bold">{fmtMoney(r.invoiced)}</span> · 已回 <span className="text-mint font-bold">{fmtMoney(v.received)}</span></div>
                 </div>
                 <div className="text-right shrink-0">
                   <div className="text-[10px] text-foreground/45 font-mono uppercase">未收</div>
@@ -94,6 +127,27 @@ export default function MReceivables() {
           );
         })}
       </MList>
+
+      <MFab icon={<ArrowDownLeft className="h-5 w-5" />} onClick={openCreate} />
+
+      <MSheet open={open} onOpenChange={setOpen} title="登记客户回款"
+        footer={<div className="flex gap-2"><MButton variant="ghost" onClick={() => setOpen(false)} className="flex-1">取消</MButton><MButton onClick={submit} className="flex-1">记录</MButton></div>}>
+        <MGroupTitle>关联销售订单</MGroupTitle>
+        <MField label="销售订单" required>
+          <MSelect value={form.refId} onChange={v => setForm({ ...form, refId: v })}
+            options={orders.filter(o => o.status !== "cancelled").map(o => {
+              const remain = Math.max((o.contractAmount ?? o.totalAmount) - (o.received || 0), 0);
+              return { value: o.id, label: `${o.code} · ${o.customerName} · 余 ${fmtMoneyShort(remain)}` };
+            })} placeholder="选择" />
+        </MField>
+        <MField label="金额" required><MInput type="number" step="0.01" value={form.amount} onChange={e => setForm({ ...form, amount: Number(e.target.value) })} /></MField>
+        <MField label="方式">
+          <MSelect value={form.method} onChange={v => setForm({ ...form, method: v })}
+            options={["对公转账", "现金", "支票", "支付宝", "微信"].map(m => ({ value: m, label: m }))} />
+        </MField>
+        <MField label="日期"><MInput type="date" value={form.paidAt} onChange={e => setForm({ ...form, paidAt: e.target.value })} /></MField>
+        <MField label="备注"><MTextarea value={form.remark} onChange={e => setForm({ ...form, remark: e.target.value })} /></MField>
+      </MSheet>
     </>
   );
 }
