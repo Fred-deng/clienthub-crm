@@ -75,14 +75,8 @@ export default function MReconciliation() {
   return (
     <>
       <MPageHeader title="账款核对" subtitle={`${groups.length} 家 · ${filtered.length} 单`} />
-      <div className="px-4 pb-3 grid grid-cols-2 gap-2">
-        <button onClick={() => setTab("in")} className={`h-12 rounded-2xl text-sm font-bold inline-flex items-center justify-center gap-2 ${tab === "in" ? "bg-tomato text-[hsl(var(--paper))]" : "bg-card border border-foreground/10"}`}>
-          <ArrowDownLeft className="h-4 w-4" />应收（销售）
-        </button>
-        <button onClick={() => setTab("out")} className={`h-12 rounded-2xl text-sm font-bold inline-flex items-center justify-center gap-2 ${tab === "out" ? "bg-cobalt text-[hsl(var(--paper))]" : "bg-card border border-foreground/10"}`}>
-          <ArrowUpRight className="h-4 w-4" />应付（采购）
-        </button>
-      </div>
+      <MChipFilter value={tab} onChange={setTab as any}
+        options={[{ value: "in", label: "应收（销售回款）" }, { value: "out", label: "应付（采购付款）" }]} />
       <div className="px-4 pb-3 grid grid-cols-2 gap-2">
         <MKpi label={tab === "in" ? "合同总额" : "采购总额"} value={fmtMoneyShort(totals.contract)} accent="cobalt" />
         <MKpi label={tab === "in" ? "已回款" : "已付款"} value={fmtMoneyShort(totals.paid)} accent="mint" />
