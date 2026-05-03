@@ -150,16 +150,17 @@ export default function MSales() {
       salesFee: Number(v.salesFee) || 0, productStdCost: Number(v.productStdCost) || 0,
     };
     const op = readCurrentOperator();
+    const reasonRemark = (editing && editing.status !== "cancelled" && payload.status === "cancelled" && cancelReason) ? `订单取消原因：${cancelReason}` : undefined;
     if (editing) {
       const merged = { ...editing, ...payload } as SalesOrder;
       syncSalesStock(editing, merged, op);
-      logOrderUpdate("sales", editing, payload);
+      logOrderUpdate("sales", editing, payload, reasonRemark);
       await salesApi.update(editing.id, payload);
     } else {
       const created = await salesApi.create(payload);
       syncSalesStock(null, created, op);
     }
-    toast.success("已保存"); setOpen(false); reload();
+    setCancelReason(""); toast.success("已保存"); setOpen(false); reload();
   });
 
   const handleDelete = async () => {
@@ -445,12 +446,13 @@ export default function MSales() {
         </div>
 
         <MGroupTitle>销售明细</MGroupTitle>
-        <MLineItemsEditor items={items} products={products} onChange={setItems} mode="sales" />
+        <MLineItemsEditor items={items} products={products} onChange={setItems} mode="sales" logModule="sales" logScope={editing?.id || draftScope} />
 
         <MGroupTitle>订单执行</MGroupTitle>
         <div className="grid grid-cols-2 gap-3">
           <MField label="订单状态">
-            <MSelect value={watch("status")} onChange={(v) => setValue("status", v)} options={STATUS_FLOW} />
+            <MSelect value={watch("status")} onChange={(v) => { if (v === "cancelled" && watch("status") !== "cancelled" && editing) { setCancelOpen(true); return; } setValue("status", v); }} options={STATUS_FLOW} />
+            {watch("status") === "cancelled" && cancelReason && <div className="text-[11px] text-tomato mt-1">取消原因：{cancelReason}</div>}
           </MField>
           <MField label="下单日"><MInput type="date" {...register("createdAt")} /></MField>
         </div>
@@ -494,6 +496,12 @@ export default function MSales() {
         )}
 
         <MGroupTitle>备注</MGroupTitle>
+        <MAccordion title="附件资料" badge={<MTag variant="muted">{(watch("contractAttachments") || []).length + (watch("stampedContractAttachments") || []).length + (watch("invoiceAttachments") || []).length + (watch("otherAttachments") || []).length}</MTag>}>
+          <MField label="合同附件"><MAttachmentList value={watch("contractAttachments") || []} onChange={(v) => setValue("contractAttachments", v)} /></MField>
+          <MField label="盖章合同扫描件"><MAttachmentList value={watch("stampedContractAttachments") || []} onChange={(v) => setValue("stampedContractAttachments", v)} /></MField>
+          <MField label="开票资料"><MAttachmentList value={watch("invoiceAttachments") || []} onChange={(v) => setValue("invoiceAttachments", v)} /></MField>
+          <MField label="其他附件"><MAttachmentList value={watch("otherAttachments") || []} onChange={(v) => setValue("otherAttachments", v)} /></MField>
+        </MAccordion>
         <MField label="备注"><MTextarea rows={3} {...register("remark")} /></MField>
 
         <div className="text-center text-[11px] text-foreground/45 mt-4 pb-2">
