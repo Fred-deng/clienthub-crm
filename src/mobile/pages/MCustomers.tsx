@@ -138,14 +138,15 @@ export default function MCustomers() {
         subtitle={`共 ${filtered.length} 位 · 应收合计 ${fmtMoney(filtered.reduce((s, c) => s + (recvByCust.get(c.id) || 0), 0))}`}
         action={<button onClick={exportAll} className="size-9 rounded-full bg-foreground/[0.06] flex items-center justify-center"><Download className="h-4 w-4" /></button>}
       />
-      <MSearchBar value={keyword} onChange={setKeyword} placeholder="搜索名称/编号/联系人" />
-      <MChipFilter value={sea} onChange={(v) => setSea(v as any)} options={SEA as any} />
-      <MFilterBar onReset={() => { setStatusF("all"); setSea("all"); setKeyword(""); }}>
-        <select value={statusF} onChange={e => setStatusF(e.target.value)} className="shrink-0 h-8 px-3 rounded-full bg-card border border-foreground/10 text-xs">
-          <option value="all">全部状态</option>
-          {Object.entries(customerStatusLabel).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-        </select>
-      </MFilterBar>
+      <CustomerStats
+        list={list}
+        activeStatus={statusF}
+        activeSea={sea}
+        onStatusClick={(s) => setStatusF(s)}
+        onSeaClick={(s) => setSea(s as any)}
+        variant="mobile"
+      />
+      <MSearchBar value={keyword} onChange={setKeyword} placeholder="搜索名称 / 编号 / 联系人" />
 
       <MList empty={filtered.length === 0}>
         {filtered.map(c => {
