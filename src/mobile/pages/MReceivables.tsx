@@ -16,6 +16,7 @@ export default function MReceivables() {
   const [keyword, setKeyword] = useState("");
   const [biz, setBiz] = useState<BizFilter>("all");
   const [filter, setFilter] = useState<"all" | "outstanding" | "settled">("outstanding");
+  const [range, setRange] = useState({ from: "", to: "" });
 
   useEffect(() => { salesApi.all().then(setOrders); customerApi.all().then(setCustomers); productApi.all().then(setProducts); }, []);
 
