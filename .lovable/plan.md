@@ -1,52 +1,49 @@
 
-# 移动端 vs PC 端 全面校验报告
+# 移动端数据逻辑全面校验报告
 
-已逐页对比 12 个移动端页面（M*）与对应 PC 页面的筛选项、显示字段、操作能力。
+已系统对比 12 个移动端页面与 PC 端的数据获取、聚合公式、关联表合并、过滤逻辑。
 
-## 一、筛选完全一致 ✅（无需改动）
+## ✅ 数据逻辑完全一致（11 个页面）
 
-| 页面 | 已对齐项 |
+| 页面 | 已核对的关键逻辑 |
 |---|---|
-| MDashboard | BizTabs（全部/软件/硬件） |
-| MProducts | 关键词、分类 chip、低库存切换 |
-| MCustomers | 关键词、状态、公海/私海（CustomerStats 已支持点击） |
-| MSuppliers | 关键词搜索（PC 端也仅此一项） |
-| MSales | 关键词（合同号/客户/明细产品）、状态 chip、日期、业务 chip |
-| MPurchases | 关键词（单号/供应商/合同名）、状态、日期、业务 chip |
-| MReceivables / MPayables | 业务 chip、状态 chip、关键词、日期 |
-| MReconciliation | 应收/应付切换、状态 chip、关键词 |
+| MDashboard | 单一 `statsApi.dashboard()` 数据源，BizFilter 切换字段 |
+| MProducts | 低库存判定 `stock <= safetyStock && category !== "software"` |
+| MCustomers | `deriveCustomerStage(status)` 同步 stage、批量改状态联动 |
+| MSuppliers | 分类 normalize、应付聚合 `payByS` |
+| MContacts / MFollowUps | 按 customerId 预过滤 + 客户端搜索 |
+| MSales / MPurchases | `splitSales/splitPurchase` biz 拆分、`contractAmount ?? totalAmount` 回退 |
+| MPayments | `splitPayment + matchFilter` 与 PC 同公式 |
+| MReceivables | 按 customer 聚合、`oldest = min(createdAt)`、aging 计算、客户 level 联表 |
+| MPayables | 按 supplier 聚合、`category` 联表、aging |
 
-## 二、需要改善的问题清单
+## 🟡 需要修复的问题（仅 1 处）
 
-### 1. MPayments（财务收支）— 显示溢出 + 缺详情入口
-- **问题 A**：KPI 用 `fmtMoney` 显示完整金额，3 列 grid 在 360px 屏会溢出/截断
-- **问题 B**：流水卡片无任何点击响应，无法查看完整备注、金额拆分（PC 端有 Toast 详情）
-- **修复**：
-  - KPI 与副标题改用 `fmtMoneyShort`
-  - 卡片 onClick 打开"收支详情" Sheet：基本信息 + 软硬件金额拆分
+### MReconciliation — 切换"应收/应付"tab 时未清空登记付款 Sheet 状态
+**现象**：用户在"应收"tab 打开某客户的"登记回款"Sheet 后未提交，直接切换到"应付"，`pay` state 仍指向应收 Row，UI 显示与 tab 不匹配。
 
-### 2. MFollowUps / MContacts — 客户筛选体验差
-- **问题**：客户筛选用原生 `<select>`，长公司名在 `max-w-[40vw]` 内被截断；客户多时无法搜索
-- **修复**：新增通用组件 `MPickerChip`（底部抽屉 + 搜索框 + 列表），替换原生 select；支持按客户名/编号搜索
+**修复**：在两个 tab 切换按钮的 onClick 中追加 `setPay(null)`。
 
-### 3. 通用组件补充
-- 在 `src/mobile/components/MUI.tsx` 新增 `MPickerChip`，可复用到未来其他长列表筛选场景
+```tsx
+<button onClick={() => { setTab("in"); setPay(null); }} ...>
+<button onClick={() => { setTab("out"); setPay(null); }} ...>
+```
 
-## 三、按用户先前确认保持现状的项
+## ℹ️ 设计上一致、非 bug 的项（不修）
 
-- MReceivables / MPayables / MReconciliation **不补加 CSV 导出**（PC 端也未提供）
-- MSuppliers **不补加导出按钮**
-
-## 四、技术变更明细
-
-| 文件 | 修改 |
+| 现象 | 说明 |
 |---|---|
-| `src/mobile/components/MUI.tsx` | + `MPickerChip` 组件（抽屉式可搜索选择器） |
-| `src/mobile/pages/MPayments.tsx` | KPI/Header 改 `fmtMoneyShort`；新增 `viewing` 状态与详情 Sheet；卡片 onClick |
-| `src/mobile/pages/MFollowUps.tsx` | 客户原生 select → `MPickerChip` |
-| `src/mobile/pages/MContacts.tsx` | 客户原生 select → `MPickerChip` |
+| MReceivables/MPayables 显示订单上的客户名/供应商名快照 | PC 端同样：业务历史保留原则，改名不回溯 |
+| MSales/MPurchases 卡片大数字显示 `totalAmount` 而非 `contractAmount` | PC 列表同字段；已付/未付才用 contractAmount |
+| MReconciliation KPI 不受"仅未结清/搜索"影响、只受日期影响 | `all` 已应用日期过滤，与 PC `kpiSource = all.filter(inRange)` 同源 |
+| MProducts 低库存判定用 raw category key | PC 同逻辑；自定义新分类也会进入低库存判定 |
+| MFollowUps/MContacts 切客户重新 fetch | PC 用 usePagedList 同样触发重新加载 |
+| MPayments totals 受 biz/方向/日期/搜索全部影响 | PC 同源 `enriched` |
 
-## 五、不在本次范围
+## 变更清单
 
-- 移动端表单字段（新增/编辑 Sheet）已与 PC 1:1 对齐，本轮不做改动
-- 批量操作（MCustomers 转公海/私海、MSales/MPurchases 批量改状态）已对齐
+| 文件 | 改动 |
+|---|---|
+| `src/mobile/pages/MReconciliation.tsx` | tab 切换按钮 onClick 追加 `setPay(null)`（2 处） |
+
+仅 1 行级别的微改，预计 1 个工具调用完成。
