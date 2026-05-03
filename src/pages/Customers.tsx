@@ -710,10 +710,12 @@ export default function Customers() {
               )}
             </div>
 
-            <DialogFooter className="col-span-12 mt-4">
-              <Button type="button" variant="outline" onClick={() => setOpen(false)}>取消</Button>
-              <Button type="submit">{editing ? "保存修改" : "创建客户"}</Button>
-            </DialogFooter>
+            <div data-group-skip="1" className="col-span-12 mt-4">
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setOpen(false)}>取消</Button>
+                <Button type="submit">{editing ? "保存修改" : "创建客户"}</Button>
+              </DialogFooter>
+            </div>
           </form>
         </DialogContent>
       </Dialog>
