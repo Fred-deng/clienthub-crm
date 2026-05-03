@@ -268,11 +268,32 @@ export function MSection({ title, action, children }: { title: string; action?: 
   );
 }
 
-// ---------- 分组标题（用于编辑表单内分块） ----------
-export function MGroupTitle({ children, action }: { children: ReactNode; action?: ReactNode }) {
+// ---------- 分组标题（用于编辑表单内分块，可折叠） ----------
+export function MGroupTitle({ children, action, storageKey = "default", defaultOpen = true }: { children: ReactNode; action?: ReactNode; storageKey?: string; defaultOpen?: boolean }) {
+  const titleStr = typeof children === "string" ? children : String(children);
+  const memKey = `jm.mgroup.${storageKey}.${titleStr}`;
+  const wrapRef = useRef<HTMLDivElement | null>(null);
+  const [open, setOpen] = useState<boolean>(() => {
+    try { const v = localStorage.getItem(memKey); return v === null ? defaultOpen : v === "1"; } catch { return defaultOpen; }
+  });
+  const apply = (next: boolean) => {
+    const me = wrapRef.current; if (!me) return;
+    let n = me.nextElementSibling as HTMLElement | null;
+    while (n) {
+      if (n.dataset && n.dataset.mgroupTitle === "1") break;
+      if (n.dataset && n.dataset.mgroupSkip === "1") { n = n.nextElementSibling as HTMLElement | null; continue; }
+      n.style.display = next ? "" : "none";
+      n = n.nextElementSibling as HTMLElement | null;
+    }
+  };
+  useEffect(() => { apply(open); /* eslint-disable-next-line */ }, []);
+  useEffect(() => { apply(open); try { localStorage.setItem(memKey, open ? "1" : "0"); } catch {} /* eslint-disable-next-line */ }, [open]);
   return (
-    <div className="flex items-center gap-2 mt-4 mb-2.5 first:mt-0">
-      <span className="inline-flex items-center px-2.5 h-6 rounded-md bg-foreground text-[hsl(var(--paper))] text-[11px] font-semibold tracking-wide">{children}</span>
+    <div ref={wrapRef} data-mgroup-title="1" className="flex items-center gap-2 mt-4 mb-2.5 first:mt-0">
+      <button type="button" onClick={() => setOpen((v) => !v)} className="inline-flex items-center gap-1 px-2.5 h-6 rounded-md bg-foreground text-[hsl(var(--paper))] text-[11px] font-semibold tracking-wide hover:opacity-90">
+        <ChevronDown className={cn("h-3 w-3 transition-transform", !open && "-rotate-90")} />
+        <span>{children}</span>
+      </button>
       <div className="flex-1 h-px bg-foreground/10" />
       {action}
     </div>
