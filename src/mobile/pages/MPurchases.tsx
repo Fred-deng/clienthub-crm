@@ -425,6 +425,21 @@ export default function MPurchases() {
         )}
       </MSheet>
 
+      <MSheet open={!!quickInv} onOpenChange={(v) => !v && setQuickInv(null)} title={`新增发票 · ${quickInv?.code || ""}`}
+        footer={<div className="flex gap-2"><MButton variant="ghost" onClick={() => setQuickInv(null)} className="flex-1">取消</MButton><MButton onClick={submitQuickInv} className="flex-[2]" disabled={quickInvAmt <= 0}>新增发票</MButton></div>}
+      >
+        {quickInv && <>
+          <MRow label="销售方" value={quickInv.supplierName} />
+          <div className="mt-4 space-y-3">
+            <MField label="发票号码"><MInput value={quickInvNo} onChange={(e) => setQuickInvNo(e.target.value)} /></MField>
+            <MField label="发票类型"><MSelect value={quickInvType} onChange={setQuickInvType} options={["增值税专用发票", "增值税普通发票", "电子普通发票", "电子专用发票", "其他"].map((v) => ({ value: v, label: v }))} /></MField>
+            <div className="grid grid-cols-2 gap-3"><MField label="状态"><MSelect value={quickInvStatus} onChange={setQuickInvStatus} options={["已收到", "未收到", "红冲"].map((v) => ({ value: v, label: v }))} /></MField><MField label="税率"><MSelect value={String(quickInvTaxRate)} onChange={(v) => setQuickInvTaxRate(Number(v))} options={[0,1,3,6,9,13].map((v) => ({ value: String(v), label: `${v}%` }))} /></MField></div>
+            <MField label="价税合计" required><MInput type="number" step="0.01" value={quickInvAmt} onChange={(e) => setQuickInvAmt(Number(e.target.value))} /></MField>
+            <MField label="备注"><MTextarea rows={2} value={quickInvRemark} onChange={(e) => setQuickInvRemark(e.target.value)} /></MField>
+          </div>
+        </>}
+      </MSheet>
+
       <MSheet open={bulkStatusOpen} onOpenChange={setBulkStatusOpen} title={`批量改状态 (${selectedIds.length} 单)`}
         footer={<MButton onClick={applyBulkStatus} className="w-full">确认应用</MButton>}>
         <MField label="目标状态"><MSelect value={bulkStatus} onChange={(v) => setBulkStatus(v as any)} options={STATUS_OPTS} /></MField>
@@ -433,6 +448,10 @@ export default function MPurchases() {
 
       <MSheet open={logOpen} onOpenChange={setLogOpen} title={logRefId ? "订单日志" : "全部采购日志"} size="full">
         <MLogList logs={logRefId ? allLogs.filter((l) => l.refId === logRefId) : allLogs} />
+      </MSheet>
+      <MSheet open={cancelOpen} onOpenChange={setCancelOpen} title="取消订单原因">
+        <MField label="原因" required><MTextarea rows={4} value={cancelReason} onChange={(e) => setCancelReason(e.target.value)} placeholder="请输入取消原因" /></MField>
+        <div className="flex gap-2"><MButton variant="ghost" onClick={() => setCancelOpen(false)} className="flex-1">返回</MButton><MButton onClick={() => { if (!cancelReason.trim()) return toast.error("请输入取消原因"); setValue("status", "cancelled"); setCancelOpen(false); }} className="flex-1">确认取消</MButton></div>
       </MSheet>
     </>
   );
