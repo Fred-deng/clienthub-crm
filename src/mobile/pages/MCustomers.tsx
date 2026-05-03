@@ -134,6 +134,7 @@ export default function MCustomers() {
   return (
     <>
       <MPageHeader
+        sticky={false}
         title="客户管理"
         subtitle={`共 ${filtered.length} 位 · 应收合计 ${fmtMoney(filtered.reduce((s, c) => s + (recvByCust.get(c.id) || 0), 0))}`}
         action={<button onClick={exportAll} className="size-9 rounded-full bg-foreground/[0.06] flex items-center justify-center"><Download className="h-4 w-4" /></button>}
