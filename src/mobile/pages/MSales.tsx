@@ -254,7 +254,8 @@ export default function MSales() {
       <MSearchBar
         value={query.keyword || ""}
         onChange={(v) => setFilter({ keyword: v })}
-        placeholder="搜索合同号 / 客户 / 明细产品"
+        placeholder="输入合同号、客户名称或产品名称"
+        hint="合同号 / 客户名称 / 销售明细产品名称"
         trailing={
           <button onClick={() => { setLogRefId(undefined); setLogOpen(true); }} className="size-10 rounded-full bg-foreground/[0.06] flex items-center justify-center" title="全部日志">
             <FileText className="h-4 w-4" />
