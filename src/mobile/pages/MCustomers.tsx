@@ -126,7 +126,7 @@ export default function MCustomers() {
   };
   const bulkStatus = async () => {
     await Promise.all(selected.map(id => customerApi.update(id, { status: bulkStatusValue as any, stage: deriveCustomerStage(bulkStatusValue) } as any)));
-    toast.success(`已将 ${selected.length} 位客户状态改为「${customerStatusLabel[bulkStatusValue] || bulkStatusValue}」`);
+    toast.success(`已将 ${selected.length} 位客户状态改为「${(customerStatusLabel as any)[bulkStatusValue] || bulkStatusValue}」`);
     setBulkStatusOpen(false); setSelected([]); reload();
   };
 
