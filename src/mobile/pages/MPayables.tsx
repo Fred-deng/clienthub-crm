@@ -37,7 +37,7 @@ export default function MPayables() {
     });
     suppliers.forEach(s => { const r = map.get(s.id); if (r) r.category = s.category; });
     return Array.from(map.values()).sort((a, b) => b.outstanding - a.outstanding);
-  }, [orders, suppliers, products]);
+  }, [orders, suppliers, products, range]);
 
   const view = (r: Row) => biz === "software" ? { contract: r.swContract, paid: r.swPaid, outstanding: r.swOut } : biz === "hardware" ? { contract: r.hwContract, paid: r.hwPaid, outstanding: r.hwOut } : { contract: r.contractAmount, paid: r.paid, outstanding: r.outstanding };
 
