@@ -32,24 +32,27 @@ export function MPageHeader({
 }
 
 // ---------- 搜索栏 ----------
-export function MSearchBar({ value, onChange, placeholder = "搜索…", trailing }: { value: string; onChange: (v: string) => void; placeholder?: string; trailing?: ReactNode }) {
+export function MSearchBar({ value, onChange, placeholder = "搜索…", trailing, hint }: { value: string; onChange: (v: string) => void; placeholder?: string; trailing?: ReactNode; hint?: string }) {
   return (
-    <div className="px-4 pt-1 pb-2 flex items-center gap-2">
-      <div className="flex-1 flex items-center gap-2 h-10 rounded-full bg-foreground/[0.04] px-3.5 border border-foreground/8">
-        <Search className="h-4 w-4 text-foreground/40" />
-        <input
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          className="flex-1 bg-transparent outline-none text-sm placeholder:text-foreground/40"
-        />
-        {value && (
-          <button onClick={() => onChange("")} className="size-5 rounded-full bg-foreground/15 flex items-center justify-center">
-            <X className="h-3 w-3 text-[hsl(var(--paper))]" />
-          </button>
-        )}
+    <div className="px-4 pt-1 pb-2">
+      <div className="flex items-center gap-2">
+        <div className="flex-1 flex items-center gap-2 h-10 rounded-full bg-foreground/[0.04] px-3.5 border border-foreground/8">
+          <Search className="h-4 w-4 text-foreground/40" />
+          <input
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={placeholder}
+            className="flex-1 min-w-0 bg-transparent outline-none text-sm placeholder:text-foreground/40"
+          />
+          {value && (
+            <button onClick={() => onChange("")} className="size-5 rounded-full bg-foreground/15 flex items-center justify-center">
+              <X className="h-3 w-3 text-[hsl(var(--paper))]" />
+            </button>
+          )}
+        </div>
+        {trailing}
       </div>
-      {trailing}
+      {hint && <div className="mt-1.5 pl-3 text-[11px] font-semibold text-foreground/55">搜索范围：{hint}</div>}
     </div>
   );
 }
