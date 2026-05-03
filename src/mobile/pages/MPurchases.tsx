@@ -240,8 +240,8 @@ export default function MPurchases() {
       <MSearchBar
         value={query.keyword || ""}
         onChange={(v) => setFilter({ keyword: v })}
-        placeholder="输入采购单号、供应商或合同名"
-        hint="采购单号 / 供应商 / 合同名"
+        placeholder="输入采购单号、供应商、合同名或产品名"
+        hint="采购单号 / 供应商 / 合同名 / 明细产品"
       />
       <MChipFilter<BizFilter>
         value={biz} onChange={setBiz}
