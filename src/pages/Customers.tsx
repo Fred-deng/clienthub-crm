@@ -354,8 +354,7 @@ export default function Customers() {
                 <th className="num">操作</th>
               </tr>
             </thead>
-            <tbody>
-              {loading && <tr className="empty"><td colSpan={11} className="empty">加载中…</td></tr>}
+            <tbody className={loading ? "opacity-60 transition-opacity" : "transition-opacity"}>
               {!loading && data.list.length === 0 && (
                 <tr className="empty"><td colSpan={11} className="empty">暂无客户数据</td></tr>
               )}
