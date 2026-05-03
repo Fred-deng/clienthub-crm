@@ -1,10 +1,12 @@
 // 移动端通用 UI 组件库（扩展版：覆盖 PC 端全部交互所需的移动控件）
 import { ReactNode, useState, useEffect, useRef } from "react";
-import { ArrowLeft, Plus, Search, X, ChevronRight, ChevronDown, Trash2, Pencil, History, Check } from "lucide-react";
+import { ArrowLeft, Plus, Search, X, ChevronRight, ChevronDown, Trash2, Pencil, History, Check, Upload, Link2, FileText, Image as ImageIcon, FileArchive, FileSpreadsheet, FileType2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { logLineItemAdd, logLineItemDelete, logLineItemUpdate, listLineItemLogs, type LineItemLogModule } from "@/services/lineItemLog";
+import { fmtMoney, productCategoryLabel } from "@/lib/format";
 
 // ---------- 页面顶部 ----------
 export function MPageHeader({
@@ -376,14 +378,24 @@ export function MIconBtn({ icon, onClick, variant = "default", title }: { icon: 
 // ---------- 行项目编辑器（采购/销售明细） ----------
 export interface MLineItem { productId: string; productName: string; category?: string; qty: number; price: number; }
 
-export function MLineItemsEditor({ items, products, onChange, mode = "sales" }: {
+export function MLineItemsEditor({ items, products, onChange, mode = "sales", logModule, logScope }: {
   items: MLineItem[];
   products: { id: string; name: string; category?: string; price: number; cost: number; unit?: string }[];
   onChange: (items: MLineItem[]) => void;
   mode?: "sales" | "purchase";
+  logModule?: LineItemLogModule;
+  logScope?: string;
 }) {
+  const canLog = !!(logModule && logScope);
+  const [lineLogsOpen, setLineLogsOpen] = useState(false);
+  const [logTick, setLogTick] = useState(0);
+  const [focusSnapshot, setFocusSnapshot] = useState<Record<string, MLineItem>>({});
   const total = items.reduce((s, it) => s + (Number(it.qty) || 0) * (Number(it.price) || 0), 0);
+  const writeUpdateLog = (before: MLineItem, after: MLineItem) => {
+    if (canLog && logLineItemUpdate(logModule!, logScope!, before as any, after as any)) setLogTick((t) => t + 1);
+  };
   const update = (i: number, patch: Partial<MLineItem>) => {
+    const before = { ...items[i] };
     const next = [...items];
     next[i] = { ...next[i], ...patch };
     if (patch.productName !== undefined) {
@@ -397,13 +409,28 @@ export function MLineItemsEditor({ items, products, onChange, mode = "sales" }: 
       }
     }
     onChange(next);
+    if (patch.category !== undefined) writeUpdateLog(before, next[i]);
   };
   const add = () => {
     const p = products[0];
-    if (!p) return onChange([...items, { productId: "", productName: "", category: "other", qty: 1, price: 0 }]);
-    onChange([...items, { productId: p.id, productName: p.name, category: p.category as any, qty: 1, price: mode === "purchase" ? (p.cost || p.price) : p.price }]);
+    const row = !p ? { productId: "", productName: "", category: "other", qty: 1, price: 0 } : { productId: p.id, productName: p.name, category: p.category as any, qty: 1, price: mode === "purchase" ? (p.cost || p.price) : p.price };
+    onChange([...items, row]);
+    if (canLog) { logLineItemAdd(logModule!, logScope!, row as any); setLogTick((t) => t + 1); }
   };
-  const remove = (i: number) => onChange(items.filter((_, x) => x !== i));
+  const remove = (i: number) => {
+    const removed = items[i];
+    onChange(items.filter((_, x) => x !== i));
+    if (canLog && removed) { logLineItemDelete(logModule!, logScope!, removed as any); setLogTick((t) => t + 1); }
+  };
+  const capture = (i: number, field: keyof MLineItem) => setFocusSnapshot((m) => ({ ...m, [`${i}:${field}`]: { ...items[i] } }));
+  const flush = (i: number, field: keyof MLineItem) => {
+    const key = `${i}:${field}`;
+    const before = focusSnapshot[key];
+    const after = items[i];
+    if (before && after) writeUpdateLog(before, after);
+    setFocusSnapshot((m) => { const n = { ...m }; delete n[key]; return n; });
+  };
+  const lineLogs = canLog ? listLineItemLogs(logModule!, logScope!) : [];
 
   return (
     <div className="rounded-2xl border border-foreground/10 bg-foreground/[0.02] overflow-hidden">
