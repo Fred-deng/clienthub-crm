@@ -36,7 +36,7 @@ export default function MReceivables() {
     });
     customers.forEach(c => { const r = map.get(c.id); if (r) r.level = c.level; });
     return Array.from(map.values()).sort((a, b) => b.outstanding - a.outstanding);
-  }, [orders, customers, products]);
+  }, [orders, customers, products, range]);
 
   const view = (r: Row) => biz === "software" ? { contract: r.swContract, received: r.swReceived, outstanding: r.swOut } : biz === "hardware" ? { contract: r.hwContract, received: r.hwReceived, outstanding: r.hwOut } : { contract: r.contractAmount, received: r.received, outstanding: r.outstanding };
 
