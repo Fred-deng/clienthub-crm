@@ -366,30 +366,26 @@ export default function MPurchases() {
 
         {editing && (
           <>
-            <MAccordion title="发票管理（供应商开票）" badge={<MTag variant="cobalt">{(watch("invoices") || []).length} 张</MTag>}>
-              <MInvoiceList value={watch("invoices") || []} onChange={(v) => setValue("invoices", v)} direction="in" defaultParty={suppliers.find((s) => s.id === watch("supplierId"))?.name} />
-            </MAccordion>
-            <MAccordion title="付款记录" badge={<MTag variant="mustard">{orderPayments.length} 笔 · {fmtMoney(orderPayments.reduce((s, p) => s + p.amount, 0))}</MTag>}>
-              {orderPayments.length === 0 ? (
-                <div className="text-center py-4 text-[12px] text-foreground/40">暂无付款</div>
-              ) : (
-                <div className="space-y-1.5">
-                  {orderPayments.map((p) => (
-                    <div key={p.id} className="flex items-center justify-between text-[12px] py-1.5 border-b border-foreground/5">
-                      <div>
-                        <div className="font-mono">{p.code}</div>
-                        <div className="text-[10px] text-foreground/45">{p.paidAt} · {p.method}</div>
-                      </div>
-                      <div className="font-mono font-bold text-tomato">-{fmtMoney(p.amount)}</div>
+            <MGroupTitle>付款记录</MGroupTitle>
+            {orderPayments.length === 0 ? (
+              <div className="text-center py-4 text-[12px] text-foreground/40">暂无付款</div>
+            ) : (
+              <div className="space-y-1.5">
+                {orderPayments.map((p) => (
+                  <div key={p.id} className="flex items-center justify-between text-[12px] py-1.5 border-b border-foreground/5">
+                    <div>
+                      <div className="font-mono">{p.code}</div>
+                      <div className="text-[10px] text-foreground/45">{p.paidAt} · {p.method}</div>
                     </div>
-                  ))}
-                </div>
-              )}
-              <button type="button" onClick={() => { setQuickPay(editing); setQuickPayAmt(Math.max((editing.contractAmount ?? editing.totalAmount) - editing.paid, 0)); }} className="mt-2 w-full h-9 rounded-full bg-tomato text-[hsl(var(--paper))] text-[12px] font-semibold">+ 新增付款</button>
-            </MAccordion>
-            <MAccordion title="操作日志" badge={<MTag variant="muted">{currentLogs.length} 条</MTag>}>
-              <MLogList logs={currentLogs} />
-            </MAccordion>
+                    <div className="font-mono font-bold text-tomato">-{fmtMoney(p.amount)}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+            <button type="button" onClick={() => { setQuickPay(editing); setQuickPayAmt(Math.max((editing.contractAmount ?? editing.totalAmount) - editing.paid, 0)); }} className="mt-2 w-full h-9 rounded-full bg-tomato text-[hsl(var(--paper))] text-[12px] font-semibold">+ 新增付款</button>
+
+            <MGroupTitle>发票管理（供应商开票）</MGroupTitle>
+            <MInvoiceList value={watch("invoices") || []} onChange={(v) => setValue("invoices", v)} direction="in" defaultParty={suppliers.find((s) => s.id === watch("supplierId"))?.name} />
           </>
         )}
 
