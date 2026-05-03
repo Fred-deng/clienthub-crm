@@ -275,6 +275,14 @@ export default function Customers() {
         }
       />
 
+      <CustomerStats
+        list={allCustomers}
+        activeStatus={query.status ?? "all"}
+        activeSea={query.seaStatus ?? "all"}
+        onStatusClick={(s) => setFilter({ status: s })}
+        onSeaClick={(s) => setFilter({ seaStatus: s })}
+      />
+
       <DataPanel
         title="客户列表"
         subtitle={`Customer registry · ${data.total} records`}
