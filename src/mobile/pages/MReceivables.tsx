@@ -22,7 +22,7 @@ export default function MReceivables() {
 
   const rows: Row[] = useMemo(() => {
     const map = new Map<string, Row>();
-    orders.filter(o => o.status !== "cancelled").forEach(o => {
+    orders.filter(o => o.status !== "cancelled" && inRange(o.createdAt, { from: range.from || undefined, to: range.to || undefined })).forEach(o => {
       const c = o.contractAmount ?? o.totalAmount;
       const sCon = splitSales(o, products); const sRec = splitSalesReceived(o, products);
       const r = map.get(o.customerId) || { customerId: o.customerId, customerName: o.customerName, orderCount: 0, contractAmount: 0, received: 0, outstanding: 0, oldest: o.createdAt, swContract: 0, hwContract: 0, swReceived: 0, hwReceived: 0, swOut: 0, hwOut: 0 };
