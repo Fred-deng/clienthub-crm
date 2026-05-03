@@ -97,7 +97,7 @@ export function MCard({ children, onClick, className, selected, onSelectChange, 
 export function MList({ children, empty, emptyText = "暂无数据", loading }: { children: ReactNode; empty?: boolean; emptyText?: string; loading?: boolean }) {
   if (loading) return <div className="px-4 py-12 text-center text-sm text-foreground/45">加载中…</div>;
   if (empty) return <div className="px-4 py-16 text-center text-sm text-foreground/40">{emptyText}</div>;
-  return <div className="px-4 space-y-2.5 pb-4">{children}</div>;
+  return <div className="px-4 space-y-2.5 pb-32">{children}</div>;
 }
 
 // ---------- 状态徽标 ----------
@@ -118,7 +118,7 @@ export function MFab({ onClick, label = "新建", icon }: { onClick: () => void;
   return (
     <button
       onClick={onClick}
-      className="fixed right-4 bottom-20 z-30 h-13 px-5 py-3 rounded-full bg-tomato text-[hsl(var(--paper))] shadow-lg shadow-tomato/30 flex items-center gap-1.5 font-semibold text-sm active:scale-95 transition-transform"
+      className="fixed right-4 bottom-20 z-30 h-12 px-4 py-2.5 rounded-full bg-tomato text-[hsl(var(--paper))] shadow-lg shadow-tomato/30 flex items-center gap-1.5 font-semibold text-[13px] active:scale-95 transition-transform"
       style={{ marginBottom: "env(safe-area-inset-bottom)" }}
     >
       {icon ?? <Plus className="h-4 w-4" />}
@@ -217,10 +217,10 @@ export function MKpi({ label, value, sub, accent = "default" }: { label: string;
     default: "text-foreground", tomato: "text-tomato", mint: "text-mint", mustard: "text-mustard", cobalt: "text-cobalt",
   };
   return (
-    <div className="bg-card rounded-2xl p-3.5 border border-foreground/8">
-      <div className="text-[10px] font-mono uppercase tracking-wider text-foreground/50 mb-1">{label}</div>
-      <div className={cn("text-xl font-display font-black tabular-nums", accentMap[accent])}>{value}</div>
-      {sub && <div className="text-[11px] text-foreground/50 mt-1">{sub}</div>}
+    <div className="bg-card rounded-2xl px-3 py-2.5 border border-foreground/8 min-w-0">
+      <div className="text-[10px] font-mono uppercase tracking-wider text-foreground/50 mb-1 truncate">{label}</div>
+      <div className={cn("text-lg font-display font-black tabular-nums truncate", accentMap[accent])}>{value}</div>
+      {sub && <div className="text-[11px] text-foreground/50 mt-1 truncate">{sub}</div>}
     </div>
   );
 }
@@ -329,7 +329,7 @@ export function MDateRange({ value, onChange }: { value: { from: string; to: str
 // ---------- 横向滚动 chip 过滤器 ----------
 export function MChipFilter<T extends string>({ value, onChange, options }: { value: T; onChange: (v: T) => void; options: { value: T; label: string }[] }) {
   return (
-    <div className="px-4 pb-3 -mx-1 flex gap-1.5 overflow-x-auto no-scrollbar">
+    <div className="px-4 pb-3 -mx-1 pr-5 flex gap-1.5 overflow-x-auto no-scrollbar">
       {options.map((o) => (
         <button
           key={o.value}

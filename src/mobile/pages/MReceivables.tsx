@@ -88,7 +88,7 @@ export default function MReceivables() {
 
   return (
     <>
-      <MPageHeader title="应收账款" subtitle={`${filtered.length} 客户`} />
+      <MPageHeader sticky={false} title="应收账款" subtitle={`${filtered.length} 客户`} />
       <div className="px-4 pb-3 grid grid-cols-2 gap-2">
         <MKpi label="合同总额" value={fmtMoneyShort(totals.contract)} accent="cobalt" />
         <MKpi label="已开票" value={fmtMoneyShort(totals.invoiced)} accent="mint" />

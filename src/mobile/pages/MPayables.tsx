@@ -89,7 +89,7 @@ export default function MPayables() {
 
   return (
     <>
-      <MPageHeader title="应付账款" subtitle={`${filtered.length} 供应商`} />
+      <MPageHeader sticky={false} title="应付账款" subtitle={`${filtered.length} 供应商`} />
       <div className="px-4 pb-3 grid grid-cols-2 gap-2">
         <MKpi label="合同总额" value={fmtMoneyShort(totals.contract)} accent="cobalt" />
         <MKpi label="已收发票" value={fmtMoneyShort(totals.invoiced)} accent="mint" />
