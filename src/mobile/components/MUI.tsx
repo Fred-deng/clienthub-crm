@@ -430,7 +430,7 @@ export function MLineItemsEditor({ items, products, onChange, mode = "sales", lo
     if (before && after) writeUpdateLog(before, after);
     setFocusSnapshot((m) => { const n = { ...m }; delete n[key]; return n; });
   };
-  const lineLogs = canLog ? listLineItemLogs(logModule!, logScope!) : [];
+  const lineLogs = canLog ? (logTick >= 0 ? listLineItemLogs(logModule!, logScope!) : []) : [];
 
   return (
     <div className="rounded-2xl border border-foreground/10 bg-foreground/[0.02] overflow-hidden">
