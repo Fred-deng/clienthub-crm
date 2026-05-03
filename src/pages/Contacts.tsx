@@ -347,7 +347,7 @@ export default function Contacts() {
             <Field label="联系人编号"><Input {...register("code")} /></Field>
             <Field label="客户名称"><Input value={watch("customerName")} disabled /></Field>
 
-            <DialogFooter className="col-span-12 mt-4">
+            <DialogFooter data-group-skip="1" className="col-span-12 mt-4">
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>取消</Button>
               <Button type="submit">{editing ? "保存修改" : "创建联系人"}</Button>
             </DialogFooter>

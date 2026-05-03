@@ -371,7 +371,7 @@ export default function Suppliers() {
               )}
             </div>
 
-            <DialogFooter className="col-span-12 mt-4">
+            <DialogFooter data-group-skip="1" className="col-span-12 mt-4">
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>取消</Button>
               <Button type="submit">{editing ? "保存修改" : "创建供应商"}</Button>
             </DialogFooter>
@@ -461,7 +461,7 @@ function MiniSupplierContactDialog({
             </div>
           </Field>
           <Field label="备注" span={12}><Textarea rows={2} {...register("remark")} /></Field>
-          <DialogFooter className="col-span-12 mt-2">
+          <DialogFooter data-group-skip="1" className="col-span-12 mt-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>取消</Button>
             <Button type="submit">创建联系人</Button>
           </DialogFooter>

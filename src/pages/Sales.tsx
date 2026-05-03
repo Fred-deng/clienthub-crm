@@ -556,7 +556,7 @@ export default function Sales() {
             <Field label="其他附件" span={4}><AttachmentField value={watch("otherAttachments") || []} onChange={(v) => setValue("otherAttachments", v)} /></Field>
             <Field label="备注" span={4}><Textarea rows={3} {...register("remark")} /></Field>
 
-            <DialogFooter className="col-span-12 mt-4">
+            <DialogFooter data-group-skip="1" className="col-span-12 mt-4">
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>取消</Button>
               <Button type="submit">{editing ? "保存" : "创建合同"}</Button>
             </DialogFooter>

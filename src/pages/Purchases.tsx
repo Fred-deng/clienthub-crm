@@ -572,7 +572,7 @@ export default function Purchases() {
             <GroupTitle>备注</GroupTitle>
             <Field label="备注" span={12}><Textarea rows={3} placeholder="补充说明" {...register("remark")} /></Field>
 
-            <DialogFooter className="col-span-12 mt-4">
+            <DialogFooter data-group-skip="1" className="col-span-12 mt-4">
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>取消</Button>
               <Button type="submit">{editing ? "保存修改" : "创建采购订单"}</Button>
             </DialogFooter>
