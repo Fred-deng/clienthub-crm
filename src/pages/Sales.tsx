@@ -20,6 +20,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { DateRangeFilter } from "@/components/common/DateRangeFilter";
 import { salesApi, customerApi, productApi, employeeApi } from "@/services/api";
 import { logOrderUpdate, logOrderDelete } from "@/services/orderLog";
@@ -120,6 +121,23 @@ export default function Sales() {
   const [quickInv, setQuickInv] = useState<SalesOrder | null>(null);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState<string>("");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [bulkStatus, setBulkStatus] = useState<string>("");
+
+  const applyBulkStatus = async () => {
+    if (!bulkStatus || selectedIds.length === 0) return;
+    const op = readCurrentOperator();
+    for (const id of selectedIds) {
+      const order = data.list.find((o) => o.id === id);
+      if (!order || order.status === bulkStatus) continue;
+      const merged = { ...order, status: bulkStatus as any } as SalesOrder;
+      syncSalesStock(order, merged, op);
+      logOrderUpdate("sales", order, { status: bulkStatus });
+      await salesApi.update(id, { status: bulkStatus } as any);
+    }
+    toast.success(`已将 ${selectedIds.length} 单更新为「${statusLabels[bulkStatus] || bulkStatus}」`);
+    setSelectedIds([]); setBulkStatus(""); reload();
+  };
 
   useEffect(() => {
     customerApi.all().then((cs) => setCustomers(cs.filter((c) => c.stage === "formal")));
@@ -243,9 +261,25 @@ export default function Sales() {
         title={<h3 className="text-xs font-bold uppercase tracking-[0.2em]">合同列表</h3>}
         actions={
           <div className="flex items-center gap-2">
+            {selectedIds.length > 0 && (
+              <div className="flex items-center gap-1.5 px-2.5 h-9 rounded-full bg-warning/10 text-[12px]">
+                <span className="text-warning font-semibold">已选 {selectedIds.length}</span>
+                <Select value={bulkStatus} onValueChange={setBulkStatus}>
+                  <SelectTrigger className="h-7 w-24 text-xs"><SelectValue placeholder="改状态" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pending">待发货</SelectItem>
+                    <SelectItem value="shipped">运输中</SelectItem>
+                    <SelectItem value="delivered">已送达</SelectItem>
+                    <SelectItem value="cancelled">已取消</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button size="sm" className="h-7 text-xs" disabled={!bulkStatus} onClick={applyBulkStatus}>应用</Button>
+                <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setSelectedIds([])}>清空</Button>
+              </div>
+            )}
             <div className="relative">
               <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <Input placeholder="搜索合同号/客户" className="pl-8 h-8 w-56 text-xs" onChange={(e) => setFilter({ keyword: e.target.value })} />
+              <Input placeholder="搜索合同号/客户/明细产品" className="pl-8 h-8 w-64 text-xs" onChange={(e) => setFilter({ keyword: e.target.value })} />
             </div>
             <Select value={query.status ?? "all"} onValueChange={(v) => setFilter({ status: v })}>
               <SelectTrigger className="h-8 w-28 text-xs"><SelectValue /></SelectTrigger>
@@ -268,6 +302,15 @@ export default function Sales() {
           <table className="data-table">
             <thead>
               <tr>
+                <th className="w-10">
+                  <Checkbox
+                    checked={data.list.length > 0 && data.list.every((o) => selectedIds.includes(o.id))}
+                    onCheckedChange={(v) => {
+                      if (v) setSelectedIds(Array.from(new Set([...selectedIds, ...data.list.map((o) => o.id)])));
+                      else setSelectedIds(selectedIds.filter((id) => !data.list.find((o) => o.id === id)));
+                    }}
+                  />
+                </th>
                 <th>合同编号</th>
                 <th>合同名称</th>
                 <th>客户</th>
@@ -283,14 +326,18 @@ export default function Sales() {
               </tr>
             </thead>
             <tbody>
-              {loading && <tr className="empty"><td colSpan={12} className="empty">加载中…</td></tr>}
+              {loading && <tr className="empty"><td colSpan={13} className="empty">加载中…</td></tr>}
               {data.list
                 .map((o) => ({ o, split: splitSales(o, products) }))
                 .filter(({ split }) => biz === "all" || (biz === "software" ? split.software > 0 : split.hardware > 0))
                 .map(({ o, split }) => {
                 const owner = employees.find((e) => e.id === (o.accountManagerId || o.ownerId));
+                const checked = selectedIds.includes(o.id);
                 return (
                   <tr key={o.id} className="clickable" onDoubleClick={() => openEdit(o)} title="双击查看详情">
+                    <td onDoubleClick={(e) => e.stopPropagation()}>
+                      <Checkbox checked={checked} onCheckedChange={(v) => setSelectedIds(v ? [...selectedIds, o.id] : selectedIds.filter((x) => x !== o.id))} />
+                    </td>
                     <td className="mono">{o.code}</td>
                     <td className="bold"><span className="block max-w-[200px] truncate">{o.contractTitle ?? "—"}</span></td>
                     <td><span className="block max-w-[180px] truncate">{o.customerName}</span></td>
@@ -322,7 +369,7 @@ export default function Sales() {
               return (
                 <tfoot>
                   <tr>
-                    <td colSpan={6} className="label">本页 {data.list.length} 单 / 共 {data.total} 单 · 合计</td>
+                    <td colSpan={7} className="label">本页 {data.list.length} 单 / 共 {data.total} 单 · 合计</td>
                     <td className="num">{fmtMoney(sumContract)}</td>
                     <td className="num text-mint">{fmtMoney(sumReceived)}</td>
                     <td className="num text-cobalt">{fmtMoney(sumInvoice)}</td>

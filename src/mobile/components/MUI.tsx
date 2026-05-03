@@ -14,7 +14,7 @@ export function MPageHeader({
 }: { title: string; subtitle?: string; back?: boolean; action?: ReactNode; sticky?: boolean }) {
   const nav = useNavigate();
   return (
-    <div className={cn("bg-background z-20 px-4 py-3 border-b border-foreground/5", sticky && "sticky top-12")}>
+    <div className={cn("bg-background z-20 px-4 pt-2 pb-2.5 border-b border-foreground/5", sticky && "sticky top-12")}>
       <div className="flex items-center gap-2">
         {back && (
           <button onClick={() => nav(-1)} className="size-9 -ml-2 rounded-full hover:bg-foreground/5 flex items-center justify-center">
@@ -34,7 +34,7 @@ export function MPageHeader({
 // ---------- 搜索栏 ----------
 export function MSearchBar({ value, onChange, placeholder = "搜索…", trailing }: { value: string; onChange: (v: string) => void; placeholder?: string; trailing?: ReactNode }) {
   return (
-    <div className="px-4 pt-2 pb-3 flex items-center gap-2">
+    <div className="px-4 pt-1 pb-2 flex items-center gap-2">
       <div className="flex-1 flex items-center gap-2 h-10 rounded-full bg-foreground/[0.04] px-3.5 border border-foreground/8">
         <Search className="h-4 w-4 text-foreground/40" />
         <input
@@ -55,7 +55,7 @@ export function MSearchBar({ value, onChange, placeholder = "搜索…", trailin
 }
 
 // ---------- 卡片 ----------
-export function MCard({ children, onClick, className, selected, onSelectChange }: { children: ReactNode; onClick?: () => void; className?: string; selected?: boolean; onSelectChange?: (s: boolean) => void }) {
+export function MCard({ children, onClick, className, selected, onSelectChange, selectPosition = "top" }: { children: ReactNode; onClick?: () => void; className?: string; selected?: boolean; onSelectChange?: (s: boolean) => void; selectPosition?: "top" | "bottom" }) {
   return (
     <div
       onClick={onClick}
@@ -66,7 +66,7 @@ export function MCard({ children, onClick, className, selected, onSelectChange }
         className
       )}
     >
-      {onSelectChange && (
+      {onSelectChange && selectPosition === "top" && (
         <button
           onClick={(e) => { e.stopPropagation(); onSelectChange(!selected); }}
           className={cn("absolute top-2.5 right-2.5 size-5 rounded-full border-2 flex items-center justify-center transition-colors z-10",
@@ -76,6 +76,16 @@ export function MCard({ children, onClick, className, selected, onSelectChange }
         </button>
       )}
       {children}
+      {onSelectChange && selectPosition === "bottom" && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onSelectChange(!selected); }}
+          className={cn("absolute bottom-3 left-3 size-6 rounded-full border-2 flex items-center justify-center transition-colors z-10",
+            selected ? "bg-tomato border-tomato" : "border-foreground/25 bg-card")}
+          aria-label="选择"
+        >
+          {selected && <Check className="h-3.5 w-3.5 text-[hsl(var(--paper))]" />}
+        </button>
+      )}
     </div>
   );
 }

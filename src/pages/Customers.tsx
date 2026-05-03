@@ -20,6 +20,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { customerApi, contactApi, followUpApi, employeeApi, salesApi, productApi } from "@/services/api";
+import { CustomerStats } from "@/components/common/CustomerStats";
 import { exportCsv } from "@/lib/csv";
 import { usePagedList } from "@/hooks/usePagedList";
 import { fmtMoney, customerStageLabel, customerStatusLabel, customerStatusTone, deriveCustomerStage } from "@/lib/format";
@@ -95,7 +96,8 @@ export default function Customers() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [allSales, setAllSales] = useState<SalesOrder[]>([]);
-  useEffect(() => { employeeApi.all().then(setEmployees); salesApi.all().then(setAllSales); }, []);
+  const [allCustomers, setAllCustomers] = useState<Customer[]>([]);
+  useEffect(() => { employeeApi.all().then(setEmployees); salesApi.all().then(setAllSales); customerApi.all().then(setAllCustomers); }, [data]);
 
   // 动态应收：按客户聚合「合同金额(优先) - 已回款」（排除已取消订单）
   const receivableByCustomer = useMemo(() => {
@@ -271,6 +273,14 @@ export default function Customers() {
             <Button size="sm" onClick={openCreate}><Plus className="h-4 w-4 mr-1.5" />新增客户</Button>
           </>
         }
+      />
+
+      <CustomerStats
+        list={allCustomers}
+        activeStatus={query.status ?? "all"}
+        activeSea={query.seaStatus ?? "all"}
+        onStatusClick={(s) => setFilter({ status: s })}
+        onSeaClick={(s) => setFilter({ seaStatus: s })}
       />
 
       <DataPanel

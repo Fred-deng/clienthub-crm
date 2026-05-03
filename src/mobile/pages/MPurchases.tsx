@@ -266,9 +266,10 @@ export default function MPurchases() {
               onClick={() => openEdit(o)}
               selected={selectedIds.includes(o.id)}
               onSelectChange={(s) => setSelectedIds(s ? [...selectedIds, o.id] : selectedIds.filter((x) => x !== o.id))}
+              selectPosition="bottom"
             >
               <div className="flex items-start justify-between gap-2 mb-1.5">
-                <div className="min-w-0 flex-1 pr-7">
+                <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5 flex-wrap mb-1">
                     <MTag variant={statusVariant(o.status)}>{statusLabels[o.status] || o.status}</MTag>
                     <MTag variant={split.category === "software" ? "cobalt" : split.category === "hardware" ? "mint" : "mustard"}>
@@ -285,7 +286,7 @@ export default function MPurchases() {
                   {unpaid > 0 && <div className="text-[10px] text-mustard font-mono">未 {fmtMoney(unpaid)}</div>}
                 </div>
               </div>
-              <div className="flex items-center justify-between mt-2 pt-2 border-t border-foreground/5">
+              <div className="flex items-center justify-between mt-2 pt-2 border-t border-foreground/5 pl-8">
                 <span className="font-mono text-[10px] text-foreground/45">{o.code} · {o.appliedAt}</span>
                 <div className="flex gap-1">
                   <MIconBtn icon={<ArrowUpRight className="h-3.5 w-3.5" />} variant="primary" title="登记付款" onClick={() => { setQuickPay(o); setQuickPayAmt(unpaid); }} />
