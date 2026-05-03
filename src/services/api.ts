@@ -16,8 +16,17 @@ function paginate<T>(list: T[], q: ListQuery = {}): Paged<T> {
 
 function filterByKeyword<T extends Record<string, any>>(list: T[], keyword?: string, fields: string[] = []): T[] {
   if (!keyword) return list;
-  const k = keyword.toLowerCase();
-  return list.filter((it) => fields.some((f) => String(it[f] ?? "").toLowerCase().includes(k)));
+  const k = normalizeKeyword(keyword);
+  if (!k) return list;
+  return list.filter((it) => fields.some((f) => includesKeyword(it[f], k)));
+}
+
+function normalizeKeyword(keyword?: string) {
+  return (keyword || "").toLowerCase().trim();
+}
+
+function includesKeyword(value: any, keyword: string) {
+  return String(value ?? "").toLowerCase().includes(keyword);
 }
 
 function makeId(prefix: string) {
@@ -124,7 +133,7 @@ export const supplierContactApi = buildCrud(supplierContacts, {
   },
 });
 
-export const purchaseApi = buildCrud(purchases, {
+const _purchaseCrud = buildCrud(purchases, {
   idPrefix: "po",
   // 编号 / 供应商 / 合同名（contractTitle）
   searchFields: ["code", "supplierName", "contractTitle"],
@@ -135,6 +144,24 @@ export const purchaseApi = buildCrud(purchases, {
     return true;
   },
 });
+
+export const purchaseApi = {
+  ..._purchaseCrud,
+  // 移动端/PC 共用：明确按采购单号、供应商、合同名称做全量模糊检索，再分页
+  async list(q: ListQuery = {}) {
+    const k = normalizeKeyword(q.keyword);
+    if (!k) return _purchaseCrud.list(q);
+    const baseRes = await _purchaseCrud.list({ ...q, keyword: undefined, page: 1, pageSize: 99999 });
+    const matched = baseRes.list.filter((o: any) =>
+      includesKeyword(o.code, k) ||
+      includesKeyword(o.supplierName, k) ||
+      includesKeyword(o.contractTitle, k)
+    );
+    const page = q.page ?? 1, pageSize = q.pageSize ?? 10;
+    const start = (page - 1) * pageSize;
+    return { list: matched.slice(start, start + pageSize), total: matched.length, page, pageSize };
+  },
+};
 
 export const contractApi = buildCrud(contracts, {
   idPrefix: "ct",
@@ -162,16 +189,16 @@ const _salesCrud = buildCrud(salesOrders, {
 });
 export const salesApi = {
   ..._salesCrud,
-  // 重写 list：支持按销售明细产品名称模糊匹配
+  // 移动端/PC 共用：合同号、客户名称、合同名称、销售明细产品名称全量模糊检索，再分页
   async list(q: ListQuery = {}) {
-    const k = (q.keyword || "").toLowerCase().trim();
+    const k = normalizeKeyword(q.keyword);
     if (!k) return _salesCrud.list(q);
     const baseRes = await _salesCrud.list({ ...q, keyword: undefined, page: 1, pageSize: 99999 });
     const matched = baseRes.list.filter((o: any) => {
-      if ((o.code || "").toLowerCase().includes(k)) return true;
-      if ((o.customerName || "").toLowerCase().includes(k)) return true;
-      if ((o.contractTitle || "").toLowerCase().includes(k)) return true;
-      return (o.items || []).some((it: any) => (it.productName || "").toLowerCase().includes(k));
+      if (includesKeyword(o.code, k)) return true;
+      if (includesKeyword(o.customerName, k)) return true;
+      if (includesKeyword(o.contractTitle, k)) return true;
+      return (o.items || []).some((it: any) => includesKeyword(it.productName, k));
     });
     const page = q.page ?? 1, pageSize = q.pageSize ?? 10;
     const start = (page - 1) * pageSize;
