@@ -75,7 +75,7 @@ export default function MReconciliation() {
   return (
     <>
       <MPageHeader title="账款核对" subtitle={`${groups.length} 家 · ${filtered.length} 单`} />
-      <div className="px-4 pt-4 pb-2 grid grid-cols-2 gap-2 bg-background">
+      <div className="sticky top-[5.5rem] z-10 bg-background px-4 pt-3 pb-2 grid grid-cols-2 gap-2 border-b border-foreground/5">
         <button onClick={() => setTab("in")} className={`h-11 rounded-2xl text-sm font-bold inline-flex items-center justify-center gap-1.5 ${tab === "in" ? "bg-tomato text-[hsl(var(--paper))] shadow-sm" : "bg-card border border-foreground/10 text-foreground/65"}`}>
           <ArrowDownLeft className="h-4 w-4" />应收（销售回款）
         </button>
