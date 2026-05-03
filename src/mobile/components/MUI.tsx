@@ -589,6 +589,31 @@ export function MInvoiceList({ value, onChange, direction, defaultParty }: { val
   );
 }
 
+export function MAttachmentList({ value, onChange }: { value: string[]; onChange: (v: string[]) => void }) {
+  const [linkOpen, setLinkOpen] = useState(false);
+  const [draft, setDraft] = useState("");
+  const fileRef = useRef<HTMLInputElement>(null);
+  const iconFor = (name: string) => {
+    const ext = name.split(".").pop()?.toLowerCase() || "";
+    if (["png", "jpg", "jpeg", "gif", "webp", "svg"].includes(ext)) return ImageIcon;
+    if (["zip", "rar", "7z"].includes(ext)) return FileArchive;
+    if (["xls", "xlsx", "csv"].includes(ext)) return FileSpreadsheet;
+    if (["pdf", "doc", "docx", "txt"].includes(ext)) return FileType2;
+    return FileText;
+  };
+  const append = (name: string) => { const v = name.trim(); if (v) onChange([...(value || []), v]); };
+  const pick = (files: FileList | null) => { if (!files) return; Array.from(files).forEach((f) => append(f.name)); if (fileRef.current) fileRef.current.value = ""; };
+  return <div className="rounded-2xl border border-foreground/10 bg-foreground/[0.02] p-3 space-y-2">
+    {(value || []).length === 0 && !linkOpen && <button type="button" onClick={() => fileRef.current?.click()} className="w-full py-5 rounded-xl border-2 border-dashed border-foreground/15 flex flex-col items-center gap-2 text-foreground/55"><Upload className="h-4 w-4" /><span className="text-[12px] font-semibold">点击选择文件</span></button>}
+    {(value || []).map((f, i) => { const Icon = iconFor(f); return <div key={`${f}-${i}`} className="flex items-center gap-2 p-2 rounded-lg bg-card border border-foreground/10">
+      <span className="size-8 rounded-md bg-cobalt/10 text-cobalt flex items-center justify-center"><Icon className="h-4 w-4" /></span><span className="flex-1 min-w-0 truncate text-[12px] font-semibold">{f}</span><button type="button" onClick={() => onChange(value.filter((_, idx) => idx !== i))} className="size-7 rounded-md bg-destructive/10 text-destructive flex items-center justify-center"><Trash2 className="h-3.5 w-3.5" /></button>
+    </div>; })}
+    {linkOpen && <div className="flex gap-2"><input autoFocus value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="附件链接或文件名" className="flex-1 h-9 px-2 rounded-lg bg-card border border-foreground/10 text-[12px]" /><button type="button" onClick={() => { append(draft); setDraft(""); setLinkOpen(false); }} className="px-3 rounded-lg bg-foreground text-[hsl(var(--paper))] text-[12px]">确定</button></div>}
+    <div className="grid grid-cols-2 gap-2"><button type="button" onClick={() => fileRef.current?.click()} className="h-8 rounded-full bg-foreground/[0.06] text-[11px] font-semibold"><Plus className="inline h-3 w-3 mr-1" />添加文件</button><button type="button" onClick={() => setLinkOpen(true)} className="h-8 rounded-full bg-foreground/[0.06] text-[11px] font-semibold"><Link2 className="inline h-3 w-3 mr-1" />粘贴链接</button></div>
+    <input ref={fileRef} type="file" multiple className="hidden" onChange={(e) => pick(e.target.files)} />
+  </div>;
+}
+
 // ---------- 操作日志查看（移动版） ----------
 export function MLogList({ logs, emptyText = "暂无日志" }: { logs: { id: string; action?: string; refCode?: string; operator?: string; createdAt: string; changes?: { field: string; before: any; after: any }[]; remark?: string }[]; emptyText?: string }) {
   if (!logs.length) return <div className="text-center py-6 text-[12px] text-foreground/40">{emptyText}</div>;
