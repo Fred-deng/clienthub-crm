@@ -10,7 +10,7 @@ import { fmtMoney, productCategoryLabel } from "@/lib/format";
 
 // ---------- 页面顶部 ----------
 export function MPageHeader({
-  title, subtitle, back = false, action, sticky = true,
+  title, subtitle, back = false, action, sticky = false,
 }: { title: string; subtitle?: string; back?: boolean; action?: ReactNode; sticky?: boolean }) {
   const nav = useNavigate();
   return (
