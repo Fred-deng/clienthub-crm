@@ -36,21 +36,9 @@ const empty: Omit<FollowUp, "id"> = {
   createdAt: new Date().toISOString().slice(0, 10),
 };
 
+import { CollapsibleGroupTitle } from "@/components/common/CollapsibleGroup";
 function GroupTitle({ children, tone = "tomato" }: { children: ReactNode; tone?: "tomato" | "mint" | "mustard" | "cobalt" }) {
-  const toneMap: Record<string, string> = {
-    tomato: "bg-tomato/15 text-tomato",
-    mint: "bg-mint/30 text-foreground",
-    mustard: "bg-mustard/25 text-foreground",
-    cobalt: "bg-cobalt/15 text-cobalt",
-  };
-  return (
-    <div className="col-span-12 flex items-center gap-3 mt-2 first:mt-0">
-      <span className={"inline-flex items-center px-3 h-7 rounded-md text-xs font-semibold tracking-wide " + toneMap[tone]}>
-        {children}
-      </span>
-      <div className="flex-1 h-px bg-foreground/10" />
-    </div>
-  );
+  return <CollapsibleGroupTitle storageKey="followups" tone={tone}>{children}</CollapsibleGroupTitle>;
 }
 function Field({ label, required, span = 4, children }: { label: string; required?: boolean; span?: number; children: ReactNode }) {
   const m: Record<number, string> = {
