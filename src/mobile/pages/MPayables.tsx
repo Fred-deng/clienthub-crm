@@ -17,12 +17,13 @@ export default function MPayables() {
   const [keyword, setKeyword] = useState("");
   const [biz, setBiz] = useState<BizFilter>("all");
   const [filter, setFilter] = useState<"all" | "outstanding" | "settled">("outstanding");
+  const [range, setRange] = useState({ from: "", to: "" });
 
   useEffect(() => { purchaseApi.all().then(setOrders); supplierApi.all().then(setSuppliers); productApi.all().then(setProducts); }, []);
 
   const rows: Row[] = useMemo(() => {
     const map = new Map<string, Row>();
-    orders.filter(o => o.status !== "cancelled" && o.status !== "draft").forEach(o => {
+    orders.filter(o => o.status !== "cancelled" && o.status !== "draft" && inRange(o.createdAt, { from: range.from || undefined, to: range.to || undefined })).forEach(o => {
       const c = o.contractAmount || o.totalAmount;
       const sCon = splitPurchase(o, products); const sPaid = splitPurchasePaid(o, products);
       const r = map.get(o.supplierId) || { supplierId: o.supplierId, supplierName: o.supplierName, orderCount: 0, contractAmount: 0, paid: 0, outstanding: 0, oldest: o.createdAt, swContract: 0, hwContract: 0, swPaid: 0, hwPaid: 0, swOut: 0, hwOut: 0 };
