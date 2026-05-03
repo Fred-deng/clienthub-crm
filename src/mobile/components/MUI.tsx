@@ -97,7 +97,7 @@ export function MCard({ children, onClick, className, selected, onSelectChange, 
 export function MList({ children, empty, emptyText = "暂无数据", loading }: { children: ReactNode; empty?: boolean; emptyText?: string; loading?: boolean }) {
   if (loading) return <div className="px-4 py-12 text-center text-sm text-foreground/45">加载中…</div>;
   if (empty) return <div className="px-4 py-16 text-center text-sm text-foreground/40">{emptyText}</div>;
-  return <div className="px-4 space-y-2.5 pb-4">{children}</div>;
+  return <div className="px-4 space-y-2.5 pb-32">{children}</div>;
 }
 
 // ---------- 状态徽标 ----------
