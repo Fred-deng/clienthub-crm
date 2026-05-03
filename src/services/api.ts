@@ -152,11 +152,12 @@ export const purchaseApi = {
     const k = normalizeKeyword(q.keyword);
     if (!k) return _purchaseCrud.list(q);
     const baseRes = await _purchaseCrud.list({ ...q, keyword: undefined, page: 1, pageSize: 99999 });
-    const matched = baseRes.list.filter((o: any) =>
-      includesKeyword(o.code, k) ||
-      includesKeyword(o.supplierName, k) ||
-      includesKeyword(o.contractTitle, k)
-    );
+    const matched = baseRes.list.filter((o: any) => {
+      if (includesKeyword(o.code, k)) return true;
+      if (includesKeyword(o.supplierName, k)) return true;
+      if (includesKeyword(o.contractTitle, k)) return true;
+      return (o.items || []).some((it: any) => includesKeyword(it.productName, k));
+    });
     const page = q.page ?? 1, pageSize = q.pageSize ?? 10;
     const start = (page - 1) * pageSize;
     return { list: matched.slice(start, start + pageSize), total: matched.length, page, pageSize };
