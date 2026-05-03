@@ -145,9 +145,10 @@ export const contractApi = buildCrud(contracts, {
   },
 });
 
-export const salesApi = buildCrud(salesOrders, {
+const _salesCrud = buildCrud(salesOrders, {
   idPrefix: "so",
-  searchFields: ["code", "customerName"],
+  // 合同号 / 客户 / 合同名
+  searchFields: ["code", "customerName", "contractTitle"],
   filter: (it, q) => {
     if (q.status && q.status !== "all" && it.status !== q.status) return false;
     if (q.month) {
@@ -159,6 +160,24 @@ export const salesApi = buildCrud(salesOrders, {
     return true;
   },
 });
+export const salesApi = {
+  ..._salesCrud,
+  // 重写 list：支持按销售明细产品名称模糊匹配
+  async list(q: ListQuery = {}) {
+    const k = (q.keyword || "").toLowerCase().trim();
+    if (!k) return _salesCrud.list(q);
+    const baseRes = await _salesCrud.list({ ...q, keyword: undefined, page: 1, pageSize: 99999 });
+    const matched = baseRes.list.filter((o: any) => {
+      if ((o.code || "").toLowerCase().includes(k)) return true;
+      if ((o.customerName || "").toLowerCase().includes(k)) return true;
+      if ((o.contractTitle || "").toLowerCase().includes(k)) return true;
+      return (o.items || []).some((it: any) => (it.productName || "").toLowerCase().includes(k));
+    });
+    const page = q.page ?? 1, pageSize = q.pageSize ?? 10;
+    const start = (page - 1) * pageSize;
+    return { list: matched.slice(start, start + pageSize), total: matched.length, page, pageSize };
+  },
+};
 
 export const paymentApi = buildCrud(payments, {
   idPrefix: "pay",
