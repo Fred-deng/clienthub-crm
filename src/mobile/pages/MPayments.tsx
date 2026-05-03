@@ -156,6 +156,31 @@ export default function MPayments() {
         <MField label="备注"><MTextarea value={form.remark} onChange={e => setForm({ ...form, remark: e.target.value })} /></MField>
       </MSheet>
 
+      <MSheet open={!!viewing} onOpenChange={v => !v && setViewing(null)} title="收支详情"
+        footer={<MButton variant="ghost" onClick={() => setViewing(null)} className="w-full">关闭</MButton>}>
+        {viewing && (() => {
+          const split = splitPayment(viewing, { sales, purchases: purs }, products);
+          const inDir = viewing.direction === "in";
+          return (
+            <>
+              <MGroupTitle>基本信息</MGroupTitle>
+              <MField label="流水号"><div className="font-mono text-[12px]">{viewing.code}</div></MField>
+              <MField label="方向"><MTag variant={inDir ? "mint" : "tomato"}>{inDir ? "回款" : "付款"}</MTag></MField>
+              <MField label="对手方"><div className="text-[13px]">{viewing.partyName}</div></MField>
+              <MField label="关联单据"><div className="font-mono text-[12px]">{viewing.refCode}</div></MField>
+              <MField label="金额"><div className={`text-lg font-display font-black tabular-nums ${inDir ? "text-mint" : "text-tomato"}`}>{inDir ? "+" : "-"}{fmtMoney(viewing.amount)}</div></MField>
+              <MField label="方式"><div className="text-[13px]">{viewing.method}</div></MField>
+              <MField label="日期"><div className="text-[13px]">{viewing.paidAt}</div></MField>
+              {viewing.remark && <MField label="备注"><div className="text-[12px] text-foreground/75">{viewing.remark}</div></MField>}
+              <MGroupTitle>金额拆分</MGroupTitle>
+              <MField label="软件部分"><div className="tabular-nums">{fmtMoney(split.software)}</div></MField>
+              <MField label="硬件部分"><div className="tabular-nums">{fmtMoney(split.hardware)}</div></MField>
+              <MField label="归类"><MTag variant={split.category === "software" ? "cobalt" : split.category === "hardware" ? "mint" : "mustard"}>{bizLabel[split.category]}</MTag></MField>
+            </>
+          );
+        })()}
+      </MSheet>
+
       <MConfirm open={!!delId} onOpenChange={v => !v && setDelId(null)} title="删除流水" onConfirm={onDelete} danger confirmText="删除" />
     </>
   );
