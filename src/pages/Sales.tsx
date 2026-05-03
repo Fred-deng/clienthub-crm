@@ -302,6 +302,15 @@ export default function Sales() {
           <table className="data-table">
             <thead>
               <tr>
+                <th className="w-10">
+                  <Checkbox
+                    checked={data.list.length > 0 && data.list.every((o) => selectedIds.includes(o.id))}
+                    onCheckedChange={(v) => {
+                      if (v) setSelectedIds(Array.from(new Set([...selectedIds, ...data.list.map((o) => o.id)])));
+                      else setSelectedIds(selectedIds.filter((id) => !data.list.find((o) => o.id === id)));
+                    }}
+                  />
+                </th>
                 <th>合同编号</th>
                 <th>合同名称</th>
                 <th>客户</th>
