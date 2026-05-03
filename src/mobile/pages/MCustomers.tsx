@@ -9,6 +9,7 @@ import {
   MBulkBar, MIconBtn,
 } from "../components/MUI";
 import { customerApi, contactApi, followUpApi, employeeApi, salesApi } from "@/services/api";
+import { CustomerStats } from "@/components/common/CustomerStats";
 import { exportCsv } from "@/lib/csv";
 import { fmtMoney, customerStatusLabel, customerStatusTone, deriveCustomerStage } from "@/lib/format";
 import type { Customer, Contact, FollowUp, Employee, SalesOrder } from "@/types";
