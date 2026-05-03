@@ -245,7 +245,7 @@ export default function Sales() {
           <div className="flex items-center gap-2">
             <div className="relative">
               <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <Input placeholder="搜索合同号/客户" className="pl-8 h-8 w-56 text-xs" onChange={(e) => setFilter({ keyword: e.target.value })} />
+              <Input placeholder="搜索合同号/客户/明细产品" className="pl-8 h-8 w-64 text-xs" onChange={(e) => setFilter({ keyword: e.target.value })} />
             </div>
             <Select value={query.status ?? "all"} onValueChange={(v) => setFilter({ status: v })}>
               <SelectTrigger className="h-8 w-28 text-xs"><SelectValue /></SelectTrigger>
