@@ -200,6 +200,14 @@ export default function MSales() {
     setQuickPay(null); setQuickPayAmt(0); setQuickPayRemark(""); reload();
   };
 
+  const submitQuickInv = async () => {
+    if (!quickInv || quickInvAmt <= 0) return toast.error("请输入价税合计");
+    const rec = { id: `inv-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, invoiceNo: quickInvNo, invoiceType: quickInvType, invoiceDate: today(), amount: quickInvAmt, taxRate: quickInvTaxRate, taxAmount: Number(((quickInvAmt * quickInvTaxRate) / (100 + quickInvTaxRate)).toFixed(2)), buyerOrSeller: quickInv.customerName, status: quickInvStatus, remark: quickInvRemark };
+    await salesApi.update(quickInv.id, { invoices: [...(quickInv.invoices || []), rec] } as any);
+    toast.success("发票已新增");
+    setQuickInv(null); setQuickInvAmt(0); setQuickInvNo(""); setQuickInvRemark(""); reload();
+  };
+
   const applyBulkStatus = async () => {
     const op = readCurrentOperator();
     for (const id of selectedIds) {
@@ -247,7 +255,7 @@ export default function MSales() {
         onChange={(v) => setFilter({ keyword: v })}
         placeholder="搜索合同号 / 客户"
         trailing={
-          <button onClick={() => setFilterOpen(true)} className="size-10 rounded-full bg-foreground/[0.06] flex items-center justify-center">
+          <button onClick={() => { setLogRefId(undefined); setLogOpen(true); }} className="size-10 rounded-full bg-foreground/[0.06] flex items-center justify-center" title="全部日志">
             <FileText className="h-4 w-4" />
           </button>
         }
@@ -322,6 +330,7 @@ export default function MSales() {
                 <span className="font-mono text-[10px] text-foreground/45">{o.code} · {o.signedAt ?? o.createdAt}</span>
                 <div className="flex gap-1">
                   <MIconBtn icon={<ArrowDownLeft className="h-3.5 w-3.5" />} variant="primary" title="登记回款" onClick={() => { setQuickPay(o); setQuickPayAmt(unpaid); }} />
+                  <MIconBtn icon={<Receipt className="h-3.5 w-3.5" />} title="新增发票" onClick={() => { setQuickInv(o); setQuickInvAmt(unpaid || (o.contractAmount ?? o.totalAmount)); }} />
                   <MIconBtn icon={<History className="h-3.5 w-3.5" />} title="日志" onClick={() => { setLogRefId(o.id); setLogOpen(true); }} />
                   <MIconBtn icon={<Trash2 className="h-3.5 w-3.5" />} variant="danger" title="删除" onClick={() => setDeletingId(o.id)} />
                 </div>
