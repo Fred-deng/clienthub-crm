@@ -366,7 +366,6 @@ export default function MPurchases() {
 
         {editing && (
           <>
-            <MGroupTitle>子表（折叠查看）</MGroupTitle>
             <MAccordion title="发票管理（供应商开票）" badge={<MTag variant="cobalt">{(watch("invoices") || []).length} 张</MTag>}>
               <MInvoiceList value={watch("invoices") || []} onChange={(v) => setValue("invoices", v)} direction="in" defaultParty={suppliers.find((s) => s.id === watch("supplierId"))?.name} />
             </MAccordion>

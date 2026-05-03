@@ -464,7 +464,6 @@ export default function MSales() {
 
         {editing && (
           <>
-            <MGroupTitle>子表（折叠查看）</MGroupTitle>
             <MAccordion title="发票管理（开给客户）" badge={<MTag variant="cobalt">{(watch("invoices") || []).length} 张</MTag>}>
               <MInvoiceList
                 value={watch("invoices") || []}
