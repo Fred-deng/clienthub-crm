@@ -240,8 +240,8 @@ export default function MPurchases() {
       <MSearchBar
         value={query.keyword || ""}
         onChange={(v) => setFilter({ keyword: v })}
-        placeholder="输入采购单号、供应商或合同名"
-        hint="采购单号 / 供应商 / 合同名"
+        placeholder="输入采购单号、供应商、合同名或产品名"
+        hint="采购单号 / 供应商 / 合同名 / 明细产品"
       />
       <MChipFilter<BizFilter>
         value={biz} onChange={setBiz}
@@ -366,7 +366,6 @@ export default function MPurchases() {
 
         {editing && (
           <>
-            <MGroupTitle>子表（折叠查看）</MGroupTitle>
             <MAccordion title="发票管理（供应商开票）" badge={<MTag variant="cobalt">{(watch("invoices") || []).length} 张</MTag>}>
               <MInvoiceList value={watch("invoices") || []} onChange={(v) => setValue("invoices", v)} direction="in" defaultParty={suppliers.find((s) => s.id === watch("supplierId"))?.name} />
             </MAccordion>
