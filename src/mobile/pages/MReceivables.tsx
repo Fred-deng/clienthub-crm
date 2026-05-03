@@ -1,9 +1,10 @@
 // 应收账款（移动端）— 1:1 复刻 PC Receivables
 import { useEffect, useMemo, useState } from "react";
-import { MPageHeader, MSearchBar, MCard, MList, MTag, MKpi, MChipFilter } from "../components/MUI";
+import { MPageHeader, MSearchBar, MCard, MList, MTag, MKpi, MChipFilter, MDateRange } from "../components/MUI";
 import { salesApi, customerApi, productApi } from "@/services/api";
 import { fmtMoney, fmtMoneyShort } from "@/lib/format";
 import { splitSales, splitSalesReceived, type BizFilter } from "@/lib/biz";
+import { inRange } from "@/components/common/DateRangeFilter";
 import type { SalesOrder, Customer, Product } from "@/types";
 
 interface Row { customerId: string; customerName: string; orderCount: number; contractAmount: number; received: number; outstanding: number; oldest: string; level?: string; swContract: number; hwContract: number; swReceived: number; hwReceived: number; swOut: number; hwOut: number; }
