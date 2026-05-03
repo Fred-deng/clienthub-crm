@@ -126,7 +126,8 @@ export const supplierContactApi = buildCrud(supplierContacts, {
 
 export const purchaseApi = buildCrud(purchases, {
   idPrefix: "po",
-  searchFields: ["code", "supplierName"],
+  // 编号 / 供应商 / 合同名（contractTitle）
+  searchFields: ["code", "supplierName", "contractTitle"],
   filter: (it, q) => {
     if (q.status && q.status !== "all" && it.status !== q.status) return false;
     if (q.dateFrom && (it.createdAt || "") < q.dateFrom) return false;
